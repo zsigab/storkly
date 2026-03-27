@@ -1,0 +1,43 @@
+[versions]
+springBoot = "4.1.0-M4"
+springDependencyManagement = "1.1.7"
+jooq = "3.20.3"
+flyway = "11.8.2"
+lombok = "1.18.38"
+testcontainers = "1.21.3"
+spotless = "7.0.4"
+jspecify = "1.0.0"
+postgresql = "42.7.5"
+
+[libraries]
+# Spring Boot starters (versions managed by Spring BOM at runtime)
+springBootStarter           = { module = "org.springframework.boot:spring-boot-starter",            version.ref = "springBoot" }
+springBootStarterWeb        = { module = "org.springframework.boot:spring-boot-starter-web",        version.ref = "springBoot" }
+springBootStarterSecurity   = { module = "org.springframework.boot:spring-boot-starter-security",   version.ref = "springBoot" }
+springBootStarterMail       = { module = "org.springframework.boot:spring-boot-starter-mail",       version.ref = "springBoot" }
+springBootStarterValidation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
+springBootStarterTest       = { module = "org.springframework.boot:spring-boot-starter-test",       version.ref = "springBoot" }
+springBootTestcontainers    = { module = "org.springframework.boot:spring-boot-testcontainers",     version.ref = "springBoot" }
+
+# JOOQ
+jooq               = { module = "org.jooq:jooq",                 version.ref = "jooq" }
+jooqMetaExtensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "jooq" }
+
+# Database
+flywayCore     = { module = "org.flywaydb:flyway-core",                   version.ref = "flyway"       }
+flywayPostgres = { module = "org.flywaydb:flyway-database-postgresql",     version.ref = "flyway"       }
+postgresql     = { module = "org.postgresql:postgresql",                   version.ref = "postgresql"   }
+
+# Utilities
+lombok   = { module = "org.projectlombok:lombok",  version.ref = "lombok"   }
+jspecify = { module = "org.jspecify:jspecify",     version.ref = "jspecify" }
+
+# Testcontainers
+testcontainersPostgres = { module = "org.testcontainers:postgresql",   version.ref = "testcontainers" }
+testcontainersJunit    = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+
+[plugins]
+springBoot                 = { id = "org.springframework.boot",        version.ref = "springBoot" }
+springDependencyManagement = { id = "io.spring.dependency-management", version.ref = "springDependencyManagement" }
+spotless                   = { id = "com.diffplug.spotless",           version.ref = "spotless" }
+jooqCodegen                = { id = "org.jooq.jooq-codegen-gradle",   version.ref = "jooq" }

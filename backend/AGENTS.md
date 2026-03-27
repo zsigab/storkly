@@ -3,12 +3,12 @@
 Spring Boot 4 / Java 26 backend for the Storkly gift registry application.
 Multi-module Gradle (Kotlin DSL) project.
 
-> **Spring Boot 4 / Java 26 note:** Verify the exact release state before use.
-> **Fallback:** If Spring Boot 4 is not yet GA, use Spring Boot 3.5.x with Java 25 (LTS).
-> The architecture, module structure, and coding patterns do not change — only version numbers.
+> **Versions in use:** Spring Boot **4.1.0-M4** (milestone, from `repo.spring.io/milestone`) +
+> Java **26** (`--enable-preview`). Spring Boot 4.0 GA is not yet released; 4.1.0-M4 is the
+> latest available milestone and is the only Spring Boot 4.x version that supports Java 26
+> class files (major version 70) — 3.5.x ships with an older ASM.
 > Valhalla value classes require `--enable-preview`; mark all usages with
-> `// Valhalla: value class` so they're easy to grep. If Java 26 is not GA, use Java 25
-> and skip Valhalla features.
+> `// Valhalla: value class` so they're easy to grep.
 
 ---
 

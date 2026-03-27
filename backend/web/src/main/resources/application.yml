@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: storkly
+  profiles:
+    active: local

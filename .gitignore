@@ -1,0 +1,26 @@
+# Gradle
+.gradle/
+backend/build/
+backend/**/build/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.pnpm-debug.log
+
+# Env secrets — never commit the real .env
+.env
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
