@@ -35,6 +35,13 @@ These are explicit anti-patterns. Do not introduce them under any circumstances:
 - **Do NOT use `SecurityFilterChain` that permits all requests.** Even in local dev,
   configure proper security with explicit path matchers. Public endpoints are allowlisted;
   everything else requires authentication.
+- **Do NOT use Jackson 2 imports** (`com.fasterxml.jackson.*`). Spring Boot 4 ships
+  Jackson 3 — use `tools.jackson.*` imports.
+- **Do NOT use `RestTemplate` or raw `WebClient` for external HTTP calls.** Declare an
+  HTTP Service Client interface with `@GetExchange`/`@PostExchange`.
+- **Do NOT use `ExecutorService` + `Future` for parallel work.** Use Java 26
+  `StructuredTaskScope` with virtual threads.
+- **Do NOT use `TestRestTemplate` in new tests.** Use `RestTestClient` (Spring Boot 4).
 
 ---
 
@@ -47,7 +54,10 @@ These are explicit anti-patterns. Do not introduce them under any circumstances:
 - **JOOQ OSS** — typesafe SQL DSL, generated from Flyway schema (free for PostgreSQL)
 - **Flyway** — schema migrations, single source of truth for the DB schema
 - **Lombok** — `@RequiredArgsConstructor`, `@Slf4j`, `@Builder` (DTOs use Java records — ADR-008)
-- **Cloudflare Turnstile** — CAPTCHA verified server-side on registration
+- **Jackson 3** — JSON serialization (`tools.jackson.*` imports, not `com.fasterxml.*`)
+- **HTTP Service Clients** — declarative `@GetExchange`/`@PostExchange` interfaces for external APIs
+- **Structured Concurrency** — `StructuredTaskScope` for parallel work (Java 26 preview)
+- **Cloudflare Turnstile** — CAPTCHA verified server-side on registration (via HTTP Service Client)
 - **Spring Mail** — Mailpit locally, Brevo in prod
 - **Playwright (Java)** — headless browser for JS-heavy scrapers (Phase 2)
 - **Jsoup** — HTML scraping for simpler sites (Phase 2)
@@ -524,8 +534,13 @@ Use **Testcontainers** (PostgreSQL). Unit tests mock repositories — no DB need
 
 ---
 
-## Valhalla Value Classes (Java 26 Preview)
+## Java 26 Features — Use These
 
+Java 26 requires `--enable-preview`. Use these features where they fit naturally.
+
+### Valhalla Value Classes
+
+Identity-free classes that behave like primitives (no `synchronized`, no `==` identity).
 Mark all usages with `// Valhalla: value class` for easy tracking.
 
 ```java
@@ -533,7 +548,272 @@ Mark all usages with `// Valhalla: value class` for easy tracking.
 public value class Money {
     BigDecimal amount;
     String currency;
+
+    public static Money of(BigDecimal amount, String currency) {
+        return new Money(amount, currency);
+    }
 }
+
+// Valhalla: value class
+public value class RegistrySlug {
+    String value;
+
+    public static RegistrySlug of(String value) {
+        return new RegistrySlug(value);
+    }
+}
+```
+
+Candidates in Storkly: `Money`, `RegistrySlug`, `ClaimToken`.
+
+### Structured Concurrency (`StructuredTaskScope`)
+
+Use for any parallel work (e.g. fetching multiple APIs, parallel DB lookups).
+Never use raw `ExecutorService` + `Future` — always `StructuredTaskScope`.
+
+```java
+import java.util.concurrent.StructuredTaskScope;
+
+// ShutdownOnFailure — cancels all if one fails
+public RegistryDetailResponse loadRegistryDetail(UUID registryId) throws Exception {
+    try (var scope = StructuredTaskScope.open(
+            StructuredTaskScope.Joiner.awaitAllSuccessfulOrThrow())) {
+
+        StructuredTaskScope.Subtask<Registry> registryTask =
+            scope.fork(() -> registryRepository.findByIdOrThrow(registryId));
+        StructuredTaskScope.Subtask<List<Item>> itemsTask =
+            scope.fork(() -> itemRepository.findByRegistryId(registryId));
+        StructuredTaskScope.Subtask<List<Category>> categoriesTask =
+            scope.fork(() -> categoryRepository.findByRegistryId(registryId));
+
+        scope.join();
+
+        return new RegistryDetailResponse(
+            registryTask.get(),
+            itemsTask.get(),
+            categoriesTask.get()
+        );
+    }
+}
+
+// ShutdownOnSuccess — returns first successful result, cancels the rest
+public ScrapeResult scrapeFirstAvailable(String url) throws Exception {
+    try (var scope = StructuredTaskScope.open(
+            StructuredTaskScope.Joiner.anySuccessfulResultOrThrow())) {
+
+        scope.fork(() -> amazonScraper.scrape(url));
+        scope.fork(() -> galaxusScraper.scrape(url));
+
+        return scope.join();
+    }
+}
+```
+
+### Primitive Types in Patterns, `instanceof`, and Switch
+
+Use primitives directly in `switch` expressions and pattern matching. No boxing needed.
+
+```java
+// Primitive switch — use instead of if/else chains on int/long/byte
+public String quantityLabel(int quantity) {
+    return switch (quantity) {
+        case 0 -> "None needed";
+        case 1 -> "One needed";
+        case int q when q <= 5 -> q + " needed";
+        case int q -> q + " needed (bulk)";
+    };
+}
+
+// Primitive pattern in instanceof — direct narrowing without casting
+public void processNumericField(long value) {
+    if (value instanceof int i) {
+        // safe narrowing: value fits in int, use i directly
+        handleIntValue(i);
+    }
+    else {
+        handleLongValue(value);
+    }
+}
+
+// Combined with sealed types
+public double computeDiscount(Object amount) {
+    return switch (amount) {
+        case int i when i > 100 -> i * 0.1;
+        case int i -> i * 0.05;
+        case double d when d > 100.0 -> d * 0.1;
+        case double d -> d * 0.05;
+        default -> 0;
+    };
+}
+```
+
+### Lazy Constants (`StableValue`)
+
+Use for expensive-to-initialise singletons and lazy fields. Replaces the double-checked locking pattern.
+The JVM treats these as true constants for optimisation — same performance as `final`.
+
+```java
+import java.lang.StableValue;
+
+public class ScraperRegistry {
+
+    // Lazy singleton — computed once on first access, thread-safe
+    private final StableValue<PlaywrightBrowser> browser = StableValue.of();
+
+    public PlaywrightBrowser getBrowser() {
+        return browser.orElseSet(() -> PlaywrightBrowser.launch());
+    }
+}
+
+// Lazy per-enum-constant initialisation
+public enum SourceSite {
+    AMAZON, GALAXUS, SHOPEE, LAZADA;
+
+    private final StableValue<Pattern> urlPattern = StableValue.of();
+
+    public Pattern urlPattern() {
+        return urlPattern.orElseSet(() -> Pattern.compile(buildRegex()));
+    }
+}
+```
+
+### HTTP/3 for HttpClient
+
+Spring Boot 4's `HttpClient` auto-enables HTTP/3 when available. No code changes needed —
+just be aware that `java.net.http.HttpClient` now negotiates HTTP/3 automatically.
+
+---
+
+## Spring Boot 4 Features — Use These
+
+### HTTP Service Clients (Declarative REST)
+
+Use for **all external API calls** (Turnstile verification, scrapers, etc.).
+Declare an interface + Spring auto-generates the implementation.
+
+```java
+// Define the client as an interface
+public interface TurnstileClient {
+
+    @PostExchange("/siteverify")
+    TurnstileResponse verify(@RequestBody TurnstileRequest request);
+}
+
+// Request/response are plain records
+public record TurnstileRequest(String secret, String response) {}
+public record TurnstileResponse(boolean success, List<String> errorCodes) {}
+
+// Wire it up in config
+@Configuration
+public class TurnstileConfig {
+
+    @Bean
+    public TurnstileClient turnstileClient(RestClient.Builder builder) {
+        RestClient restClient = builder
+            .baseUrl("https://challenges.cloudflare.com/turnstile/v0")
+            .build();
+        return HttpServiceProxyFactory
+            .builderFor(RestClientAdapter.create(restClient))
+            .build()
+            .createClient(TurnstileClient.class);
+    }
+}
+
+// Use in service — just inject and call
+@Service
+@RequiredArgsConstructor
+public class TurnstileService {
+
+    private final TurnstileClient turnstileClient;
+    private final TurnstileProperties properties;
+
+    public boolean verify(String token) {
+        TurnstileResponse response = turnstileClient.verify(
+            new TurnstileRequest(properties.secretKey(), token)
+        );
+        return response.success();
+    }
+}
+```
+
+**Do NOT** use `RestTemplate` or raw `WebClient` for external calls — always declare an
+HTTP Service Client interface.
+
+### Jackson 3 (Jackson 2 is Deprecated)
+
+Spring Boot 4 ships Jackson 3. The package changed from `com.fasterxml.jackson` to
+`tools.jackson`. Use the new imports:
+
+```java
+// Old (Jackson 2) — DO NOT USE
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+// New (Jackson 3) — USE THIS
+import tools.jackson.annotation.JsonProperty;
+import tools.jackson.databind.ObjectMapper;
+```
+
+Spring auto-configures the Jackson 3 `ObjectMapper` bean. No manual config needed.
+
+### RestTestClient for Integration Tests
+
+Use `RestTestClient` instead of `TestRestTemplate` for new integration tests. Works with
+both `MockMvc` (no server) and `WebTestClient` (running server).
+
+```java
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Testcontainers
+class RegistryControllerIntegrationTest {
+
+    @Container
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+        .withDatabaseName("storkly_test")
+        .withUsername("test")
+        .withPassword("test");
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @Autowired
+    private RestTestClient restTestClient;
+
+    @Test
+    void createRegistry_returnsCreated() {
+        RegistryCreateRequest request = new RegistryCreateRequest(
+            "Baby Shower", "Our wishlist", RegistryVisibility.PUBLIC
+        );
+
+        restTestClient.post().uri("/api/registries")
+            .body(request)
+            .exchange()
+            .expectStatus().isCreated()
+            .expectBody(RegistryResponse.class)
+            .value(r -> assertThat(r.slug()).isEqualTo("baby-shower"));
+    }
+}
+```
+
+### Renamed Config Properties
+
+Use the new property names. The old names are deprecated:
+
+| Old (deprecated) | New |
+|---|---|
+| `management.tracing.enabled` | `management.tracing.export.enabled` |
+| `spring.dao.exceptiontranslation.enabled` | `spring.persistence.exceptiontranslation.enabled` |
+
+### Console Logging Control
+
+```yaml
+# application-test.yml — suppress console noise in tests
+logging:
+  console:
+    enabled: false
 ```
 
 ---
@@ -705,48 +985,10 @@ public class SecurityConfig {
 
 ---
 
-## Integration Test Pattern — Testcontainers
+## Integration Test Pattern — Testcontainers + RestTestClient
 
-```java
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-class RegistryControllerIntegrationTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-        .withDatabaseName("storkly_test")
-        .withUsername("test")
-        .withPassword("test");
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-    }
-
-    @Autowired
-    private TestRestTemplate restTemplate;
-
-    @Test
-    void createRegistry_returnsCreated() {
-        RegistryCreateRequest request = new RegistryCreateRequest(
-            "Baby Shower",
-            "Our wishlist",
-            RegistryVisibility.PUBLIC
-        );
-
-        ResponseEntity<RegistryResponse> response = restTemplate.postForEntity(
-            "/api/registries",
-            request,
-            RegistryResponse.class
-        );
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
-        assertThat(response.getBody().slug()).isEqualTo("baby-shower");
-    }
-}
-```
+See the **RestTestClient** example in the "Spring Boot 4 Features" section above.
+Use `RestTestClient` (not `TestRestTemplate`) for all new integration tests.
 
 > Note: Testcontainers requires Docker or Podman access. If not available in distrobox,
 > run integration tests in CI only. Unit tests (mocked repos) always work locally.
