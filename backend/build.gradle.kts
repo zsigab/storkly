@@ -9,9 +9,12 @@ repositories {
 }
 
 spotless {
-    // TODO: Java formatting disabled — Spotless 7.0.4 uses com.sun.tools.javac.util.Log$DeferredDiagnosticHandler
-    // which was removed in Java 26 (JDK-8316972). Re-enable once Spotless ships a Java 26-compatible release.
-    // Both palantirJavaFormat() and googleJavaFormat() fail with NoSuchMethodError on Java 26.
+    java {
+        target("**/src/**/*.java")
+        palantirJavaFormat("2.90.0")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
     kotlinGradle {
         target("**/*.gradle.kts")
         ktlint()
