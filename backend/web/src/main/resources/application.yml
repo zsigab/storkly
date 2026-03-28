@@ -1,8 +1,6 @@
 spring:
   application:
     name: storkly
-  profiles:
-    active: local
   flyway:
     locations: classpath:db/migration
     baseline-on-migrate: false
