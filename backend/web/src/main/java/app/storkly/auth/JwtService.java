@@ -9,16 +9,20 @@ import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import javax.crypto.SecretKey;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class JwtService {
 
     private final JwtProperties jwtProperties;
+    private final SecretKey secretKey;
+
+    public JwtService(JwtProperties jwtProperties) {
+        this.jwtProperties = jwtProperties;
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+    }
 
     public String generateAccessToken(User user) {
         return buildToken(user, jwtProperties.accessTokenExpiry().toMillis());
@@ -61,6 +65,6 @@ public class JwtService {
     }
 
     private SecretKey signingKey() {
-        return Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+        return secretKey;
     }
 }

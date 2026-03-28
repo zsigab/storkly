@@ -6,6 +6,7 @@ import app.storkly.auth.dto.RegisterRequest;
 import app.storkly.auth.dto.ResetPasswordRequest;
 import app.storkly.auth.dto.TokenResponse;
 import app.storkly.auth.dto.VerifyEmailRequest;
+import app.storkly.config.CookieProperties;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.user.User;
 import app.storkly.service.auth.AuthService;
@@ -33,6 +34,7 @@ public class AuthController {
     private final AuthService authService;
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final CookieProperties cookieProperties;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -89,6 +91,7 @@ public class AuthController {
     private void setAccessTokenCookie(HttpServletResponse response, String token) {
         Cookie cookie = new Cookie("access_token", token);
         cookie.setHttpOnly(true);
+        cookie.setSecure(cookieProperties.secure());
         cookie.setPath("/");
         cookie.setMaxAge(ACCESS_TOKEN_MAX_AGE);
         cookie.setAttribute("SameSite", "Strict");
@@ -98,6 +101,7 @@ public class AuthController {
     private void setRefreshTokenCookie(HttpServletResponse response, String token) {
         Cookie cookie = new Cookie("refresh_token", token);
         cookie.setHttpOnly(true);
+        cookie.setSecure(cookieProperties.secure());
         cookie.setPath("/api/auth/refresh");
         cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
         cookie.setAttribute("SameSite", "Strict");

@@ -35,8 +35,10 @@ These are explicit anti-patterns. Do not introduce them under any circumstances:
 - **Do NOT use `SecurityFilterChain` that permits all requests.** Even in local dev,
   configure proper security with explicit path matchers. Public endpoints are allowlisted;
   everything else requires authentication.
-- **Do NOT use Jackson 2 imports** (`com.fasterxml.jackson.*`). Spring Boot 4 ships
-  Jackson 3 — use `tools.jackson.*` imports.
+- **Do NOT use Jackson 2 databind/core imports** (`com.fasterxml.jackson.databind.*`,
+  `com.fasterxml.jackson.core.*`). Spring Boot 4 ships Jackson 3 — use `tools.jackson.*`.
+  **Exception:** `jackson-annotations` stays in `com.fasterxml.jackson.annotation.*` for
+  backward compatibility — `@JsonProperty`, `@JsonIgnore`, etc. remain in the old package.
 - **Do NOT use `RestTemplate` or raw `WebClient` for external HTTP calls.** Declare an
   HTTP Service Client interface with `@GetExchange`/`@PostExchange`.
 - **Do NOT use `ExecutorService` + `Future` for parallel work.** Use Java 26
@@ -54,7 +56,7 @@ These are explicit anti-patterns. Do not introduce them under any circumstances:
 - **JOOQ OSS** — typesafe SQL DSL, generated from Flyway schema (free for PostgreSQL)
 - **Flyway** — schema migrations, single source of truth for the DB schema
 - **Lombok** — `@RequiredArgsConstructor`, `@Slf4j`, `@Builder` (DTOs use Java records — ADR-008)
-- **Jackson 3** — JSON serialization (`tools.jackson.*` imports, not `com.fasterxml.*`)
+- **Jackson 3** — JSON serialization (`tools.jackson.*` for databind/core; annotations stay in `com.fasterxml.jackson.annotation.*`)
 - **HTTP Service Clients** — declarative `@GetExchange`/`@PostExchange` interfaces for external APIs
 - **Structured Concurrency** — `StructuredTaskScope` for parallel work (Java 26 preview)
 - **Cloudflare Turnstile** — CAPTCHA verified server-side on registration (via HTTP Service Client)
@@ -742,16 +744,17 @@ HTTP Service Client interface.
 ### Jackson 3 (Jackson 2 is Deprecated)
 
 Spring Boot 4 ships Jackson 3. The package changed from `com.fasterxml.jackson` to
-`tools.jackson`. Use the new imports:
+`tools.jackson`, **except for `jackson-annotations`** which stays in `com.fasterxml.jackson.annotation`
+for backward compatibility.
 
 ```java
-// Old (Jackson 2) — DO NOT USE
+// Annotations — unchanged, still com.fasterxml (DO use these)
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-// New (Jackson 3) — USE THIS
-import tools.jackson.annotation.JsonProperty;
+// Databind / core — moved to tools.jackson (DO NOT use com.fasterxml for these)
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.core.JsonProcessingException;
 ```
 
 Spring auto-configures the Jackson 3 `ObjectMapper` bean. No manual config needed.

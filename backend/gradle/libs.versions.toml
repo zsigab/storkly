@@ -38,8 +38,6 @@ springdocWebmvcUi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-u
 springSecurityCore = { module = "org.springframework.security:spring-security-core" }
 springWeb          = { module = "org.springframework:spring-web" }
 springTx           = { module = "org.springframework:spring-tx" }
-jacksonDatabind    = { module = "com.fasterxml.jackson.core:jackson-databind" }
-
 # JWT
 jjwtApi    = { module = "io.jsonwebtoken:jjwt-api",     version.ref = "jjwt" }
 jjwtImpl   = { module = "io.jsonwebtoken:jjwt-impl",    version.ref = "jjwt" }

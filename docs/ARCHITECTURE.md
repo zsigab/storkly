@@ -279,6 +279,7 @@ POST   /api/auth/login
 POST   /api/auth/refresh
 POST   /api/auth/forgot-password
 POST   /api/auth/reset-password
+POST   /api/auth/logout
 GET    /api/auth/oauth2/{provider}          -- Phase 2
 GET    /api/auth/oauth2/callback/{provider} -- Phase 2
 ```

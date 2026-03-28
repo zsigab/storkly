@@ -55,14 +55,17 @@ public class DataSeeder {
         // it is computed at seed time from the literal string "password".
         String passwordHash = passwordEncoder.encode("password");
 
+        OffsetDateTime now = OffsetDateTime.now();
+
         dsl.insertInto(USER)
                 .set(USER.ID, UUID.fromString("00000000-0000-0000-0000-000000000001"))
                 .set(USER.EMAIL, "owner@example.com")
                 .set(USER.PASSWORD_HASH, passwordHash)
                 .set(USER.DISPLAY_NAME, "Registry Owner")
+                .set(USER.EMAIL_VERIFIED_AT, now)
                 .set(USER.PROVIDER, AuthProvider.LOCAL)
                 .set(USER.ROLE, UserRole.USER)
-                .set(USER.CREATED_AT, OffsetDateTime.now())
+                .set(USER.CREATED_AT, now)
                 .execute();
 
         dsl.insertInto(USER)
@@ -70,9 +73,10 @@ public class DataSeeder {
                 .set(USER.EMAIL, "gifter@example.com")
                 .set(USER.PASSWORD_HASH, passwordHash)
                 .set(USER.DISPLAY_NAME, "Generous Gifter")
+                .set(USER.EMAIL_VERIFIED_AT, now)
                 .set(USER.PROVIDER, AuthProvider.LOCAL)
                 .set(USER.ROLE, UserRole.USER)
-                .set(USER.CREATED_AT, OffsetDateTime.now())
+                .set(USER.CREATED_AT, now)
                 .execute();
     }
 

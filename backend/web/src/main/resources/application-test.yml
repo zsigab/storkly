@@ -13,10 +13,13 @@ storkly:
     secret-key: "test-turnstile-key"
   mail:
     from: noreply@storkly.test
+    frontend-url: http://localhost:5173
   jwt:
     secret: "test-secret-key-must-be-at-least-32-characters-long-for-hmac"
     access-token-expiry: PT15M
     refresh-token-expiry: P7D
+  cookie:
+    secure: false
   cors:
     allowed-origins:
       - http://localhost:5173

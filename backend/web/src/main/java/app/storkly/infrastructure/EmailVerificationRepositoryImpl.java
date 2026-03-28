@@ -1,7 +1,6 @@
 package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.EMAIL_VERIFICATION_TOKEN;
-import static app.storkly.domain.generated.Tables.USER;
 
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.generated.tables.records.EmailVerificationTokenRecord;
@@ -28,7 +27,7 @@ public class EmailVerificationRepositoryImpl implements EmailVerificationReposit
     }
 
     @Override
-    public void consume(String token) {
+    public UUID consume(String token) {
         EmailVerificationTokenRecord record = dsl.selectFrom(EMAIL_VERIFICATION_TOKEN)
                 .where(EMAIL_VERIFICATION_TOKEN.TOKEN.eq(token))
                 .fetchOne();
@@ -41,14 +40,10 @@ public class EmailVerificationRepositoryImpl implements EmailVerificationReposit
         if (record.getExpiresAt().isBefore(OffsetDateTime.now())) {
             throw new InvalidTokenException("Verification token has expired");
         }
-        OffsetDateTime now = OffsetDateTime.now();
         dsl.update(EMAIL_VERIFICATION_TOKEN)
-                .set(EMAIL_VERIFICATION_TOKEN.USED_AT, now)
+                .set(EMAIL_VERIFICATION_TOKEN.USED_AT, OffsetDateTime.now())
                 .where(EMAIL_VERIFICATION_TOKEN.TOKEN.eq(token))
                 .execute();
-        dsl.update(USER)
-                .set(USER.EMAIL_VERIFIED_AT, now)
-                .where(USER.ID.eq(record.getUserId()))
-                .execute();
+        return record.getUserId();
     }
 }

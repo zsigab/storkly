@@ -1,7 +1,7 @@
 package app.storkly.service.auth;
 
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
-import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.UserNotFoundException;
 import app.storkly.domain.user.AuthProvider;
 import app.storkly.domain.user.EmailVerificationRepository;
@@ -54,16 +54,32 @@ public class AuthService {
 
     @Transactional
     public void verifyEmail(String token) {
-        emailVerificationRepository.consume(token);
+        UUID userId = emailVerificationRepository.consume(token);
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException("id:" + userId));
+        User verified = User.builder()
+                .id(user.id())
+                .email(user.email())
+                .passwordHash(user.passwordHash())
+                .displayName(user.displayName())
+                .emailVerifiedAt(OffsetDateTime.now())
+                .provider(user.provider())
+                .providerId(user.providerId())
+                .role(user.role())
+                .createdAt(user.createdAt())
+                .build();
+        userRepository.save(verified);
     }
 
     @Transactional
     public User authenticate(String email, String password) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UserNotFoundException(email));
-        if (passwordEncoder.matches(password, user.passwordHash())) {
-            return user;
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new InvalidCredentialsException());
+        if (!passwordEncoder.matches(password, user.passwordHash())) {
+            throw new InvalidCredentialsException();
         }
-        throw new InvalidTokenException("Invalid credentials");
+        if (!user.isEnabled()) {
+            throw new InvalidCredentialsException();
+        }
+        return user;
     }
 
     @Transactional

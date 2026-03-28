@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
-import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.user.AuthProvider;
 import app.storkly.domain.user.EmailVerificationRepository;
 import app.storkly.domain.user.PasswordResetRepository;
@@ -130,6 +130,7 @@ class AuthServiceTest {
                 .email("alice@example.com")
                 .passwordHash("hashed")
                 .displayName("Alice")
+                .emailVerifiedAt(OffsetDateTime.now())
                 .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
@@ -143,7 +144,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void authenticate_wrongPassword_throwsInvalidTokenException() {
+    void authenticate_wrongPassword_throwsInvalidCredentialsException() {
         User user = User.builder()
                 .id(UUID.randomUUID())
                 .email("alice@example.com")
@@ -157,7 +158,7 @@ class AuthServiceTest {
         when(passwordEncoder.matches("wrongpass", "hashed")).thenReturn(false);
 
         assertThatThrownBy(() -> authService.authenticate("alice@example.com", "wrongpass"))
-                .isInstanceOf(InvalidTokenException.class);
+                .isInstanceOf(InvalidCredentialsException.class);
     }
 
     @Test

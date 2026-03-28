@@ -19,7 +19,7 @@ public class EmailService {
     public void sendEmailVerification(String to, String token) {
         String subject = "Verify your Storkly account";
         String body = "Click the link to verify your email:\n\n"
-                + "http://localhost:5173/verify-email?token=" + token + "\n\n"
+                + emailProperties.frontendUrl() + "/verify-email?token=" + token + "\n\n"
                 + "This link expires in 24 hours.";
         send(to, subject, body);
     }
@@ -28,7 +28,7 @@ public class EmailService {
     public void sendPasswordReset(String to, String token) {
         String subject = "Reset your Storkly password";
         String body = "Click the link to reset your password:\n\n"
-                + "http://localhost:5173/reset-password?token=" + token + "\n\n"
+                + emailProperties.frontendUrl() + "/reset-password?token=" + token + "\n\n"
                 + "This link expires in 1 hour.";
         send(to, subject, body);
     }

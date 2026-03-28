@@ -2,6 +2,7 @@ package app.storkly.exception;
 
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
+import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidTokenException.class)
     public ProblemDetail handleUnauthorized(InvalidTokenException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
