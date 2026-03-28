@@ -20,6 +20,7 @@ springBootStarterMail       = { module = "org.springframework.boot:spring-boot-s
 springBootStarterValidation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
 springBootStarterJooq       = { module = "org.springframework.boot:spring-boot-starter-jooq",       version.ref = "springBoot" }
 springBootStarterFlyway     = { module = "org.springframework.boot:spring-boot-starter-flyway",     version.ref = "springBoot" }
+springBootStarterOauth2Client = { module = "org.springframework.boot:spring-boot-starter-oauth2-client", version.ref = "springBoot" }
 springBootStarterTest       = { module = "org.springframework.boot:spring-boot-starter-test",       version.ref = "springBoot" }
 springBootTestcontainers    = { module = "org.springframework.boot:spring-boot-testcontainers",     version.ref = "springBoot" }
 

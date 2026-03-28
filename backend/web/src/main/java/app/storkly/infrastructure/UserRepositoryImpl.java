@@ -71,6 +71,14 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerId) {
+        return dsl.selectFrom(USER)
+                .where(USER.PROVIDER.eq(mapProvider(provider)).and(USER.PROVIDER_ID.eq(providerId)))
+                .fetchOptional()
+                .map(this::toUser);
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return dsl.fetchCount(USER, USER.EMAIL.eq(email)) > 0;
     }
