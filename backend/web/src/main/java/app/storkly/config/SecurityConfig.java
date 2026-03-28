@@ -49,6 +49,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/registries/{slug}/items")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/items/{id}")
+                        .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/registries/{slug}/categories")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/registries/{slug}/join")

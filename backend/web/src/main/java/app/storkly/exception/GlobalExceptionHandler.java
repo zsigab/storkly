@@ -6,6 +6,7 @@ import app.storkly.domain.exception.CategoryNotFoundException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({UserNotFoundException.class, RegistryNotFoundException.class, CategoryNotFoundException.class})
+    @ExceptionHandler({
+        UserNotFoundException.class,
+        RegistryNotFoundException.class,
+        CategoryNotFoundException.class,
+        ItemNotFoundException.class
+    })
     public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
