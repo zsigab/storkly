@@ -1028,13 +1028,25 @@ test that would break if the behaviour regressed.
 - **Commit message format:**
 
 ```
-Topic: concise summary
+<PhaseId> - <Topic>: concise summary
 
-ADR-NNN: short decision summary (only when relevant)
+<Implementation summary — what was built, key files created/modified,
+choices made, and any caveats. Be thorough.>
+
+ADR-NNN: short decision summary (when applicable)
 
 Co-Authored-By: Claude <co-author>
 ```
 
 - Run `./gradlew spotlessApply` before every commit
 - Run `./gradlew check` to verify build + formatting passes
-- Non-obvious reasoning goes into numbered ADRs in `docs/decisions/`
+
+### Architecture Decision Records (ADRs)
+
+**When you make an implementation choice that isn't directly specified in
+ARCHITECTURE.md, create a new ADR.** Examples: choosing a library version to
+resolve a compatibility issue, changing a column type for tooling reasons,
+picking one approach over another when the spec is silent.
+
+Create the file in `docs/decisions/NNN-short-title.md`, add it to
+`docs/DECISIONS.md`, and reference it in the commit message. Do not skip this.

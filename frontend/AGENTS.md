@@ -302,10 +302,19 @@ test that would break if the behaviour regressed.
 - **Commit message format:**
 
 ```
-Topic: concise summary
+<PhaseId> - <Topic>: concise summary
 
-ADR-NNN: short decision summary (only when relevant)
+<Implementation summary — what was built, key files created/modified,
+choices made, and any caveats. Be thorough.>
+
+ADR-NNN: short decision summary (when applicable)
 ```
 
 - Push each commit to the remote
 - Do not batch unrelated changes into one commit
+
+### Architecture Decision Records (ADRs)
+
+**When you make an implementation choice that isn't directly specified in
+ARCHITECTURE.md, create a new ADR.** Create the file in `docs/decisions/`,
+add it to `docs/DECISIONS.md`, and reference it in the commit message.

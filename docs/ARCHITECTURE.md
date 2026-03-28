@@ -647,14 +647,25 @@ services:
 - **Commit message format:**
 
 ```
-Topic: concise summary of what changed and why
+<PhaseId> - <Topic>: concise summary of what changed and why
 
-ADR-NNN: short decision summary (one per line, only when relevant)
+<Implementation summary — what was built, key files, notable details.
+This is the body of the commit message. Be thorough: list what was
+created/modified, what choices were made, and any caveats.>
+
+ADR-NNN: short decision summary (one per line, when applicable)
+
+Co-Authored-By: ...
 ```
 
 Examples:
 ```
-Scaffold: initialize Gradle multi-module project
+1A - Scaffold: initialize Gradle multi-module project
+
+Gradle multi-module (Kotlin DSL): util, domain, service, scraper, web.
+Spring Boot 4.1.0-M4 + Java 26 (--enable-preview). Version catalog in
+gradle/libs.versions.toml. Spotless with palantir-java-format 2.90.0.
+React + Vite + TypeScript frontend scaffold.
 
 ADR-001: Gradle Kotlin DSL over Maven
 ADR-004: private repo, no license yet
@@ -662,18 +673,46 @@ ADR-007: PostgreSQL everywhere, no H2
 ```
 
 ```
-Auth: email/password registration with Argon2 + Turnstile CAPTCHA
+1D - Auth: email/password registration with Argon2 + Turnstile CAPTCHA
+
+AuthController with register/login/verify-email/forgot-password/reset-password
+endpoints. Argon2PasswordEncoder for hashing. TurnstileClient (HTTP Service
+Client) for server-side CAPTCHA verification. JWT access (15min) + refresh (7d)
+tokens in httpOnly cookies. EmailVerificationService sends token via Spring Mail.
+
+ADR-009: httpOnly cookies over localStorage for JWT storage
 ```
 
 ```
-DB: Flyway migration V1 — full schema with JOOQ DDL codegen
+1C - DB: Flyway migration V1 — full schema with JOOQ DDL codegen
+
+V1__initial_schema.sql: 9 tables, 5 enum types. JOOQ DDL-based codegen in
+domain module — parses Flyway SQL at build time, no running DB needed.
+DataSeeder component (STORKLY_SEED_DATA=true) inserts 2 users, 1 registry,
+3 categories, 5 items, 1 claim. VARCHAR used instead of TEXT for UNIQUE
+columns (H2 inside DDLDatabase can't index CLOBs; no runtime difference
+on PostgreSQL).
 
 ADR-003: JOOQ over Hibernate
 ADR-007: DDL-based codegen, no running DB needed
 ```
 
-- Non-obvious reasoning goes into numbered ADRs in `docs/decisions/`
 - Keep `main` always in a working state; feature branches optional for larger sub-tasks
+
+### Architecture Decision Records (ADRs)
+
+**When you make an implementation choice that isn't directly specified in ARCHITECTURE.md,
+create a new ADR.** Examples:
+- Choosing a library version to resolve a compatibility issue
+- Changing a column type to work around a tooling limitation
+- Picking one valid approach over another when the spec is silent
+- Deviating from the spec for a good reason
+
+The ADR captures *why* so future readers don't have to guess. Create the file in
+`docs/decisions/NNN-short-title.md`, add it to `docs/DECISIONS.md`, and reference
+it in the commit message.
+
+Do not skip this. If you made a choice, document it.
 
 ---
 
