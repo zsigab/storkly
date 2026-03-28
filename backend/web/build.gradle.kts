@@ -34,3 +34,7 @@ dependencies {
     testImplementation(libs.testcontainersPostgres)
     testImplementation(libs.testcontainersJunit)
 }
+
+tasks.bootJar {
+    archiveFileName = "storkly.jar"
+}

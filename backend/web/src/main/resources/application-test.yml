@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+
+storkly:
+  captcha:
+    enabled: false
+  jwt:
+    secret: "test-secret-key-must-be-at-least-32-characters-long-for-hmac"
+    access-token-expiry: PT15M
+    refresh-token-expiry: P7D
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+
+logging:
+  console:
+    enabled: false

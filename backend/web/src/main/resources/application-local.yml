@@ -1,0 +1,31 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/storkly
+    username: storkly
+    password: storkly
+    driver-class-name: org.postgresql.Driver
+  mail:
+    host: localhost
+    port: 1025
+    username: ""
+    password: ""
+    properties:
+      "[mail.smtp.auth]": "false"
+      "[mail.smtp.starttls.enable]": "false"
+
+storkly:
+  captcha:
+    enabled: true
+    secret-key: "1x0000000000000000000000000000000AA"
+  jwt:
+    secret: "local-development-secret-key-change-in-production-must-be-long"
+    access-token-expiry: PT15M
+    refresh-token-expiry: P7D
+  cors:
+    allowed-origins:
+      - http://localhost:5173
+
+logging:
+  level:
+    app.storkly: DEBUG
+    org.jooq.tools.LoggerListener: DEBUG

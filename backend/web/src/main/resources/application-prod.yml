@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db:5432/storkly
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  mail:
+    host: smtp-relay.brevo.com
+    port: 587
+    username: ${BREVO_USERNAME}
+    password: ${BREVO_PASSWORD}
+    properties:
+      "[mail.smtp.auth]": "true"
+      "[mail.smtp.starttls.enable]": "true"
+
+storkly:
+  captcha:
+    enabled: true
+    secret-key: ${TURNSTILE_SECRET_KEY}
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expiry: PT15M
+    refresh-token-expiry: P7D
+  cors:
+    allowed-origins:
+      - https://storkly.app
+
+logging:
+  level:
+    app.storkly: INFO

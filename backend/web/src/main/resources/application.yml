@@ -3,3 +3,23 @@ spring:
     name: storkly
   profiles:
     active: local
+  flyway:
+    locations: classpath:db/migration
+    baseline-on-migrate: false
+  mail:
+    properties:
+      "[mail.smtp.auth]": "true"
+      "[mail.smtp.starttls.enable]": "true"
+
+server:
+  port: 8080
+  shutdown: graceful
+
+management:
+  tracing:
+    export:
+      enabled: false
+
+storkly:
+  mail:
+    from: noreply@storkly.app

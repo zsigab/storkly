@@ -1,0 +1,11 @@
+# Local Colima (preprod) — no TLS
+:80 {
+    handle /api/* {
+        reverse_proxy api:8080
+    }
+    handle {
+        root * /srv/frontend
+        try_files {path} /index.html
+        file_server
+    }
+}
