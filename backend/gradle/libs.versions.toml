@@ -1,7 +1,7 @@
 [versions]
 springBoot = "4.1.0-M4"
 springDependencyManagement = "1.1.7"
-jooq = "3.20.3"
+jooq = "3.21.1"
 flyway = "11.8.2"
 lombok = "1.18.38"
 testcontainers = "1.21.3"
@@ -16,6 +16,7 @@ springBootStarterWeb        = { module = "org.springframework.boot:spring-boot-s
 springBootStarterSecurity   = { module = "org.springframework.boot:spring-boot-starter-security",   version.ref = "springBoot" }
 springBootStarterMail       = { module = "org.springframework.boot:spring-boot-starter-mail",       version.ref = "springBoot" }
 springBootStarterValidation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
+springBootStarterJooq       = { module = "org.springframework.boot:spring-boot-starter-jooq",       version.ref = "springBoot" }
 springBootStarterTest       = { module = "org.springframework.boot:spring-boot-starter-test",       version.ref = "springBoot" }
 springBootTestcontainers    = { module = "org.springframework.boot:spring-boot-testcontainers",     version.ref = "springBoot" }
 

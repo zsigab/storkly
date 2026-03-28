@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.springBootStarterValidation)
 
     // Database
+    implementation(libs.springBootStarterJooq)
     implementation(libs.jooq)
     implementation(libs.flywayCore)
     implementation(libs.flywayPostgres)
