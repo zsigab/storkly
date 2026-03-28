@@ -4,6 +4,10 @@ spring:
     username: storkly
     password: storkly
     driver-class-name: org.postgresql.Driver
+  task:
+    execution:
+      pool:
+        core-size: 2
   mail:
     host: localhost
     port: 1025

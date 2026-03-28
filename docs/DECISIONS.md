@@ -13,3 +13,4 @@ This index provides a quick summary and links.
 | [006](decisions/006-local-dev-no-containers.md) | Local dev runs Spring Boot directly, not in container | Accepted | 2026-03-27 |
 | [007](decisions/007-drop-h2-postgresql-everywhere.md) | Drop H2, PostgreSQL everywhere, DDL-based JOOQ codegen | Accepted | 2026-03-27 |
 | [008](decisions/008-records-over-lombok-value.md) | Java records for DTOs, drop Lombok @Value | Accepted | 2026-03-27 |
+| [009](decisions/009-jwt-httponly-cookies.md) | JWT stored in httpOnly cookies, not localStorage | Accepted | 2026-03-28 |

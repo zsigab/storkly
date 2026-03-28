@@ -13,6 +13,9 @@ dependencies {
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     compileOnly(libs.jspecify)
-    implementation(libs.springBootStarter)
+    implementation(libs.springBootStarterWeb)
+    implementation(libs.springBootStarterMail)
+    implementation(libs.springBootStarterSecurity)
+    implementation(libs.springTx)
     testImplementation(libs.springBootStarterTest)
 }

@@ -1,0 +1,66 @@
+package app.storkly.auth;
+
+import app.storkly.domain.user.User;
+import app.storkly.service.auth.JwtProperties;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import javax.crypto.SecretKey;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class JwtService {
+
+    private final JwtProperties jwtProperties;
+
+    public String generateAccessToken(User user) {
+        return buildToken(user, jwtProperties.accessTokenExpiry().toMillis());
+    }
+
+    public String generateRefreshToken(User user) {
+        return buildToken(user, jwtProperties.refreshTokenExpiry().toMillis());
+    }
+
+    public String extractEmail(String token) {
+        return parseClaims(token).getSubject();
+    }
+
+    public boolean isValid(String token) {
+        try {
+            parseClaims(token);
+            return true;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.debug("JWT validation failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private String buildToken(User user, long expiryMillis) {
+        long now = System.currentTimeMillis();
+        return Jwts.builder()
+                .subject(user.email())
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + expiryMillis))
+                .signWith(signingKey())
+                .compact();
+    }
+
+    private Claims parseClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    private SecretKey signingKey() {
+        return Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+    }
+}

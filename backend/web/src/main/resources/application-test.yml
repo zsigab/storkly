@@ -10,6 +10,9 @@ spring:
 storkly:
   captcha:
     enabled: false
+    secret-key: "test-turnstile-key"
+  mail:
+    from: noreply@storkly.test
   jwt:
     secret: "test-secret-key-must-be-at-least-32-characters-long-for-hmac"
     access-token-expiry: PT15M

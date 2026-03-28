@@ -3,6 +3,13 @@
 
 plugins {
     alias(libs.plugins.jooqCodegen)
+    id("io.spring.dependency-management")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.boot:spring-boot-dependencies:${libs.versions.springBoot.get()}")
+    }
 }
 
 sourceSets {
@@ -23,6 +30,7 @@ dependencies {
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     compileOnly(libs.jspecify)
+    compileOnly(libs.springSecurityCore)
     testImplementation(libs.springBootStarterTest)
 
     jooqCodegen(libs.jooqMetaExtensions)

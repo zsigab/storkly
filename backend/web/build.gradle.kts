@@ -29,6 +29,11 @@ dependencies {
     implementation(libs.flywayPostgres)
     runtimeOnly(libs.postgresql)
 
+    // JWT
+    implementation(libs.jjwtApi)
+    runtimeOnly(libs.jjwtImpl)
+    runtimeOnly(libs.jjwtJackson)
+
     // Testing
     testImplementation(libs.springBootStarterTest)
     testImplementation(libs.springBootTestcontainers)
