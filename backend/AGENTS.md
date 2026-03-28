@@ -985,13 +985,39 @@ public class SecurityConfig {
 
 ---
 
-## Integration Test Pattern — Testcontainers + RestTestClient
+## Test Requirements
+
+**Every feature from Phase 1D onward must include tests.** A feature without tests is
+not complete. No exceptions.
+
+### What to test
+
+| Layer | Test type | Tool | What to cover |
+|-------|-----------|------|---------------|
+| Service | Unit test | JUnit 5 + Mockito | Business logic, validation, edge cases. Mock repository interfaces. |
+| Helper | Unit test | JUnit 5 | Mapping logic, predicate methods, slug generation — anything non-trivial. |
+| Controller | Integration test | `RestTestClient` + Testcontainers | Full request/response cycle: status codes, response bodies, auth enforcement, validation errors. |
+| Repository (JOOQ) | Integration test | Testcontainers | Query correctness, FK constraints, edge cases (empty results, duplicates). |
+
+### What NOT to test
+
+- Getters, setters, constructors (Java records handle this)
+- Spring wiring (if the context loads, it works)
+- JOOQ-generated code
+- DataSeeder (it is a dev tool, not a feature)
+
+### Integration Test Pattern — Testcontainers + RestTestClient
 
 See the **RestTestClient** example in the "Spring Boot 4 Features" section above.
 Use `RestTestClient` (not `TestRestTemplate`) for all new integration tests.
 
 > Note: Testcontainers requires Docker or Podman access. If not available in distrobox,
 > run integration tests in CI only. Unit tests (mocked repos) always work locally.
+
+### Coverage target
+
+100% is not the goal. The standard is: every user-facing behaviour has at least one
+test that would break if the behaviour regressed.
 
 ---
 

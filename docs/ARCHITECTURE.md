@@ -351,6 +351,25 @@ A `DataSeeder` component runs on startup when `SEED_DATA=true` (env var). Insert
 - Unit tests mock repositories — no database needed
 - CI (GitHub Actions) runs full integration suite with PostgreSQL service container
 
+### Test Coverage Requirements
+
+Every feature delivered from Phase 1D onward must include tests. No feature is
+considered complete without them.
+
+**Backend:**
+- **Unit tests** for every service class (mocked repository dependencies)
+- **Integration tests** for every controller endpoint (Testcontainers + `RestTestClient`)
+- Helpers with non-trivial logic get their own unit tests
+- `DataSeeder` is for UI development, not a substitute for tests
+
+**Frontend:**
+- **Component tests** for every feature component (Vitest + React Testing Library)
+- Test user-visible behaviour, not implementation details (query by role/label)
+- No snapshot tests
+
+100% coverage is not the goal. The standard is: every user-facing behaviour has at
+least one test that would break if the behaviour regressed.
+
 ### Profiles
 
 | Profile | Database | Email | CAPTCHA |

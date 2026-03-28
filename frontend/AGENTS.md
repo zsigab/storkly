@@ -270,11 +270,29 @@ Protected routes check auth state via a `<RequireAuth>` wrapper component.
 
 ---
 
-## Testing
+## Test Requirements
 
-- Component tests: Vitest + React Testing Library
-- Focus on behaviour, not implementation (query by role/label, not class names)
-- No snapshot tests
+**Every feature from Phase 1I onward must include tests.** A feature without tests is
+not complete.
+
+- **Tool:** Vitest + React Testing Library
+- **Focus on behaviour**, not implementation — query by role/label, not class names
+- **No snapshot tests**
+- Test user interactions: clicks, form submissions, navigation, error states
+- Test data fetching states: loading, success, error (mock the API layer, not `fetch`)
+- Every page component gets at least one "renders and shows expected content" test
+- Every form gets a "validates and submits" test
+
+### What NOT to test
+
+- Shadcn/UI primitives (`src/components/ui/`) — they are tested upstream
+- Pure layout/styling (use visual review instead)
+- Implementation details (internal state, hook internals)
+
+### Coverage target
+
+100% is not the goal. The standard is: every user-facing behaviour has at least one
+test that would break if the behaviour regressed.
 
 ---
 
