@@ -3,6 +3,7 @@ package app.storkly.exception;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.AlreadySubscribedException;
 import app.storkly.domain.exception.CategoryNotFoundException;
+import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
@@ -25,7 +26,8 @@ public class GlobalExceptionHandler {
         UserNotFoundException.class,
         RegistryNotFoundException.class,
         CategoryNotFoundException.class,
-        ItemNotFoundException.class
+        ItemNotFoundException.class,
+        ClaimNotFoundException.class
     })
     public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());

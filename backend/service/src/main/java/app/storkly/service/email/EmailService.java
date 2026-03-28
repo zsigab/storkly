@@ -25,6 +25,17 @@ public class EmailService {
     }
 
     @Async
+    public void sendClaimConfirmation(String to, String name, String itemTitle, String token) {
+        String subject = "Your claim on Storkly";
+        String body = "Hi " + name + ",\n\n"
+                + "You've claimed \"" + itemTitle + "\".\n\n"
+                + "If you'd like to un-claim it, click the link below:\n\n"
+                + emailProperties.frontendUrl() + "/un-claim?token=" + token + "\n\n"
+                + "Keep this link safe — it's the only way to manage your claim without an account.";
+        send(to, subject, body);
+    }
+
+    @Async
     public void sendPasswordReset(String to, String token) {
         String subject = "Reset your Storkly password";
         String body = "Click the link to reset your password:\n\n"
