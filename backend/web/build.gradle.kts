@@ -19,6 +19,7 @@ dependencies {
     // Web
     implementation(libs.springBootStarterWeb)
     implementation(libs.springBootStarterSecurity)
+    implementation(libs.springdocWebmvcUi)
     implementation(libs.springBootStarterMail)
     implementation(libs.springBootStarterValidation)
 

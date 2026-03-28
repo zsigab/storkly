@@ -17,6 +17,9 @@ frontend/.pnpm-debug.log
 # Env secrets — never commit the real .env
 .env
 !.env.example
+frontend/.env.local
+frontend/.env
+!frontend/.env.example
 
 # OS
 .DS_Store

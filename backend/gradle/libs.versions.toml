@@ -8,6 +8,7 @@ testcontainers = "1.21.3"
 spotless = "7.0.4"
 jspecify = "1.0.0"
 postgresql = "42.7.5"
+springdoc = "3.0.2"
 
 [libraries]
 # Spring Boot starters (versions managed by Spring BOM at runtime)
@@ -28,6 +29,9 @@ jooqMetaExtensions = { module = "org.jooq:jooq-meta-extensions", version.ref = "
 flywayCore     = { module = "org.flywaydb:flyway-core",                   version.ref = "flyway"       }
 flywayPostgres = { module = "org.flywaydb:flyway-database-postgresql",     version.ref = "flyway"       }
 postgresql     = { module = "org.postgresql:postgresql",                   version.ref = "postgresql"   }
+
+# OpenAPI / Springdoc
+springdocWebmvcUi = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
 # Utilities
 lombok   = { module = "org.projectlombok:lombok",  version.ref = "lombok"   }

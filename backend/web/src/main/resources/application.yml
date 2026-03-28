@@ -20,6 +20,13 @@ management:
     export:
       enabled: false
 
+springdoc:
+  api-docs:
+    path: /api/docs
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+
 storkly:
   mail:
     from: noreply@storkly.app
