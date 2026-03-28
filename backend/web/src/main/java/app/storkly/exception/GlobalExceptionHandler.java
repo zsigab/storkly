@@ -1,9 +1,12 @@
 package app.storkly.exception;
 
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.AlreadySubscribedException;
+import app.storkly.domain.exception.CategoryNotFoundException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,9 +20,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ProblemDetail handleNotFound(UserNotFoundException ex) {
+    @ExceptionHandler({UserNotFoundException.class, RegistryNotFoundException.class, CategoryNotFoundException.class})
+    public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
+    @ExceptionHandler(AlreadySubscribedException.class)
+    public ProblemDetail handleConflictSubscription(AlreadySubscribedException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(AccessDeniedException.class)
