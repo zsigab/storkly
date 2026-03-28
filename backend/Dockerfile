@@ -1,27 +1,52 @@
 # ─── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM eclipse-temurin:26-jdk AS builder
+# eclipse-temurin:26-jdk is not yet published (Temurin lags ~weeks behind Oracle GA).
+# Switch both stages to that image once available.
+FROM ubuntu:24.04 AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates tar && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ARCH=$(dpkg --print-architecture | sed 's/amd64/x64/;s/arm64/aarch64/') && \
+    curl -fL "https://download.oracle.com/java/26/latest/jdk-26_linux-${ARCH}_bin.tar.gz" \
+        -o /tmp/jdk26.tar.gz && \
+    mkdir -p /opt/jdk-26 && \
+    tar -xzf /tmp/jdk26.tar.gz -C /opt/jdk-26 --strip-components=1 && \
+    rm /tmp/jdk26.tar.gz
+
+ENV JAVA_HOME=/opt/jdk-26
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 WORKDIR /workspace
 
-# Copy Gradle wrapper and version catalog first for layer caching
 COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts gradle/ ./
 COPY gradle/ gradle/
 RUN chmod +x gradlew
 
-# Download dependencies (cached unless build files change)
-RUN ./gradlew dependencies --no-daemon -q || true
+RUN ./gradlew dependencies --no-daemon -q --console=plain || true
 
-# Copy source and build
 COPY . .
-RUN ./gradlew :web:bootJar -x test --no-daemon
+RUN ./gradlew :web:bootJar -x test --no-daemon --console=plain
 
 # ─── Stage 2: Runtime ─────────────────────────────────────────────────────────
-FROM eclipse-temurin:26-jdk AS runtime
+FROM ubuntu:24.04 AS runtime
+
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates tar && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN ARCH=$(dpkg --print-architecture | sed 's/amd64/x64/;s/arm64/aarch64/') && \
+    curl -fL "https://download.oracle.com/java/26/latest/jdk-26_linux-${ARCH}_bin.tar.gz" \
+        -o /tmp/jdk26.tar.gz && \
+    mkdir -p /opt/jdk-26 && \
+    tar -xzf /tmp/jdk26.tar.gz -C /opt/jdk-26 --strip-components=1 && \
+    rm /tmp/jdk26.tar.gz
+
+ENV JAVA_HOME=/opt/jdk-26
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 WORKDIR /app
 
-RUN addgroup --system --gid 1001 storkly && \
-    adduser --system --uid 1001 --gid 1001 storkly
+RUN groupadd --system --gid 1001 storkly && \
+    useradd --system --uid 1001 --gid 1001 storkly
 
 COPY --from=builder /workspace/web/build/libs/storkly.jar app.jar
 

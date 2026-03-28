@@ -24,10 +24,12 @@ dependencies {
 
     // Database
     implementation(libs.springBootStarterJooq)
+    implementation(libs.springBootStarterFlyway)
     implementation(libs.jooq)
     implementation(libs.flywayCore)
     implementation(libs.flywayPostgres)
     runtimeOnly(libs.postgresql)
+    runtimeOnly(libs.bouncycastle)
 
     // JWT
     implementation(libs.jjwtApi)
@@ -39,6 +41,16 @@ dependencies {
     testImplementation(libs.springBootTestcontainers)
     testImplementation(libs.testcontainersPostgres)
     testImplementation(libs.testcontainersJunit)
+}
+
+// Include domain module's resources (Flyway migrations) directly in BOOT-INF/classes
+// so Flyway can find them without nested-jar scanning.
+sourceSets.main {
+    resources.srcDir(project(":domain").layout.projectDirectory.dir("src/main/resources"))
+}
+
+tasks.bootRun {
+    environment("SPRING_PROFILES_ACTIVE", System.getenv("SPRING_PROFILES_ACTIVE") ?: "local")
 }
 
 tasks.bootJar {

@@ -19,6 +19,7 @@ springBootStarterSecurity   = { module = "org.springframework.boot:spring-boot-s
 springBootStarterMail       = { module = "org.springframework.boot:spring-boot-starter-mail",       version.ref = "springBoot" }
 springBootStarterValidation = { module = "org.springframework.boot:spring-boot-starter-validation", version.ref = "springBoot" }
 springBootStarterJooq       = { module = "org.springframework.boot:spring-boot-starter-jooq",       version.ref = "springBoot" }
+springBootStarterFlyway     = { module = "org.springframework.boot:spring-boot-starter-flyway",     version.ref = "springBoot" }
 springBootStarterTest       = { module = "org.springframework.boot:spring-boot-starter-test",       version.ref = "springBoot" }
 springBootTestcontainers    = { module = "org.springframework.boot:spring-boot-testcontainers",     version.ref = "springBoot" }
 
@@ -44,8 +45,9 @@ jjwtImpl   = { module = "io.jsonwebtoken:jjwt-impl",    version.ref = "jjwt" }
 jjwtJackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
 # Utilities
-lombok   = { module = "org.projectlombok:lombok",  version.ref = "lombok"   }
-jspecify = { module = "org.jspecify:jspecify",     version.ref = "jspecify" }
+lombok      = { module = "org.projectlombok:lombok",         version.ref = "lombok"   }
+jspecify    = { module = "org.jspecify:jspecify",            version.ref = "jspecify" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.83" }
 
 # Testcontainers
 testcontainersPostgres = { module = "org.testcontainers:postgresql",   version.ref = "testcontainers" }

@@ -11,8 +11,9 @@ import org.springframework.web.service.invoker.HttpServiceProxyFactory;
 public class TurnstileConfig {
 
     @Bean
-    public TurnstileClient turnstileClient(RestClient.Builder builder) {
-        RestClient restClient = builder.baseUrl("https://challenges.cloudflare.com/turnstile/v0")
+    public TurnstileClient turnstileClient() {
+        RestClient restClient = RestClient.builder()
+                .baseUrl("https://challenges.cloudflare.com/turnstile/v0")
                 .build();
         return HttpServiceProxyFactory.builderFor(RestClientAdapter.create(restClient))
                 .build()
