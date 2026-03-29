@@ -252,17 +252,9 @@ export function RegistryPage(): React.ReactElement {
         </div>
       )}
 
-      {isOwner && (
-        <div className="flex justify-end">
-          <Button asChild size="sm">
-            <Link to={`/r/${registry.slug}/items/new`}>Add item</Link>
-          </Button>
-        </div>
-      )}
-
       {items.length === 0 && (
         <p className="text-muted-foreground py-8 text-center text-sm">
-          {isOwner ? "No items yet. Add your first item above." : "No items yet."}
+          {isOwner ? "No items yet. Add your first item below." : "No items yet."}
         </p>
       )}
 
@@ -295,6 +287,14 @@ export function RegistryPage(): React.ReactElement {
               subscriberNames={subscriberNames}
             />
           ))}
+        </div>
+      )}
+
+      {isOwner && (
+        <div className="flex justify-end">
+          <Button asChild size="sm">
+            <Link to={`/r/${registry.slug}/items/new`}>Add item</Link>
+          </Button>
         </div>
       )}
     </div>
