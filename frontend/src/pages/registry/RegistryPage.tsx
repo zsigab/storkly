@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +40,12 @@ export function RegistryPage(): React.ReactElement {
   const subscriberNames: Record<string, string> = Object.fromEntries(
     subscribers.map((s) => [s.userId, s.displayName]),
   );
+  const [hasUnsubscribed, setHasUnsubscribed] = useState(false);
+  const userHasClaims = user !== null && allClaims.some((c) => c.claimerUserId === user.id);
+
+  useEffect(() => {
+    if (joinRegistry.isSuccess) setHasUnsubscribed(false);
+  }, [joinRegistry.isSuccess]);
 
   if (isPending) {
     return (
@@ -146,17 +153,32 @@ export function RegistryPage(): React.ReactElement {
             <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
           </Button>
         )}
-        {isSubscriber && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="shrink-0"
-            onClick={() => unsubscribeRegistry.mutate(registry.slug)}
-            disabled={unsubscribeRegistry.isPending}
-          >
-            {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
-          </Button>
-        )}
+        {(isSubscriber || hasUnsubscribed) &&
+          (hasUnsubscribed ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => joinRegistry.mutate(inviteToken ?? "")}
+              disabled={joinRegistry.isPending}
+            >
+              {joinRegistry.isPending ? "Subscribing…" : "Re-subscribe"}
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0"
+              onClick={() => {
+                unsubscribeRegistry.mutate(registry.slug);
+                setHasUnsubscribed(true);
+              }}
+              disabled={unsubscribeRegistry.isPending || userHasClaims}
+              title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
+            >
+              {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
+            </Button>
+          ))}
       </div>
 
       {inviteToken !== null && !isOwner && !isSubscriber && (
