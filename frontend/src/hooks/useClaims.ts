@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import type { ClaimResponse } from "@/api/schema";
 
@@ -14,6 +14,23 @@ export function useItemClaims(itemId: string) {
     },
     enabled: itemId.length > 0,
   });
+}
+
+export function useAllItemClaims(itemIds: string[]) {
+  const results = useQueries({
+    queries: itemIds.map((id) => ({
+      queryKey: ["claims", id] as const,
+      queryFn: async (): Promise<ClaimResponse[]> => {
+        const { data, error } = await api.GET("/api/items/{id}/claims", {
+          params: { path: { id } },
+        });
+        if (error !== undefined) throw error;
+        return data ?? [];
+      },
+      enabled: id.length > 0,
+    })),
+  });
+  return results.flatMap((r) => r.data ?? []);
 }
 
 export function useClaimItem(slug: string) {

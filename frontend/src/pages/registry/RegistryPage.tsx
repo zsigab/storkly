@@ -14,6 +14,7 @@ import {
   useRegistrySubscribers,
   useUnsubscribeRegistry,
 } from "@/hooks/useRegistries";
+import { useAllItemClaims } from "@/hooks/useClaims";
 import { useRegistryItems } from "@/hooks/useItems";
 
 export function RegistryPage(): React.ReactElement {
@@ -34,6 +35,10 @@ export function RegistryPage(): React.ReactElement {
     user !== null &&
     !isOwner &&
     myRegistries.some((r) => r.slug === safeSlug && r.ownerId !== user.id);
+  const allClaims = useAllItemClaims(items.map((i) => i.id));
+  const subscriberNames: Record<string, string> = Object.fromEntries(
+    subscribers.map((s) => [s.userId, s.displayName]),
+  );
 
   if (isPending) {
     return (
@@ -189,17 +194,28 @@ export function RegistryPage(): React.ReactElement {
             <p className="text-muted-foreground text-sm">No subscribers yet.</p>
           ) : (
             <ul className="space-y-2">
-              {subscribers.map((subscriber) => (
-                <li
-                  key={subscriber.userId}
-                  className="flex items-center justify-between rounded-lg border px-3 py-2"
-                >
-                  <span className="text-sm font-medium">{subscriber.displayName}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {new Date(subscriber.joinedAt).toLocaleDateString()}
-                  </span>
-                </li>
-              ))}
+              {subscribers.map((subscriber) => {
+                const claimedItems = allClaims
+                  .filter((c) => c.claimerUserId === subscriber.userId)
+                  .map((c) => items.find((i) => i.id === c.itemId))
+                  .filter((i) => i !== undefined);
+                return (
+                  <li key={subscriber.userId} className="space-y-1 rounded-lg border px-3 py-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">{subscriber.displayName}</span>
+                      <span className="text-muted-foreground text-xs">
+                        {new Date(subscriber.joinedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    {claimedItems.length > 0 && (
+                      <p className="text-muted-foreground text-xs">
+                        {"Claimed: "}
+                        {claimedItems.map((i) => i.title).join(", ")}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -231,6 +247,7 @@ export function RegistryPage(): React.ReactElement {
               slug={registry.slug}
               isOwner={isOwner}
               categoryName={cat.name}
+              subscriberNames={subscriberNames}
             />
           ))}
         </div>
@@ -239,7 +256,13 @@ export function RegistryPage(): React.ReactElement {
       {uncategorizedItems.length > 0 && (
         <div className="space-y-2">
           {uncategorizedItems.map((item) => (
-            <ItemCard key={item.id} item={item} slug={registry.slug} isOwner={isOwner} />
+            <ItemCard
+              key={item.id}
+              item={item}
+              slug={registry.slug}
+              isOwner={isOwner}
+              subscriberNames={subscriberNames}
+            />
           ))}
         </div>
       )}

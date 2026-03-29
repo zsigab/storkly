@@ -45,6 +45,7 @@ interface ItemCardProps {
   slug: string;
   isOwner: boolean;
   categoryName?: string | null;
+  subscriberNames?: Record<string, string>;
 }
 
 export function ItemCard({
@@ -52,6 +53,7 @@ export function ItemCard({
   slug,
   isOwner,
   categoryName = null,
+  subscriberNames = {},
 }: ItemCardProps): React.ReactElement {
   const { user } = useAuth();
   const { data: claims = [] } = useItemClaims(item.id);
@@ -167,6 +169,24 @@ export function ItemCard({
           )}
         </div>
       </div>
+
+      {isOwner && claims.length > 0 && (
+        <div className="border-t pt-2">
+          <p className="text-muted-foreground text-xs">
+            {"Claimed by: "}
+            {claims
+              .map((c) => {
+                const name =
+                  c.claimerUserId !== null
+                    ? (subscriberNames[c.claimerUserId] ?? "A member")
+                    : (c.claimerName ?? "Anonymous");
+                const date = new Date(c.claimedAt).toLocaleDateString();
+                return `${name} (${date})`;
+              })
+              .join(", ")}
+          </p>
+        </div>
+      )}
 
       {(claimItem.isError || unclaimItem.isError) && (
         <Alert variant="destructive">
