@@ -12,8 +12,31 @@ export interface ProblemDetail {
 }
 
 export interface TokenResponse {
+  id: string;
   email: string;
   displayName: string;
+}
+
+export interface RegistryResponse {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  visibility: "PUBLIC" | "PRIVATE";
+  ownerId: string;
+  createdAt: string;
+}
+
+export interface RegistryInviteResponse {
+  token: string;
+}
+
+export interface CategoryResponse {
+  id: string;
+  registryId: string;
+  name: string;
+  sortOrder: number;
+  isDefault: boolean;
 }
 
 /** Used for endpoints that return 200/201 with no body. */
@@ -77,6 +100,74 @@ export type paths = {
         };
       };
       responses: { 200: Empty; 401: Err };
+    };
+  };
+  "/api/registries": {
+    get: {
+      responses: { 200: Ok<RegistryResponse[]> };
+    };
+    post: {
+      requestBody: {
+        content: {
+          "application/json": {
+            name: string;
+            description?: string | null;
+            visibility: "PUBLIC" | "PRIVATE";
+          };
+        };
+      };
+      responses: { 201: Ok<RegistryResponse>; 403: Err; 422: Err };
+    };
+  };
+  "/api/registries/{slug}": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<RegistryResponse>; 403: Err; 404: Err };
+    };
+    patch: {
+      parameters: { path: { slug: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            name?: string | null;
+            description?: string | null;
+            visibility?: "PUBLIC" | "PRIVATE" | null;
+          };
+        };
+      };
+      responses: { 200: Ok<RegistryResponse>; 403: Err; 404: Err; 422: Err };
+    };
+    delete: {
+      parameters: { path: { slug: string } };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/invite": {
+    post: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<RegistryInviteResponse>; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/join": {
+    post: {
+      parameters: { path: { slug: string } };
+      requestBody: {
+        content: { "application/json": { token: string } };
+      };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/categories": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<CategoryResponse[]> };
+    };
+    post: {
+      parameters: { path: { slug: string } };
+      requestBody: {
+        content: { "application/json": { name: string } };
+      };
+      responses: { 201: Ok<CategoryResponse>; 403: Err; 404: Err };
     };
   };
 };

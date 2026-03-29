@@ -1,3 +1,5 @@
 package app.storkly.auth.dto;
 
-public record TokenResponse(String email, String displayName) {}
+import java.util.UUID;
+
+public record TokenResponse(UUID id, String email, String displayName) {}

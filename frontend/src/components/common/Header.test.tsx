@@ -1,14 +1,20 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { AuthProvider } from "@/hooks/useAuth";
 import { Header } from "./Header";
 
+vi.mock("@/api", () => ({ api: { POST: vi.fn() } }));
+
 beforeEach(() => {
+  vi.clearAllMocks();
   Object.defineProperty(window, "localStorage", {
     value: {
       getItem: vi.fn().mockReturnValue(null),
       setItem: vi.fn(),
+      removeItem: vi.fn(),
       clear: vi.fn(),
     },
     writable: true,
@@ -19,12 +25,20 @@ beforeEach(() => {
   });
 });
 
+function makeClient() {
+  return new QueryClient({ defaultOptions: { mutations: { retry: false } } });
+}
+
 function renderHeader(): void {
   render(
     <MemoryRouter>
-      <ThemeProvider>
-        <Header />
-      </ThemeProvider>
+      <QueryClientProvider client={makeClient()}>
+        <ThemeProvider>
+          <AuthProvider>
+            <Header />
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
     </MemoryRouter>,
   );
 }
@@ -43,5 +57,31 @@ describe("Header", () => {
   it("renders the theme toggle button", () => {
     renderHeader();
     expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
+  });
+
+  it("shows sign in and register links when logged out", () => {
+    renderHeader();
+    expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /register/i })).toBeInTheDocument();
+  });
+
+  it("shows dashboard link and sign out when logged in", () => {
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: vi
+          .fn()
+          .mockReturnValue(
+            JSON.stringify({ id: "u1", email: "a@b.com", displayName: "Alice" }),
+          ),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    renderHeader();
+    expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
+    expect(screen.getByText("Alice")).toBeInTheDocument();
   });
 });

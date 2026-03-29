@@ -1,0 +1,126 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
+import { api } from "@/api";
+import type { RegistryResponse } from "@/api/schema";
+
+export function useMyRegistries() {
+  return useQuery({
+    queryKey: ["registries"],
+    queryFn: async (): Promise<RegistryResponse[]> => {
+      const { data, error } = await api.GET("/api/registries");
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useRegistry(slug: string) {
+  return useQuery({
+    queryKey: ["registry", slug],
+    queryFn: async (): Promise<RegistryResponse> => {
+      const { data, error } = await api.GET("/api/registries/{slug}", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    enabled: slug.length > 0,
+  });
+}
+
+export function useCreateRegistry() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: async (values: {
+      name: string;
+      description: string | null;
+      visibility: "PUBLIC" | "PRIVATE";
+    }): Promise<RegistryResponse> => {
+      const { data, error } = await api.POST("/api/registries", { body: values });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ["registries"] });
+      void navigate(`/r/${data.slug}`);
+    },
+  });
+}
+
+export function useUpdateRegistry(slug: string) {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: async (values: {
+      name: string;
+      description: string | null;
+      visibility: "PUBLIC" | "PRIVATE";
+    }): Promise<RegistryResponse> => {
+      const { data, error } = await api.PATCH("/api/registries/{slug}", {
+        params: { path: { slug } },
+        body: values,
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    onSuccess: (data) => {
+      void queryClient.invalidateQueries({ queryKey: ["registry", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registries"] });
+      void navigate(`/r/${data.slug}`);
+    },
+  });
+}
+
+export function useDeleteRegistry() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: async (registrySlug: string) => {
+      const { error } = await api.DELETE("/api/registries/{slug}", {
+        params: { path: { slug: registrySlug } },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["registries"] });
+      void navigate("/dashboard");
+    },
+  });
+}
+
+export function useGenerateInvite(slug: string) {
+  return useMutation({
+    mutationFn: async () => {
+      const { data, error } = await api.POST("/api/registries/{slug}/invite", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+  });
+}
+
+export function useJoinRegistry(slug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (token: string) => {
+      const { error } = await api.POST("/api/registries/{slug}/join", {
+        params: { path: { slug } },
+        body: { token },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["registry", slug] });
+    },
+  });
+}

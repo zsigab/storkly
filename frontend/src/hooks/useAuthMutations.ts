@@ -66,3 +66,19 @@ export function useResetPassword() {
     },
   });
 }
+
+export function useLogout() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await api.POST("/api/auth/logout", {});
+      if (error !== undefined) throw error;
+    },
+    onSettled: () => {
+      logout();
+      void navigate("/");
+    },
+  });
+}

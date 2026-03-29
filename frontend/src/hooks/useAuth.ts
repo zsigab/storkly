@@ -19,8 +19,10 @@ function readStoredUser(): TokenResponse | null {
     if (
       parsed !== null &&
       typeof parsed === "object" &&
+      "id" in parsed &&
       "email" in parsed &&
       "displayName" in parsed &&
+      typeof (parsed as Record<string, unknown>)["id"] === "string" &&
       typeof (parsed as Record<string, unknown>)["email"] === "string" &&
       typeof (parsed as Record<string, unknown>)["displayName"] === "string"
     ) {

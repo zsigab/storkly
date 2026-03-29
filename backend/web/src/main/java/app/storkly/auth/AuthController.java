@@ -54,7 +54,7 @@ public class AuthController {
         String refreshToken = jwtService.generateRefreshToken(user);
         setAccessTokenCookie(response, accessToken);
         setRefreshTokenCookie(response, refreshToken);
-        return new TokenResponse(user.email(), user.displayName());
+        return new TokenResponse(user.id(), user.email(), user.displayName());
     }
 
     @PostMapping("/refresh")
@@ -69,7 +69,7 @@ public class AuthController {
         String newRefreshToken = jwtService.generateRefreshToken(user);
         setAccessTokenCookie(response, newAccessToken);
         setRefreshTokenCookie(response, newRefreshToken);
-        return new TokenResponse(user.email(), user.displayName());
+        return new TokenResponse(user.id(), user.email(), user.displayName());
     }
 
     @PostMapping("/logout")
