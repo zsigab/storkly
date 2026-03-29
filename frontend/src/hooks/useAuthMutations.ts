@@ -20,7 +20,7 @@ export function useLogin() {
     onSuccess: ({ user, from }) => {
       login(user);
       void queryClient.invalidateQueries();
-      void navigate(from ?? "/");
+      void navigate(from ?? "/dashboard");
     },
   });
 }
