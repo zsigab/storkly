@@ -67,6 +67,10 @@ public class RegistryService {
         return registryRepository.findByOwnerId(ownerId);
     }
 
+    public List<Registry> findSubscribed(UUID userId) {
+        return registryRepository.findBySubscriberId(userId);
+    }
+
     @Transactional
     public Registry update(
             String slug,

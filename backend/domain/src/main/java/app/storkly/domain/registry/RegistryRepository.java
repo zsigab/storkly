@@ -13,6 +13,8 @@ public interface RegistryRepository {
 
     List<Registry> findByOwnerId(UUID ownerId);
 
+    List<Registry> findBySubscriberId(UUID userId);
+
     boolean existsBySlug(String slug);
 
     void deleteById(UUID id);

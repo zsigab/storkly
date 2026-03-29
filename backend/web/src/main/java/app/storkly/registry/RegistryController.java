@@ -11,6 +11,7 @@ import app.storkly.registry.dto.RegistryUpdateRequest;
 import app.storkly.service.registry.RegistryService;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -35,7 +36,9 @@ public class RegistryController {
 
     @GetMapping
     public List<RegistryResponse> listMine(@AuthenticationPrincipal User currentUser) {
-        return registryService.findByOwner(currentUser.id()).stream()
+        List<Registry> owned = registryService.findByOwner(currentUser.id());
+        List<Registry> subscribed = registryService.findSubscribed(currentUser.id());
+        return Stream.concat(owned.stream(), subscribed.stream())
                 .map(this::toResponse)
                 .toList();
     }

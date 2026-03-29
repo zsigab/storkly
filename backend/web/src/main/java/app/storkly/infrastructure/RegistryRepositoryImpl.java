@@ -1,6 +1,7 @@
 package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.REGISTRY;
+import static app.storkly.domain.generated.Tables.REGISTRY_SUBSCRIPTION;
 
 import app.storkly.domain.generated.tables.records.RegistryRecord;
 import app.storkly.domain.registry.Registry;
@@ -75,6 +76,17 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                 .orderBy(REGISTRY.CREATED_AT.desc())
                 .fetch()
                 .map(this::toRegistry);
+    }
+
+    @Override
+    public List<Registry> findBySubscriberId(UUID userId) {
+        return dsl.select(REGISTRY.fields())
+                .from(REGISTRY)
+                .join(REGISTRY_SUBSCRIPTION).on(REGISTRY_SUBSCRIPTION.REGISTRY_ID.eq(REGISTRY.ID))
+                .where(REGISTRY_SUBSCRIPTION.USER_ID.eq(userId))
+                .orderBy(REGISTRY_SUBSCRIPTION.JOINED_AT.desc())
+                .fetch()
+                .map(r -> toRegistry(r.into(REGISTRY)));
     }
 
     @Override
