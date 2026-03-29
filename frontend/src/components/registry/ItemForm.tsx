@@ -16,7 +16,9 @@ const schema = z.object({
   currency: z.string(),
   categoryId: z.string(),
   flag: z.enum(["EXACT_ONLY", "SIMILAR_OK", "SIMILAR_CHEAPER"]),
-  quantityDesired: z.string().refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1, "Quantity must be at least 1"),
+  quantityDesired: z
+    .string()
+    .refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1, "Quantity must be at least 1"),
   notes: z.string(),
 });
 
@@ -104,24 +106,37 @@ export function ItemForm({
         <textarea
           id="description"
           rows={3}
-          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           {...register("description")}
         />
       </FormField>
 
       <div className="grid grid-cols-2 gap-4">
         <FormField label="Price" htmlFor="priceReference" error={errors.priceReference?.message}>
-          <Input id="priceReference" type="number" step="0.01" min="0" placeholder="0.00" {...register("priceReference")} />
+          <Input
+            id="priceReference"
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+            {...register("priceReference")}
+          />
         </FormField>
         <FormField label="Currency" htmlFor="currency" error={errors.currency?.message}>
-          <Input id="currency" type="text" placeholder="USD" maxLength={3} {...register("currency")} />
+          <Input
+            id="currency"
+            type="text"
+            placeholder="USD"
+            maxLength={3}
+            {...register("currency")}
+          />
         </FormField>
       </div>
 
       <FormField label="Category" htmlFor="categoryId" error={errors.categoryId?.message}>
         <select
           id="categoryId"
-          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           {...register("categoryId")}
         >
           <option value="">— No category —</option>
@@ -136,7 +151,7 @@ export function ItemForm({
       <FormField label="Flag" htmlFor="flag" error={errors.flag?.message}>
         <select
           id="flag"
-          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           {...register("flag")}
         >
           <option value="EXACT_ONLY">Exact only — please buy exactly this</option>
@@ -145,12 +160,21 @@ export function ItemForm({
         </select>
       </FormField>
 
-      <FormField label="Quantity wanted" htmlFor="quantityDesired" error={errors.quantityDesired?.message}>
+      <FormField
+        label="Quantity wanted"
+        htmlFor="quantityDesired"
+        error={errors.quantityDesired?.message}
+      >
         <Input id="quantityDesired" type="number" min="1" {...register("quantityDesired")} />
       </FormField>
 
       <FormField label="Notes for gifters" htmlFor="notes" error={errors.notes?.message}>
-        <Input id="notes" type="text" placeholder="Any size, colour, or variant preferences…" {...register("notes")} />
+        <Input
+          id="notes"
+          type="text"
+          placeholder="Any size, colour, or variant preferences…"
+          {...register("notes")}
+        />
       </FormField>
 
       {isError && (

@@ -36,7 +36,9 @@ export function LoginPage(): React.ReactElement {
       <form
         noValidate
         className="space-y-4"
-        onSubmit={handleSubmit((values) => login.mutate({ ...values, ...(from !== undefined && { from }) }))}
+        onSubmit={handleSubmit((values) =>
+          login.mutate({ ...values, ...(from !== undefined && { from }) }),
+        )}
       >
         <FormField label="Email" htmlFor="email" error={errors.email?.message}>
           <Input id="email" type="email" autoComplete="email" {...register("email")} />

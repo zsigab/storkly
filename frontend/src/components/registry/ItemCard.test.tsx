@@ -11,7 +11,15 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useNavigate: () => vi.fn(),
-    Link: ({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) => (
+    Link: ({
+      to,
+      children,
+      className,
+    }: {
+      to: string;
+      children: React.ReactNode;
+      className?: string;
+    }) => (
       <a href={to} className={className}>
         {children}
       </a>
@@ -41,10 +49,15 @@ const base: ItemResponse = {
 };
 
 function makeClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 }
 
-function renderCard(props: Partial<Parameters<typeof ItemCard>[0]> = {}, storedUser: object | null = null) {
+function renderCard(
+  props: Partial<Parameters<typeof ItemCard>[0]> = {},
+  storedUser: object | null = null,
+) {
   Object.defineProperty(window, "localStorage", {
     value: {
       getItem: vi.fn().mockReturnValue(storedUser !== null ? JSON.stringify(storedUser) : null),
@@ -87,7 +100,10 @@ describe("ItemCard", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     renderCard({ item: { ...base, urlOriginal: "https://example.com/item" } });
-    expect(screen.getByRole("link", { name: "Baby Carrier" })).toHaveAttribute("href", "https://example.com/item");
+    expect(screen.getByRole("link", { name: "Baby Carrier" })).toHaveAttribute(
+      "href",
+      "https://example.com/item",
+    );
   });
 
   it("shows edit and delete for owner", async () => {
@@ -117,7 +133,17 @@ describe("ItemCard", () => {
   it("shows Claimed when item is fully claimed", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({
-      data: [{ id: "c1", itemId: "item-1", claimerUserId: null, claimerName: "Alice", claimerEmail: "a@b.com", quantityClaimed: 1, claimedAt: "2024-01-01T00:00:00Z" }],
+      data: [
+        {
+          id: "c1",
+          itemId: "item-1",
+          claimerUserId: null,
+          claimerName: "Alice",
+          claimerEmail: "a@b.com",
+          quantityClaimed: 1,
+          claimedAt: "2024-01-01T00:00:00Z",
+        },
+      ],
       error: undefined,
       response: new Response(),
     });
@@ -128,11 +154,23 @@ describe("ItemCard", () => {
   it("shows unclaim button when logged-in user has claimed", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({
-      data: [{ id: "c1", itemId: "item-1", claimerUserId: "user-1", claimerName: "Alice", claimerEmail: "a@b.com", quantityClaimed: 1, claimedAt: "2024-01-01T00:00:00Z" }],
+      data: [
+        {
+          id: "c1",
+          itemId: "item-1",
+          claimerUserId: "user-1",
+          claimerName: "Alice",
+          claimerEmail: "a@b.com",
+          quantityClaimed: 1,
+          claimedAt: "2024-01-01T00:00:00Z",
+        },
+      ],
       error: undefined,
       response: new Response(),
     });
     renderCard({}, { id: "user-1", email: "a@b.com", displayName: "Alice" });
-    await waitFor(() => expect(screen.getByRole("button", { name: /unclaim/i })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /unclaim/i })).toBeInTheDocument(),
+    );
   });
 });

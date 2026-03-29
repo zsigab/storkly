@@ -46,7 +46,7 @@ export function ItemCard({ item, slug, isOwner }: ItemCardProps): React.ReactEle
   };
 
   return (
-    <div className="border-border rounded-lg border p-4 space-y-2">
+    <div className="border-border space-y-2 rounded-lg border p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
           {item.urlOriginal !== null ? (
@@ -62,17 +62,17 @@ export function ItemCard({ item, slug, isOwner }: ItemCardProps): React.ReactEle
             <p className="font-medium">{item.title}</p>
           )}
           {item.description !== null && (
-            <p className="text-muted-foreground text-sm line-clamp-2">{item.description}</p>
+            <p className="text-muted-foreground line-clamp-2 text-sm">{item.description}</p>
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>
             {item.priceReference !== null && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 {item.currency ?? ""} {item.priceReference.toFixed(2)}
               </span>
             )}
             {item.quantityDesired > 1 && (
-              <span className="text-sm text-muted-foreground">
+              <span className="text-muted-foreground text-sm">
                 {quantityClaimed}/{item.quantityDesired} claimed
               </span>
             )}
@@ -107,13 +107,9 @@ export function ItemCard({ item, slug, isOwner }: ItemCardProps): React.ReactEle
               {unclaimItem.isPending ? "Releasing…" : "Unclaim"}
             </Button>
           ) : isClaimed ? (
-            <span className="text-sm text-muted-foreground">Claimed</span>
+            <span className="text-muted-foreground text-sm">Claimed</span>
           ) : user !== null ? (
-            <Button
-              size="sm"
-              onClick={handleAuthenticatedClaim}
-              disabled={claimItem.isPending}
-            >
+            <Button size="sm" onClick={handleAuthenticatedClaim} disabled={claimItem.isPending}>
               {claimItem.isPending ? "Claiming…" : "Claim"}
             </Button>
           ) : (

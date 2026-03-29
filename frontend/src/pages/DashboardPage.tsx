@@ -33,7 +33,7 @@ export function DashboardPage(): React.ReactElement {
         )}
 
         {!isPending && !isError && ownedRegistries.length === 0 && (
-          <div className="py-12 text-center space-y-3">
+          <div className="space-y-3 py-12 text-center">
             <p className="text-muted-foreground">You don't have any registries yet.</p>
             <Button asChild variant="outline">
               <Link to="/registry/new">Create your first registry</Link>
@@ -56,13 +56,13 @@ export function DashboardPage(): React.ReactElement {
           <div className="space-y-3">
             {subscribedRegistries.map((registry) => (
               <div key={registry.id} className="flex items-stretch gap-2">
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <RegistryCard registry={registry} />
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="self-center shrink-0"
+                  className="shrink-0 self-center"
                   onClick={() => unsubscribe.mutate(registry.slug)}
                   disabled={unsubscribe.isPending}
                 >

@@ -9,7 +9,10 @@ function DialogPortal({ ...props }: DialogPrimitive.DialogPortalProps) {
   return <DialogPrimitive.Portal {...props} />;
 }
 
-function DialogOverlay({ className, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>) {
+function DialogOverlay({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
       className={cn(
@@ -46,7 +49,10 @@ function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
   return <div className={cn("flex flex-col space-y-1.5", className)} {...props} />;
 }
 
-function DialogTitle({ className, ...props }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>) {
+function DialogTitle({
+  className,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>) {
   return <DialogPrimitive.Title className={cn("text-lg font-semibold", className)} {...props} />;
 }
 
@@ -54,7 +60,20 @@ function DialogDescription({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>) {
-  return <DialogPrimitive.Description className={cn("text-muted-foreground text-sm", className)} {...props} />;
+  return (
+    <DialogPrimitive.Description
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  );
 }
 
-export { Dialog, DialogTrigger, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogDescription };
+export {
+  Dialog,
+  DialogTrigger,
+  DialogClose,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+};

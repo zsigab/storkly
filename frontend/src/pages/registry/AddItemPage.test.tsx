@@ -12,14 +12,26 @@ vi.mock("react-router", async () => {
     ...actual,
     useNavigate: () => mockNavigate,
     useParams: () => ({ slug: "baby-shower" }),
-    Link: ({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) => (
-      <a href={to} className={className}>{children}</a>
+    Link: ({
+      to,
+      children,
+      className,
+    }: {
+      to: string;
+      children: React.ReactNode;
+      className?: string;
+    }) => (
+      <a href={to} className={className}>
+        {children}
+      </a>
     ),
   };
 });
 
 function makeClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 }
 
 function renderPage() {
@@ -60,11 +72,24 @@ describe("AddItemPage", () => {
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     vi.mocked(api.POST).mockResolvedValueOnce({
       data: {
-        id: "item-1", registryId: "reg-1", categoryId: null, addedByUserId: "u1",
-        urlOriginal: null, sourceSite: "MANUAL", title: "Baby Carrier",
-        description: null, imageUrl: null, priceReference: null, currency: null,
-        priceCapturedAt: null, quantityDesired: 1, flag: "EXACT_ONLY",
-        notes: null, sortOrder: 0, createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z",
+        id: "item-1",
+        registryId: "reg-1",
+        categoryId: null,
+        addedByUserId: "u1",
+        urlOriginal: null,
+        sourceSite: "MANUAL",
+        title: "Baby Carrier",
+        description: null,
+        imageUrl: null,
+        priceReference: null,
+        currency: null,
+        priceCapturedAt: null,
+        quantityDesired: 1,
+        flag: "EXACT_ONLY",
+        notes: null,
+        sortOrder: 0,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
       },
       error: undefined,
       response: new Response(),
@@ -74,9 +99,12 @@ describe("AddItemPage", () => {
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Baby Carrier" } });
     fireEvent.click(screen.getByRole("button", { name: /add item/i }));
     await waitFor(() =>
-      expect(api.POST).toHaveBeenCalledWith("/api/registries/{slug}/items", expect.objectContaining({
-        params: { path: { slug: "baby-shower" } },
-      })),
+      expect(api.POST).toHaveBeenCalledWith(
+        "/api/registries/{slug}/items",
+        expect.objectContaining({
+          params: { path: { slug: "baby-shower" } },
+        }),
+      ),
     );
     expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
   });

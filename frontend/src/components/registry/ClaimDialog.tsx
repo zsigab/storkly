@@ -31,7 +31,13 @@ interface ClaimDialogProps {
   slug: string;
 }
 
-export function ClaimDialog({ open, onOpenChange, itemId, itemTitle, slug }: ClaimDialogProps): React.ReactElement {
+export function ClaimDialog({
+  open,
+  onOpenChange,
+  itemId,
+  itemTitle,
+  slug,
+}: ClaimDialogProps): React.ReactElement {
   const claimItem = useClaimItem(slug);
 
   const {
@@ -65,7 +71,12 @@ export function ClaimDialog({ open, onOpenChange, itemId, itemTitle, slug }: Cla
             <Input id="claimerName" type="text" autoComplete="name" {...register("claimerName")} />
           </FormField>
           <FormField label="Your email" htmlFor="claimerEmail" error={errors.claimerEmail?.message}>
-            <Input id="claimerEmail" type="email" autoComplete="email" {...register("claimerEmail")} />
+            <Input
+              id="claimerEmail"
+              type="email"
+              autoComplete="email"
+              {...register("claimerEmail")}
+            />
           </FormField>
           <p className="text-muted-foreground text-xs">
             We'll send you a link to un-claim this item if your plans change.

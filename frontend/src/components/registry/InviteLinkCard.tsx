@@ -30,8 +30,8 @@ export function InviteLinkCard({ slug }: InviteLinkCardProps): React.ReactElemen
   };
 
   return (
-    <div className="border-border rounded-lg border p-4 space-y-3">
-      <h3 className="font-semibold text-sm">Invite link</h3>
+    <div className="border-border space-y-3 rounded-lg border p-4">
+      <h3 className="text-sm font-semibold">Invite link</h3>
       {inviteUrl !== null ? (
         <>
           <div className="flex gap-2">

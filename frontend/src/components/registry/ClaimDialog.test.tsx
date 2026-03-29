@@ -53,13 +53,23 @@ describe("ClaimDialog", () => {
   it("calls API with name and email on valid submit", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.POST).mockResolvedValueOnce({
-      data: { id: "c1", itemId: "item-1", claimerUserId: null, claimerName: "Alice", claimerEmail: "alice@example.com", quantityClaimed: 1, claimedAt: "2024-01-01T00:00:00Z" },
+      data: {
+        id: "c1",
+        itemId: "item-1",
+        claimerUserId: null,
+        claimerName: "Alice",
+        claimerEmail: "alice@example.com",
+        quantityClaimed: 1,
+        claimedAt: "2024-01-01T00:00:00Z",
+      },
       error: undefined,
       response: new Response(),
     });
     renderDialog();
     fireEvent.change(screen.getByLabelText(/your name/i), { target: { value: "Alice" } });
-    fireEvent.change(screen.getByLabelText(/your email/i), { target: { value: "alice@example.com" } });
+    fireEvent.change(screen.getByLabelText(/your email/i), {
+      target: { value: "alice@example.com" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /claim item/i }));
     await waitFor(() =>
       expect(api.POST).toHaveBeenCalledWith("/api/items/{id}/claims", {

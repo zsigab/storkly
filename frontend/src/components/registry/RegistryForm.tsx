@@ -17,7 +17,11 @@ type FormValues = z.infer<typeof schema>;
 
 interface RegistryFormProps {
   defaultValues?: Partial<FormValues>;
-  onSubmit: (values: { name: string; description: string | null; visibility: "PUBLIC" | "PRIVATE" }) => void;
+  onSubmit: (values: {
+    name: string;
+    description: string | null;
+    visibility: "PUBLIC" | "PRIVATE";
+  }) => void;
   isPending: boolean;
   isError: boolean;
   error: unknown;
@@ -67,7 +71,7 @@ export function RegistryForm({
           id="description"
           rows={3}
           placeholder="Tell people what this registry is for…"
-          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           {...register("description")}
         />
       </FormField>
@@ -75,7 +79,7 @@ export function RegistryForm({
       <FormField label="Visibility" htmlFor="visibility" error={errors.visibility?.message}>
         <select
           id="visibility"
-          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           {...register("visibility")}
         >
           <option value="PUBLIC">Public — anyone can view</option>

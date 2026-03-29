@@ -28,7 +28,9 @@ vi.mock("react-router", async () => {
 });
 
 function makeClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 }
 
 function renderPage() {
@@ -52,11 +54,13 @@ beforeEach(() => {
 describe("DashboardPage", () => {
   it("shows empty state when no registries exist", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValueOnce({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: [],
+      error: undefined,
+      response: new Response(),
+    });
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByText(/don't have any registries/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/don't have any registries/i)).toBeInTheDocument());
   });
 
   it("shows owned registry cards", async () => {
@@ -142,14 +146,21 @@ describe("DashboardPage", () => {
     renderPage();
     const button = await screen.findByRole("button", { name: /unsubscribe/i });
     await userEvent.click(button);
-    expect(api.DELETE).toHaveBeenCalledWith("/api/registries/{slug}/subscription", expect.objectContaining({
-      params: { path: { slug: "friends-registry" } },
-    }));
+    expect(api.DELETE).toHaveBeenCalledWith(
+      "/api/registries/{slug}/subscription",
+      expect.objectContaining({
+        params: { path: { slug: "friends-registry" } },
+      }),
+    );
   });
 
   it("has link to create a new registry", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValueOnce({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: [],
+      error: undefined,
+      response: new Response(),
+    });
     renderPage();
     await waitFor(() =>
       expect(screen.getByRole("link", { name: /new registry/i })).toHaveAttribute(

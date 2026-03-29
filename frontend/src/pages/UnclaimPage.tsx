@@ -34,7 +34,9 @@ export function UnclaimPage(): React.ReactElement {
       <div className="mx-auto max-w-md space-y-4 py-20 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">Invalid link</h1>
         <p className="text-muted-foreground text-sm">This un-claim link is missing a token.</p>
-        <Link to="/" className="text-primary text-sm hover:underline">Go home</Link>
+        <Link to="/" className="text-primary text-sm hover:underline">
+          Go home
+        </Link>
       </div>
     );
   }
@@ -54,7 +56,9 @@ export function UnclaimPage(): React.ReactElement {
         <Alert variant="destructive">
           <AlertDescription>{getApiErrorMessage(unclaim.error)}</AlertDescription>
         </Alert>
-        <Link to="/" className="text-primary text-sm hover:underline">Go home</Link>
+        <Link to="/" className="text-primary text-sm hover:underline">
+          Go home
+        </Link>
       </div>
     );
   }
@@ -66,7 +70,9 @@ export function UnclaimPage(): React.ReactElement {
         <p className="text-muted-foreground text-sm">
           Your claim has been removed. Someone else can now gift this item.
         </p>
-        <Link to="/" className="text-primary text-sm hover:underline">Go home</Link>
+        <Link to="/" className="text-primary text-sm hover:underline">
+          Go home
+        </Link>
       </div>
     );
   }
