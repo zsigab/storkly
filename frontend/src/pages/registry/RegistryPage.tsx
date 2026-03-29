@@ -1,16 +1,13 @@
-import { useState } from "react";
 import { useParams, useSearchParams, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InviteLinkCard } from "@/components/registry/InviteLinkCard";
 import { ItemCard } from "@/components/registry/ItemCard";
-import { ConfirmNameDialog } from "@/components/common/ConfirmNameDialog";
 import { getApiErrorMessage, getApiErrorStatus } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
 import {
   useRegistry,
-  useDeleteRegistry,
   useJoinRegistry,
   useMyRegistries,
   useRegistryCategories,
@@ -28,10 +25,8 @@ export function RegistryPage(): React.ReactElement {
   const { data: registry, isPending, isError, error } = useRegistry(safeSlug);
   const { data: categories = [] } = useRegistryCategories(safeSlug);
   const { data: items = [] } = useRegistryItems(safeSlug);
-  const deleteRegistry = useDeleteRegistry();
   const joinRegistry = useJoinRegistry(safeSlug);
   const unsubscribeRegistry = useUnsubscribeRegistry();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isOwner = user !== null && registry !== undefined && user.id === registry.ownerId;
   const { data: subscribers = [] } = useRegistrySubscribers(safeSlug, isOwner);
   const { data: myRegistries = [] } = useMyRegistries();
@@ -248,17 +243,6 @@ export function RegistryPage(): React.ReactElement {
           ))}
         </div>
       )}
-
-      <ConfirmNameDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        title="Delete registry"
-        description="This will permanently delete the registry and all its items. This action cannot be undone."
-        confirmName={registry.name}
-        confirmLabel="Delete registry"
-        onConfirm={() => deleteRegistry.mutate(registry.slug)}
-        isPending={deleteRegistry.isPending}
-      />
     </div>
   );
 }
