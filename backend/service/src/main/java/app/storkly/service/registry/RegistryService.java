@@ -9,6 +9,7 @@ import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryInvite;
 import app.storkly.domain.registry.RegistryInviteRepository;
 import app.storkly.domain.registry.RegistryRepository;
+import app.storkly.domain.registry.RegistrySubscriber;
 import app.storkly.domain.registry.RegistrySubscriptionRepository;
 import app.storkly.domain.registry.RegistryVisibility;
 import app.storkly.util.SlugUtil;
@@ -73,6 +74,12 @@ public class RegistryService {
 
     public List<Registry> findSubscribed(UUID userId) {
         return registryRepository.findBySubscriberId(userId);
+    }
+
+    public List<RegistrySubscriber> findSubscribers(String slug, UUID currentUserId) {
+        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        assertOwner(registry, currentUserId);
+        return subscriptionRepository.findByRegistryId(registry.id());
     }
 
     @Transactional

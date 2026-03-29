@@ -13,6 +13,7 @@ import {
   useDeleteRegistry,
   useJoinRegistry,
   useRegistryCategories,
+  useRegistrySubscribers,
 } from "@/hooks/useRegistries";
 import { useRegistryItems } from "@/hooks/useItems";
 
@@ -28,6 +29,8 @@ export function RegistryPage(): React.ReactElement {
   const deleteRegistry = useDeleteRegistry();
   const joinRegistry = useJoinRegistry(safeSlug);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const isOwner = user !== null && registry !== undefined && user.id === registry.ownerId;
+  const { data: subscribers = [] } = useRegistrySubscribers(safeSlug, isOwner);
 
   if (isPending) {
     return (
@@ -80,8 +83,6 @@ export function RegistryPage(): React.ReactElement {
   }
 
   if (registry === undefined) return <></>;
-
-  const isOwner = user !== null && user.id === registry.ownerId;
 
   const categoriesWithItems = categories
     .map((cat) => ({ cat, catItems: items.filter((i) => i.categoryId === cat.id) }))
@@ -145,6 +146,34 @@ export function RegistryPage(): React.ReactElement {
       )}
 
       {isOwner && <InviteLinkCard slug={registry.slug} />}
+
+      {isOwner && (
+        <div className="space-y-3">
+          <h2 className="text-lg font-semibold">
+            Subscribers{" "}
+            <span className="text-muted-foreground text-base font-normal">
+              ({subscribers.length})
+            </span>
+          </h2>
+          {subscribers.length === 0 ? (
+            <p className="text-muted-foreground text-sm">No subscribers yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {subscribers.map((subscriber) => (
+                <li
+                  key={subscriber.userId}
+                  className="flex items-center justify-between rounded-lg border px-3 py-2"
+                >
+                  <span className="text-sm font-medium">{subscriber.displayName}</span>
+                  <span className="text-muted-foreground text-xs">
+                    {new Date(subscriber.joinedAt).toLocaleDateString()}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {isOwner && (
         <div className="flex justify-end">

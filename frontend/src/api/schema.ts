@@ -31,6 +31,12 @@ export interface RegistryInviteResponse {
   token: string;
 }
 
+export interface SubscriberResponse {
+  userId: string;
+  displayName: string;
+  joinedAt: string;
+}
+
 export interface CategoryResponse {
   id: string;
   registryId: string;
@@ -195,6 +201,12 @@ export type paths = {
         content: { "application/json": { token: string } };
       };
       responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/subscribers": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<SubscriberResponse[]>; 403: Err; 404: Err };
     };
   };
   "/api/registries/{slug}/items": {

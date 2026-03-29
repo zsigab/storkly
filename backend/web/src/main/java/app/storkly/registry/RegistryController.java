@@ -8,6 +8,7 @@ import app.storkly.registry.dto.RegistryCreateRequest;
 import app.storkly.registry.dto.RegistryInviteResponse;
 import app.storkly.registry.dto.RegistryResponse;
 import app.storkly.registry.dto.RegistryUpdateRequest;
+import app.storkly.registry.dto.SubscriberResponse;
 import app.storkly.service.registry.RegistryService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -109,6 +110,14 @@ public class RegistryController {
     public void removeCoOwner(
             @PathVariable String slug, @PathVariable UUID userId, @AuthenticationPrincipal User currentUser) {
         registryService.removeCoOwner(slug, userId, currentUser.id());
+    }
+
+    @GetMapping("/{slug}/subscribers")
+    public List<SubscriberResponse> listSubscribers(
+            @PathVariable String slug, @AuthenticationPrincipal User currentUser) {
+        return registryService.findSubscribers(slug, currentUser.id()).stream()
+                .map(s -> new SubscriberResponse(s.userId(), s.displayName(), s.joinedAt()))
+                .toList();
     }
 
     private RegistryResponse toResponse(Registry registry) {

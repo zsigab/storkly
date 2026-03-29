@@ -1,9 +1,12 @@
 package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.REGISTRY_SUBSCRIPTION;
+import static app.storkly.domain.generated.Tables.USER;
 
+import app.storkly.domain.registry.RegistrySubscriber;
 import app.storkly.domain.registry.RegistrySubscriptionRepository;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
@@ -37,5 +40,20 @@ public class RegistrySubscriptionRepositoryImpl implements RegistrySubscriptionR
         dsl.deleteFrom(REGISTRY_SUBSCRIPTION)
                 .where(REGISTRY_SUBSCRIPTION.USER_ID.eq(userId).and(REGISTRY_SUBSCRIPTION.REGISTRY_ID.eq(registryId)))
                 .execute();
+    }
+
+    @Override
+    public List<RegistrySubscriber> findByRegistryId(UUID registryId) {
+        return dsl.select(REGISTRY_SUBSCRIPTION.USER_ID, USER.DISPLAY_NAME, REGISTRY_SUBSCRIPTION.JOINED_AT)
+                .from(REGISTRY_SUBSCRIPTION)
+                .join(USER)
+                .on(USER.ID.eq(REGISTRY_SUBSCRIPTION.USER_ID))
+                .where(REGISTRY_SUBSCRIPTION.REGISTRY_ID.eq(registryId))
+                .orderBy(REGISTRY_SUBSCRIPTION.JOINED_AT.desc())
+                .fetch()
+                .map(record -> new RegistrySubscriber(
+                        record.get(REGISTRY_SUBSCRIPTION.USER_ID),
+                        record.get(USER.DISPLAY_NAME),
+                        record.get(REGISTRY_SUBSCRIPTION.JOINED_AT)));
     }
 }
