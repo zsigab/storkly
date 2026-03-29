@@ -31,4 +31,11 @@ public class RegistrySubscriptionRepositoryImpl implements RegistrySubscriptionR
                         REGISTRY_SUBSCRIPTION.USER_ID.eq(userId).and(REGISTRY_SUBSCRIPTION.REGISTRY_ID.eq(registryId)))
                 > 0;
     }
+
+    @Override
+    public void delete(UUID userId, UUID registryId) {
+        dsl.deleteFrom(REGISTRY_SUBSCRIPTION)
+                .where(REGISTRY_SUBSCRIPTION.USER_ID.eq(userId).and(REGISTRY_SUBSCRIPTION.REGISTRY_ID.eq(registryId)))
+                .execute();
+    }
 }

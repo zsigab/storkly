@@ -130,6 +130,12 @@ public class RegistryService {
     }
 
     @Transactional
+    public void unsubscribe(String slug, UUID currentUserId) {
+        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        subscriptionRepository.delete(currentUserId, registry.id());
+    }
+
+    @Transactional
     public void addCoOwner(String slug, UUID userId, UUID currentUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
         assertOwner(registry, currentUserId);

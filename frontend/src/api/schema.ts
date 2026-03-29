@@ -176,6 +176,12 @@ export type paths = {
       responses: { 204: Empty; 403: Err; 404: Err };
     };
   };
+  "/api/registries/{slug}/subscription": {
+    delete: {
+      parameters: { path: { slug: string } };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
   "/api/registries/{slug}/invite": {
     post: {
       parameters: { path: { slug: string } };

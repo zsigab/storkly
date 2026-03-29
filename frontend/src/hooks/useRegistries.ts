@@ -95,6 +95,22 @@ export function useDeleteRegistry() {
   });
 }
 
+export function useUnsubscribeRegistry() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (slug: string) => {
+      const { error } = await api.DELETE("/api/registries/{slug}/subscription", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["registries"] });
+    },
+  });
+}
+
 export function useGenerateInvite(slug: string) {
   return useMutation({
     mutationFn: async () => {

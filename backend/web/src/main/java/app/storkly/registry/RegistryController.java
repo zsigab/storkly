@@ -89,6 +89,12 @@ public class RegistryController {
         registryService.join(slug, request.token(), currentUser.id());
     }
 
+    @DeleteMapping("/{slug}/subscription")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void unsubscribe(@PathVariable String slug, @AuthenticationPrincipal User currentUser) {
+        registryService.unsubscribe(slug, currentUser.id());
+    }
+
     @PostMapping("/{slug}/co-owners")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void addCoOwner(
