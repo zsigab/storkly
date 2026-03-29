@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router";
 import { RegistryForm } from "@/components/registry/RegistryForm";
-import { useRegistry, useUpdateRegistry } from "@/hooks/useRegistries";
+import { ConfirmNameDialog } from "@/components/common/ConfirmNameDialog";
+import { useRegistry, useUpdateRegistry, useDeleteRegistry } from "@/hooks/useRegistries";
 
 export function EditRegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
   const { data: registry, isPending, isError } = useRegistry(slug ?? "");
   const updateRegistry = useUpdateRegistry(slug ?? "");
+  const deleteRegistry = useDeleteRegistry();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   if (isPending) {
     return (
@@ -22,6 +26,10 @@ export function EditRegistryPage(): React.ReactElement {
       </div>
     );
   }
+
+  const handleDelete = (): void => {
+    deleteRegistry.mutate(registry.slug);
+  };
 
   return (
     <div className="mx-auto max-w-lg space-y-6 py-10">
@@ -42,6 +50,18 @@ export function EditRegistryPage(): React.ReactElement {
         isError={updateRegistry.isError}
         error={updateRegistry.error}
         submitLabel="Save changes"
+        onDelete={() => setDeleteDialogOpen(true)}
+        isDeletePending={deleteRegistry.isPending}
+      />
+      <ConfirmNameDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete registry"
+        description="This will permanently delete the registry and all its items. This action cannot be undone."
+        confirmName={registry.name}
+        confirmLabel="Delete registry"
+        onConfirm={handleDelete}
+        isPending={deleteRegistry.isPending}
       />
     </div>
   );

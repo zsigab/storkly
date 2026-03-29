@@ -106,12 +106,36 @@ describe("ItemCard", () => {
     );
   });
 
-  it("shows edit and delete for owner", async () => {
+  it("renders image when imageUrl is present", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({ item: { ...base, imageUrl: "https://example.com/image.jpg" } });
+    const img = screen.getByAltText("Baby Carrier");
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute("src", "https://example.com/image.jpg");
+  });
+
+  it("renders category placeholder when imageUrl is null and categoryName is provided", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({ categoryName: "Furniture" });
+    const placeholder = screen.getByText("F");
+    expect(placeholder).toBeInTheDocument();
+  });
+
+  it("renders generic placeholder when imageUrl and categoryName are both null", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard();
+    const icon = document.querySelector("svg");
+    expect(icon).toBeInTheDocument();
+  });
+
+  it("shows edit link for owner", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     renderCard({ isOwner: true });
     expect(screen.getByRole("link", { name: /edit/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
   it("shows claim button for logged-out user when not claimed", async () => {

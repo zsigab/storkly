@@ -49,7 +49,11 @@ public class RegistryService {
     public Registry findBySlug(String slug, @Nullable UUID currentUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
 
-        if (registry.visibility() == RegistryVisibility.PRIVATE) {
+        if (registry.visibility() == RegistryVisibility.HIDDEN) {
+            if (currentUserId == null || !registry.ownerId().equals(currentUserId)) {
+                throw new AccessDeniedException("Registry is hidden");
+            }
+        } else if (registry.visibility() == RegistryVisibility.PRIVATE) {
             if (currentUserId == null) {
                 throw new AccessDeniedException("Registry is private");
             }

@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
 import { EditItemPage } from "./EditItemPage";
 
-vi.mock("@/api", () => ({ api: { GET: vi.fn(), PATCH: vi.fn() } }));
+vi.mock("@/api", () => ({ api: { GET: vi.fn(), PATCH: vi.fn(), DELETE: vi.fn() } }));
 const mockNavigate = vi.fn();
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
@@ -113,5 +113,63 @@ describe("EditItemPage", () => {
       ),
     );
     expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
+  });
+
+  it("calls DELETE and navigates when delete button is clicked", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: itemFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    vi.mocked(api.DELETE).mockResolvedValueOnce({ data: null, response: new Response() });
+    renderPage();
+    await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: /delete item/i }));
+    await waitFor(() =>
+      expect(api.DELETE).toHaveBeenCalledWith(
+        "/api/items/{id}",
+        expect.objectContaining({
+          params: { path: { id: "item-1" } },
+        }),
+      ),
+    );
+    expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
+  });
+
+  it("shows delete/discard buttons when quantity is set to 0", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: itemFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
+    const quantityInput = screen.getByLabelText(/quantity wanted/i);
+    fireEvent.change(quantityInput, { target: { value: "0" } });
+    expect(screen.getByRole("button", { name: /delete item/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /discard/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+  });
+
+  it("restores quantity to 1 when discard button is clicked", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: itemFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
+    const quantityInput = screen.getByLabelText(/quantity wanted/i) as HTMLInputElement;
+    fireEvent.change(quantityInput, { target: { value: "0" } });
+    fireEvent.click(screen.getByRole("button", { name: /discard/i }));
+    expect(quantityInput.value).toBe("1");
+    expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^delete item$/i })).toBeInTheDocument();
   });
 });

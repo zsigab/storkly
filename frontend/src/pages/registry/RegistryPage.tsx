@@ -100,7 +100,11 @@ export function RegistryPage(): React.ReactElement {
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-semibold tracking-tight">{registry.name}</h1>
             <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
-              {registry.visibility === "PUBLIC" ? "Public" : "Private"}
+              {registry.visibility === "PUBLIC"
+                ? "Public"
+                : registry.visibility === "HIDDEN"
+                  ? "Hidden"
+                  : "Private"}
             </Badge>
           </div>
           {registry.description !== null && (
@@ -162,7 +166,13 @@ export function RegistryPage(): React.ReactElement {
             {cat.name}
           </h2>
           {catItems.map((item) => (
-            <ItemCard key={item.id} item={item} slug={registry.slug} isOwner={isOwner} />
+            <ItemCard
+              key={item.id}
+              item={item}
+              slug={registry.slug}
+              isOwner={isOwner}
+              categoryName={cat.name}
+            />
           ))}
         </div>
       ))}

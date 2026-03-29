@@ -141,7 +141,10 @@ describe("DashboardPage", () => {
       }
       return { data: [], error: undefined, response: new Response() };
     });
-    vi.mocked(api.DELETE).mockResolvedValueOnce({ error: undefined, response: new Response() });
+    vi.mocked(api.DELETE).mockResolvedValueOnce({
+      data: null,
+      response: new Response(),
+    });
 
     renderPage();
     const button = await screen.findByRole("button", { name: /unsubscribe/i });

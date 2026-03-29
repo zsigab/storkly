@@ -10,7 +10,7 @@ import { getApiErrorMessage } from "@/api/helpers";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string(),
-  visibility: z.enum(["PUBLIC", "PRIVATE"]),
+  visibility: z.enum(["PUBLIC", "PRIVATE", "HIDDEN"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -20,12 +20,14 @@ interface RegistryFormProps {
   onSubmit: (values: {
     name: string;
     description: string | null;
-    visibility: "PUBLIC" | "PRIVATE";
+    visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
   }) => void;
   isPending: boolean;
   isError: boolean;
   error: unknown;
   submitLabel: string;
+  onDelete?: () => void;
+  isDeletePending?: boolean;
 }
 
 export function RegistryForm({
@@ -35,6 +37,8 @@ export function RegistryForm({
   isError,
   error,
   submitLabel,
+  onDelete,
+  isDeletePending = false,
 }: RegistryFormProps): React.ReactElement {
   const {
     register,
@@ -84,6 +88,7 @@ export function RegistryForm({
         >
           <option value="PUBLIC">Public — anyone can view</option>
           <option value="PRIVATE">Private — invite only</option>
+          <option value="HIDDEN">Hidden — only you can see it</option>
         </select>
       </FormField>
 
@@ -96,6 +101,17 @@ export function RegistryForm({
       <Button type="submit" className="w-full" disabled={isPending}>
         {isPending ? "Saving…" : submitLabel}
       </Button>
+      {onDelete !== undefined && (
+        <Button
+          type="button"
+          variant="destructive"
+          className="w-full"
+          onClick={onDelete}
+          disabled={isDeletePending}
+        >
+          {isDeletePending ? "Deleting…" : "Delete registry"}
+        </Button>
+      )}
     </form>
   );
 }

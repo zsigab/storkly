@@ -82,7 +82,8 @@ public class RegistryRepositoryImpl implements RegistryRepository {
     public List<Registry> findBySubscriberId(UUID userId) {
         return dsl.select(REGISTRY.fields())
                 .from(REGISTRY)
-                .join(REGISTRY_SUBSCRIPTION).on(REGISTRY_SUBSCRIPTION.REGISTRY_ID.eq(REGISTRY.ID))
+                .join(REGISTRY_SUBSCRIPTION)
+                .on(REGISTRY_SUBSCRIPTION.REGISTRY_ID.eq(REGISTRY.ID))
                 .where(REGISTRY_SUBSCRIPTION.USER_ID.eq(userId))
                 .orderBy(REGISTRY_SUBSCRIPTION.JOINED_AT.desc())
                 .fetch()

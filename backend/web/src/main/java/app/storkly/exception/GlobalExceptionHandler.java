@@ -2,12 +2,12 @@ package app.storkly.exception;
 
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.AlreadySubscribedException;
-import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.CategoryNotFoundException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.exception.UserNotFoundException;

@@ -2,13 +2,12 @@ package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.USER;
 
-import java.time.OffsetDateTime;
-
 import app.storkly.domain.generated.tables.records.UserRecord;
 import app.storkly.domain.user.AuthProvider;
 import app.storkly.domain.user.User;
 import app.storkly.domain.user.UserRepository;
 import app.storkly.domain.user.UserRole;
+import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

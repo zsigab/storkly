@@ -44,6 +44,8 @@ interface ItemFormProps {
   isError: boolean;
   error: unknown;
   submitLabel: string;
+  onDelete?: () => void;
+  isDeletePending?: boolean;
 }
 
 export function ItemForm({
@@ -54,11 +56,15 @@ export function ItemForm({
   isError,
   error,
   submitLabel,
+  onDelete,
+  isDeletePending = false,
 }: ItemFormProps): React.ReactElement {
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
+    setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -74,6 +80,9 @@ export function ItemForm({
       ...defaultValues,
     },
   });
+
+  const quantityValue = watch("quantityDesired");
+  const isQuantityZero = quantityValue === "0";
 
   return (
     <form
@@ -183,9 +192,45 @@ export function ItemForm({
         </Alert>
       )}
 
-      <Button type="submit" className="w-full" disabled={isPending}>
-        {isPending ? "Saving…" : submitLabel}
-      </Button>
+      {isQuantityZero && onDelete !== undefined ? (
+        <div className="space-y-2">
+          <Button
+            type="button"
+            variant="destructive"
+            className="w-full"
+            onClick={onDelete}
+            disabled={isDeletePending}
+          >
+            {isDeletePending ? "Deleting…" : "Delete item"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={() => setValue("quantityDesired", "1")}
+            disabled={isDeletePending}
+          >
+            Discard
+          </Button>
+        </div>
+      ) : (
+        <>
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending ? "Saving…" : submitLabel}
+          </Button>
+          {onDelete !== undefined && (
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full"
+              onClick={onDelete}
+              disabled={isDeletePending}
+            >
+              {isDeletePending ? "Deleting…" : "Delete item"}
+            </Button>
+          )}
+        </>
+      )}
     </form>
   );
 }

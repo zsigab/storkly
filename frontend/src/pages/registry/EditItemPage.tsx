@@ -1,6 +1,6 @@
-import { useParams, Link } from "react-router";
+import { useParams, Link, useNavigate } from "react-router";
 import { ItemForm } from "@/components/registry/ItemForm";
-import { useUpdateItem } from "@/hooks/useItems";
+import { useUpdateItem, useDeleteItem } from "@/hooks/useItems";
 import { useRegistryCategories } from "@/hooks/useRegistries";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api";
@@ -23,11 +23,13 @@ function useItem(id: string) {
 
 export function EditItemPage(): React.ReactElement {
   const { slug, id } = useParams<{ slug: string; id: string }>();
+  const navigate = useNavigate();
   const safeSlug = slug ?? "";
   const safeId = id ?? "";
   const { data: item, isPending, isError } = useItem(safeId);
   const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);
   const updateItem = useUpdateItem(safeSlug);
+  const deleteItem = useDeleteItem(safeSlug);
 
   if (isPending || categoriesPending) {
     return (
@@ -44,6 +46,14 @@ export function EditItemPage(): React.ReactElement {
       </div>
     );
   }
+
+  const handleDelete = (): void => {
+    deleteItem.mutate(safeId, {
+      onSuccess: () => {
+        navigate(`/r/${safeSlug}`);
+      },
+    });
+  };
 
   return (
     <div className="mx-auto max-w-lg space-y-6 py-10">
@@ -71,6 +81,8 @@ export function EditItemPage(): React.ReactElement {
         isError={updateItem.isError}
         error={updateItem.error}
         submitLabel="Save changes"
+        onDelete={handleDelete}
+        isDeletePending={deleteItem.isPending}
       />
     </div>
   );

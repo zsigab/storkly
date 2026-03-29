@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
 import { EditRegistryPage } from "./EditRegistryPage";
 
-vi.mock("@/api", () => ({ api: { GET: vi.fn(), PATCH: vi.fn() } }));
+vi.mock("@/api", () => ({ api: { GET: vi.fn(), PATCH: vi.fn(), DELETE: vi.fn() } }));
 const mockNavigate = vi.fn();
 const mockParams = { slug: "my-registry" };
 vi.mock("react-router", async () => {
@@ -119,5 +119,62 @@ describe("EditRegistryPage", () => {
       "href",
       "/dashboard",
     );
+  });
+
+  it("renders delete registry button", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: registryFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /delete registry/i })).toBeInTheDocument(),
+    );
+  });
+
+  it("opens delete confirmation dialog when delete button is clicked", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: registryFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /delete registry/i })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /delete registry/i }));
+    expect(screen.getByRole("heading", { name: /delete registry/i })).toBeInTheDocument();
+  });
+
+  it("calls DELETE and navigates when delete is confirmed", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: registryFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    vi.mocked(api.DELETE).mockResolvedValueOnce({ data: null, response: new Response() });
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /delete registry/i })).toBeInTheDocument(),
+    );
+    const buttons = screen.getAllByRole("button", { name: /delete registry/i });
+    fireEvent.click(buttons[0]!);
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: /delete registry/i })).toBeInTheDocument(),
+    );
+    const inputField = screen.getByPlaceholderText("My Registry") as HTMLInputElement;
+    fireEvent.change(inputField, { target: { value: "My Registry" } });
+    const allButtons = screen.getAllByRole("button", { name: /delete registry/i });
+    fireEvent.click(allButtons[allButtons.length - 1]!);
+    await waitFor(() =>
+      expect(api.DELETE).toHaveBeenCalledWith("/api/registries/{slug}", {
+        params: { path: { slug: "my-registry" } },
+      }),
+    );
+    expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
   });
 });

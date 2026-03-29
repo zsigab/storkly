@@ -37,7 +37,7 @@ export function useCreateRegistry() {
     mutationFn: async (values: {
       name: string;
       description: string | null;
-      visibility: "PUBLIC" | "PRIVATE";
+      visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
     }): Promise<RegistryResponse> => {
       const { data, error } = await api.POST("/api/registries", { body: values });
       if (error !== undefined) throw error;
@@ -59,7 +59,7 @@ export function useUpdateRegistry(slug: string) {
     mutationFn: async (values: {
       name: string;
       description: string | null;
-      visibility: "PUBLIC" | "PRIVATE";
+      visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
     }): Promise<RegistryResponse> => {
       const { data, error } = await api.PATCH("/api/registries/{slug}", {
         params: { path: { slug } },

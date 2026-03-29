@@ -22,7 +22,7 @@ export interface RegistryResponse {
   name: string;
   slug: string;
   description: string | null;
-  visibility: "PUBLIC" | "PRIVATE";
+  visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
   ownerId: string;
   createdAt: string;
 }
@@ -146,7 +146,7 @@ export type paths = {
           "application/json": {
             name: string;
             description?: string | null;
-            visibility: "PUBLIC" | "PRIVATE";
+            visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
           };
         };
       };
@@ -165,7 +165,7 @@ export type paths = {
           "application/json": {
             name?: string | null;
             description?: string | null;
-            visibility?: "PUBLIC" | "PRIVATE" | null;
+            visibility?: "PUBLIC" | "PRIVATE" | "HIDDEN" | null;
           };
         };
       };
