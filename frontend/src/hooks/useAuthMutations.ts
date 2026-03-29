@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { api } from "@/api";
 import { useAuth } from "./useAuth";
@@ -6,6 +6,7 @@ import { useAuth } from "./useAuth";
 export function useLogin() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (values: { email: string; password: string }) => {
@@ -16,6 +17,7 @@ export function useLogin() {
     },
     onSuccess: (data) => {
       login(data);
+      void queryClient.invalidateQueries();
       void navigate("/");
     },
   });
@@ -70,6 +72,7 @@ export function useResetPassword() {
 export function useLogout() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
@@ -78,6 +81,7 @@ export function useLogout() {
     },
     onSettled: () => {
       logout();
+      queryClient.clear();
       void navigate("/");
     },
   });
