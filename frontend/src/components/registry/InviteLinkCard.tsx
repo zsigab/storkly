@@ -43,7 +43,7 @@ export function InviteLinkCard({ slug }: InviteLinkCardProps): React.ReactElemen
       )}
       {inviteUrl !== null && (
         <div className="flex gap-2">
-          <Input value={inviteUrl} readOnly className="text-xs" />
+          <Input value={inviteUrl} readOnly className="h-9 text-xs" />
           <Button variant="outline" size="sm" onClick={handleCopy}>
             {copied ? "Copied!" : "Copy"}
           </Button>

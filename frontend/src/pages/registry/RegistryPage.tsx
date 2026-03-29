@@ -229,35 +229,45 @@ export function RegistryPage(): React.ReactElement {
             </h2>
             <span className="text-muted-foreground text-sm">{subscribersOpen ? "▲" : "▼"}</span>
           </button>
-          {subscribersOpen &&
-            (subscribers.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No subscribers yet.</p>
-            ) : (
-              <ul className="space-y-2">
-                {subscribers.map((subscriber) => {
-                  const claimedItems = allClaims
-                    .filter((c) => c.claimerUserId === subscriber.userId)
-                    .map((c) => items.find((i) => i.id === c.itemId))
-                    .filter((i) => i !== undefined);
-                  return (
-                    <li key={subscriber.userId} className="space-y-1 rounded-lg border px-3 py-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{subscriber.displayName}</span>
-                        <span className="text-muted-foreground text-xs">
-                          {new Date(subscriber.joinedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      {claimedItems.length > 0 && (
-                        <p className="text-muted-foreground text-xs">
-                          {"Claimed: "}
-                          {claimedItems.map((i) => i.title).join(", ")}
-                        </p>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            ))}
+          <div
+            className={`grid transition-all duration-200 ease-in-out ${subscribersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          >
+            <div className="overflow-hidden">
+              <div className="pt-1">
+                {subscribers.length === 0 ? (
+                  <p className="text-muted-foreground text-sm">No subscribers yet.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {subscribers.map((subscriber) => {
+                      const claimedItems = allClaims
+                        .filter((c) => c.claimerUserId === subscriber.userId)
+                        .map((c) => items.find((i) => i.id === c.itemId))
+                        .filter((i) => i !== undefined);
+                      return (
+                        <li
+                          key={subscriber.userId}
+                          className="space-y-1 rounded-lg border px-3 py-2"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{subscriber.displayName}</span>
+                            <span className="text-muted-foreground text-xs">
+                              {new Date(subscriber.joinedAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {claimedItems.length > 0 && (
+                            <p className="text-muted-foreground text-xs">
+                              {"Claimed: "}
+                              {claimedItems.map((i) => i.title).join(", ")}
+                            </p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
