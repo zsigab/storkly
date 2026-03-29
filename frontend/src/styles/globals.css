@@ -34,6 +34,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Peachy warm theme */
     --background: 30 100% 98%;
     --foreground: 20 14% 20%;
@@ -58,6 +59,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     /* Muted navy-grey dark mode */
     --background: 220 15% 16%;
     --foreground: 220 10% 88%;
