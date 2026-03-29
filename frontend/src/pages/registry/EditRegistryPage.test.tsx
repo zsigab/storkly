@@ -40,7 +40,9 @@ const registryFixture = {
 };
 
 function makeClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 }
 
 function renderPage() {
@@ -100,5 +102,22 @@ describe("EditRegistryPage", () => {
       }),
     );
     expect(mockNavigate).toHaveBeenCalledWith("/r/my-registry");
+  });
+
+  it("renders back to dashboard link", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: registryFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /back to dashboard/i })).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("link", { name: /back to dashboard/i })).toHaveAttribute(
+      "href",
+      "/dashboard",
+    );
   });
 });

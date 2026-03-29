@@ -42,7 +42,9 @@ const registryFixture = {
 };
 
 function makeClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 }
 
 /** Mock all GET calls: registry returns registryFixture, categories and items return []. */
@@ -167,11 +169,17 @@ describe("RegistryPage", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation((path: string) => {
       if (path === "/api/registries/{slug}") {
-        return Promise.resolve({ data: registryFixture, error: undefined, response: new Response() });
+        return Promise.resolve({
+          data: registryFixture,
+          error: undefined,
+          response: new Response(),
+        });
       }
       if (path === "/api/registries/{slug}/categories") {
         return Promise.resolve({
-          data: [{ id: "cat-1", registryId: "1", name: "Essentials", sortOrder: 0, isDefault: true }],
+          data: [
+            { id: "cat-1", registryId: "1", name: "Essentials", sortOrder: 0, isDefault: true },
+          ],
           error: undefined,
           response: new Response(),
         });
@@ -180,11 +188,24 @@ describe("RegistryPage", () => {
         return Promise.resolve({
           data: [
             {
-              id: "item-1", registryId: "1", categoryId: "cat-1", addedByUserId: "u1",
-              urlOriginal: null, sourceSite: "MANUAL", title: "Baby Carrier",
-              description: null, imageUrl: null, priceReference: null, currency: null,
-              priceCapturedAt: null, quantityDesired: 1, flag: "EXACT_ONLY",
-              notes: null, sortOrder: 0, createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z",
+              id: "item-1",
+              registryId: "1",
+              categoryId: "cat-1",
+              addedByUserId: "u1",
+              urlOriginal: null,
+              sourceSite: "MANUAL",
+              title: "Baby Carrier",
+              description: null,
+              imageUrl: null,
+              priceReference: null,
+              currency: null,
+              priceCapturedAt: null,
+              quantityDesired: 1,
+              flag: "EXACT_ONLY",
+              notes: null,
+              sortOrder: 0,
+              createdAt: "2024-01-01T00:00:00Z",
+              updatedAt: "2024-01-01T00:00:00Z",
             },
           ],
           error: undefined,
@@ -205,5 +226,26 @@ describe("RegistryPage", () => {
     await waitFor(() =>
       expect(screen.getByRole("link", { name: /add item/i })).toBeInTheDocument(),
     );
+  });
+
+  it("shows back to dashboard link when authenticated", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
+    renderPage({ id: "user-uuid", email: "user@example.com", displayName: "User" });
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /back to dashboard/i })).toBeInTheDocument(),
+    );
+    expect(screen.getByRole("link", { name: /back to dashboard/i })).toHaveAttribute(
+      "href",
+      "/dashboard",
+    );
+  });
+
+  it("hides back to dashboard link when guest", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
+    renderPage();
+    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    expect(screen.queryByRole("link", { name: /back to dashboard/i })).not.toBeInTheDocument();
   });
 });

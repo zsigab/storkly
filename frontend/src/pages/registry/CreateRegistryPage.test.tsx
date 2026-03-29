@@ -28,7 +28,9 @@ vi.mock("react-router", async () => {
 });
 
 function makeClient() {
-  return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
 }
 
 function renderPage() {
@@ -59,9 +61,7 @@ describe("CreateRegistryPage", () => {
   it("validates that name is required", async () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: /create registry/i }));
-    await waitFor(() =>
-      expect(screen.getByText(/name is required/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/name is required/i)).toBeInTheDocument());
   });
 
   it("calls API and navigates to registry on success", async () => {
@@ -100,8 +100,13 @@ describe("CreateRegistryPage", () => {
     renderPage();
     fireEvent.change(screen.getByLabelText(/name/i), { target: { value: "Taken Name" } });
     fireEvent.click(screen.getByRole("button", { name: /create registry/i }));
-    await waitFor(() =>
-      expect(screen.getByText(/name already taken/i)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/name already taken/i)).toBeInTheDocument());
+  });
+
+  it("renders back to dashboard link", () => {
+    renderPage();
+    const link = screen.getByRole("link", { name: /back to dashboard/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/dashboard");
   });
 });

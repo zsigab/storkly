@@ -1,4 +1,4 @@
-import { useParams } from "react-router";
+import { useParams, Link } from "react-router";
 import { RegistryForm } from "@/components/registry/RegistryForm";
 import { useRegistry, useUpdateRegistry } from "@/hooks/useRegistries";
 
@@ -25,7 +25,12 @@ export function EditRegistryPage(): React.ReactElement {
 
   return (
     <div className="mx-auto max-w-lg space-y-6 py-10">
-      <h1 className="text-3xl font-semibold tracking-tight">Edit registry</h1>
+      <div className="space-y-2">
+        <Link to="/dashboard" className="text-muted-foreground hover:text-foreground text-sm">
+          ← Back to dashboard
+        </Link>
+        <h1 className="text-3xl font-semibold tracking-tight">Edit registry</h1>
+      </div>
       <RegistryForm
         defaultValues={{
           name: registry.name,

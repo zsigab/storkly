@@ -8,7 +8,12 @@ import { ItemCard } from "@/components/registry/ItemCard";
 import { ConfirmNameDialog } from "@/components/common/ConfirmNameDialog";
 import { getApiErrorMessage, getApiErrorStatus } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
-import { useRegistry, useDeleteRegistry, useJoinRegistry, useRegistryCategories } from "@/hooks/useRegistries";
+import {
+  useRegistry,
+  useDeleteRegistry,
+  useJoinRegistry,
+  useRegistryCategories,
+} from "@/hooks/useRegistries";
 import { useRegistryItems } from "@/hooks/useItems";
 
 export function RegistryPage(): React.ReactElement {
@@ -85,6 +90,11 @@ export function RegistryPage(): React.ReactElement {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-10">
+      {user !== null && (
+        <Link to="/dashboard" className="text-muted-foreground hover:text-foreground text-sm">
+          ← Back to dashboard
+        </Link>
+      )}
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -102,11 +112,7 @@ export function RegistryPage(): React.ReactElement {
             <Button asChild variant="outline" size="sm">
               <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setDeleteDialogOpen(true)}
-            >
+            <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
               Delete
             </Button>
           </div>
@@ -114,7 +120,7 @@ export function RegistryPage(): React.ReactElement {
       </div>
 
       {inviteToken !== null && !isOwner && (
-        <div className="border-border rounded-lg border p-4 space-y-3">
+        <div className="border-border space-y-3 rounded-lg border p-4">
           <p className="text-sm font-medium">You've been invited to join this registry.</p>
           {joinRegistry.isSuccess ? (
             <p className="text-muted-foreground text-sm">You've joined this registry.</p>
@@ -152,7 +158,9 @@ export function RegistryPage(): React.ReactElement {
 
       {categoriesWithItems.map(({ cat, catItems }) => (
         <div key={cat.id} className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{cat.name}</h2>
+          <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
+            {cat.name}
+          </h2>
           {catItems.map((item) => (
             <ItemCard key={item.id} item={item} slug={registry.slug} isOwner={isOwner} />
           ))}

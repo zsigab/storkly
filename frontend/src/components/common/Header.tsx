@@ -11,16 +11,16 @@ export function Header(): React.ReactElement {
   return (
     <header className="border-border bg-card border-b">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link to="/" className="text-primary text-xl font-semibold">
+        <Link
+          to={user !== null ? "/dashboard" : "/"}
+          className="text-primary text-xl font-semibold"
+        >
           Storkly
         </Link>
         <nav className="flex items-center gap-4">
           {user !== null ? (
             <>
-              <Link to="/dashboard" className="text-sm hover:text-foreground text-muted-foreground">
-                Dashboard
-              </Link>
-              <span className="text-sm text-muted-foreground">{user.displayName}</span>
+              <span className="text-muted-foreground text-sm">{user.displayName}</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -32,7 +32,7 @@ export function Header(): React.ReactElement {
             </>
           ) : (
             <>
-              <Link to="/login" className="text-sm hover:text-foreground text-muted-foreground">
+              <Link to="/login" className="hover:text-foreground text-muted-foreground text-sm">
                 Sign in
               </Link>
               <Button asChild size="sm">

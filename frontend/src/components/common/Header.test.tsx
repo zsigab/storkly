@@ -49,9 +49,25 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: /storkly/i })).toBeInTheDocument();
   });
 
-  it("logo link points to home", () => {
+  it("logo links to / when guest", () => {
     renderHeader();
     expect(screen.getByRole("link", { name: /storkly/i })).toHaveAttribute("href", "/");
+  });
+
+  it("logo links to /dashboard when authenticated", () => {
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: vi
+          .fn()
+          .mockReturnValue(JSON.stringify({ id: "u1", email: "a@b.com", displayName: "Alice" })),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+      },
+      writable: true,
+    });
+    renderHeader();
+    expect(screen.getByRole("link", { name: /storkly/i })).toHaveAttribute("href", "/dashboard");
   });
 
   it("renders the theme toggle button", () => {
@@ -65,14 +81,12 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: /register/i })).toBeInTheDocument();
   });
 
-  it("shows dashboard link and sign out when logged in", () => {
+  it("shows sign out and display name when logged in", () => {
     Object.defineProperty(window, "localStorage", {
       value: {
         getItem: vi
           .fn()
-          .mockReturnValue(
-            JSON.stringify({ id: "u1", email: "a@b.com", displayName: "Alice" }),
-          ),
+          .mockReturnValue(JSON.stringify({ id: "u1", email: "a@b.com", displayName: "Alice" })),
         setItem: vi.fn(),
         removeItem: vi.fn(),
         clear: vi.fn(),
@@ -80,7 +94,7 @@ describe("Header", () => {
       writable: true,
     });
     renderHeader();
-    expect(screen.getByRole("link", { name: /dashboard/i })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /^dashboard$/i })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
     expect(screen.getByText("Alice")).toBeInTheDocument();
   });
