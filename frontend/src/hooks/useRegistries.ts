@@ -138,6 +138,8 @@ export function useJoinRegistry(slug: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["registry", slug] });
       void queryClient.invalidateQueries({ queryKey: ["registries"] });
+      void queryClient.invalidateQueries({ queryKey: ["items", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["categories", slug] });
     },
   });
 }
