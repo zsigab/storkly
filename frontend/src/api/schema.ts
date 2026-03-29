@@ -39,6 +39,40 @@ export interface CategoryResponse {
   isDefault: boolean;
 }
 
+export type ItemFlag = "EXACT_ONLY" | "SIMILAR_OK" | "SIMILAR_CHEAPER";
+export type SourceSite = "LAZADA_PH" | "SHOPEE_PH" | "AMAZON" | "GALAXUS" | "SM" | "ROBINSONS" | "MANUAL";
+
+export interface ItemResponse {
+  id: string;
+  registryId: string;
+  categoryId: string | null;
+  addedByUserId: string | null;
+  urlOriginal: string | null;
+  sourceSite: SourceSite;
+  title: string;
+  description: string | null;
+  imageUrl: string | null;
+  priceReference: number | null;
+  currency: string | null;
+  priceCapturedAt: string | null;
+  quantityDesired: number;
+  flag: ItemFlag;
+  notes: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ClaimResponse {
+  id: string;
+  itemId: string;
+  claimerUserId: string | null;
+  claimerName: string | null;
+  claimerEmail: string | null;
+  quantityClaimed: number;
+  claimedAt: string;
+}
+
 /** Used for endpoints that return 200/201 with no body. */
 type Empty = { content: { "application/json": null } };
 type Err = { content: { "application/json": ProblemDetail } };
@@ -154,6 +188,88 @@ export type paths = {
       requestBody: {
         content: { "application/json": { token: string } };
       };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/items": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<ItemResponse[]>; 403: Err; 404: Err };
+    };
+    post: {
+      parameters: { path: { slug: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            title: string;
+            description?: string | null;
+            urlOriginal?: string | null;
+            imageUrl?: string | null;
+            priceReference?: number | null;
+            currency?: string | null;
+            categoryId?: string | null;
+            flag: ItemFlag;
+            quantityDesired: number;
+            notes?: string | null;
+          };
+        };
+      };
+      responses: { 201: Ok<ItemResponse>; 403: Err; 404: Err; 422: Err };
+    };
+  };
+  "/api/items/{id}": {
+    get: {
+      parameters: { path: { id: string } };
+      responses: { 200: Ok<ItemResponse>; 403: Err; 404: Err };
+    };
+    patch: {
+      parameters: { path: { id: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            title?: string | null;
+            description?: string | null;
+            urlOriginal?: string | null;
+            imageUrl?: string | null;
+            priceReference?: number | null;
+            currency?: string | null;
+            categoryId?: string | null;
+            flag?: ItemFlag | null;
+            quantityDesired?: number | null;
+            notes?: string | null;
+            sortOrder?: number | null;
+          };
+        };
+      };
+      responses: { 200: Ok<ItemResponse>; 403: Err; 404: Err; 422: Err };
+    };
+    delete: {
+      parameters: { path: { id: string } };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
+  "/api/items/{id}/claims": {
+    get: {
+      parameters: { path: { id: string } };
+      responses: { 200: Ok<ClaimResponse[]> };
+    };
+    post: {
+      parameters: { path: { id: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            claimerName?: string | null;
+            claimerEmail?: string | null;
+            quantityClaimed: number;
+          };
+        };
+      };
+      responses: { 201: Ok<ClaimResponse>; 400: Err; 409: Err };
+    };
+  };
+  "/api/claims/{value}": {
+    delete: {
+      parameters: { path: { value: string } };
       responses: { 204: Empty; 403: Err; 404: Err };
     };
   };

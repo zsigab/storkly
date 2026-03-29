@@ -45,6 +45,16 @@ function makeClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
 }
 
+/** Mock all GET calls: registry returns registryFixture, categories and items return []. */
+function mockGetSuccess() {
+  return vi.fn().mockImplementation((path: string) => {
+    if (path === "/api/registries/{slug}") {
+      return Promise.resolve({ data: registryFixture, error: undefined, response: new Response() });
+    }
+    return Promise.resolve({ data: [], error: undefined, response: new Response() });
+  });
+}
+
 function renderPage(storedUser: object | null = null) {
   Object.defineProperty(window, "localStorage", {
     value: {
@@ -71,11 +81,7 @@ beforeEach(() => {
 describe("RegistryPage", () => {
   it("shows registry name and description", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: registryFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage();
     await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
     expect(screen.getByText("A great registry")).toBeInTheDocument();
@@ -83,11 +89,7 @@ describe("RegistryPage", () => {
 
   it("shows edit and delete buttons for the owner", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: registryFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
     await waitFor(() => expect(screen.getByRole("link", { name: /edit/i })).toBeInTheDocument());
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
@@ -95,11 +97,7 @@ describe("RegistryPage", () => {
 
   it("hides edit and delete buttons for non-owner", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: registryFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage({ id: "other-uuid", email: "other@example.com", displayName: "Other" });
     await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
     expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
@@ -108,11 +106,7 @@ describe("RegistryPage", () => {
 
   it("shows join banner when invite token is present", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: registryFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     mockSearchParams.set("invite", "tok123");
     renderPage();
     await waitFor(() =>
@@ -123,11 +117,7 @@ describe("RegistryPage", () => {
 
   it("calls join API when join button clicked", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValue({
-      data: registryFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     vi.mocked(api.POST).mockResolvedValueOnce({
       data: null,
       error: undefined,
@@ -170,6 +160,50 @@ describe("RegistryPage", () => {
     renderPage();
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: /not found/i })).toBeInTheDocument(),
+    );
+  });
+
+  it("shows items grouped by category", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation((path: string) => {
+      if (path === "/api/registries/{slug}") {
+        return Promise.resolve({ data: registryFixture, error: undefined, response: new Response() });
+      }
+      if (path === "/api/registries/{slug}/categories") {
+        return Promise.resolve({
+          data: [{ id: "cat-1", registryId: "1", name: "Essentials", sortOrder: 0, isDefault: true }],
+          error: undefined,
+          response: new Response(),
+        });
+      }
+      if (path === "/api/registries/{slug}/items") {
+        return Promise.resolve({
+          data: [
+            {
+              id: "item-1", registryId: "1", categoryId: "cat-1", addedByUserId: "u1",
+              urlOriginal: null, sourceSite: "MANUAL", title: "Baby Carrier",
+              description: null, imageUrl: null, priceReference: null, currency: null,
+              priceCapturedAt: null, quantityDesired: 1, flag: "EXACT_ONLY",
+              notes: null, sortOrder: 0, createdAt: "2024-01-01T00:00:00Z", updatedAt: "2024-01-01T00:00:00Z",
+            },
+          ],
+          error: undefined,
+          response: new Response(),
+        });
+      }
+      return Promise.resolve({ data: [], error: undefined, response: new Response() });
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Baby Carrier")).toBeInTheDocument());
+    expect(screen.getByText("Essentials")).toBeInTheDocument();
+  });
+
+  it("shows add item button for owner", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
+    renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /add item/i })).toBeInTheDocument(),
     );
   });
 });

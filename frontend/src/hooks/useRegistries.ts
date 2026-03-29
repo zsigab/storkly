@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { api } from "@/api";
-import type { RegistryResponse } from "@/api/schema";
+import type { CategoryResponse, RegistryResponse } from "@/api/schema";
 
 export function useMyRegistries() {
   return useQuery({
@@ -122,5 +122,19 @@ export function useJoinRegistry(slug: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["registry", slug] });
     },
+  });
+}
+
+export function useRegistryCategories(slug: string) {
+  return useQuery({
+    queryKey: ["categories", slug],
+    queryFn: async (): Promise<CategoryResponse[]> => {
+      const { data, error } = await api.GET("/api/registries/{slug}/categories", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+    enabled: slug.length > 0,
   });
 }

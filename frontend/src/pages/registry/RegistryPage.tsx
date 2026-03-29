@@ -3,18 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InviteLinkCard } from "@/components/registry/InviteLinkCard";
+import { ItemCard } from "@/components/registry/ItemCard";
 import { getApiErrorMessage, getApiErrorStatus } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
-import { useRegistry, useDeleteRegistry, useJoinRegistry } from "@/hooks/useRegistries";
+import { useRegistry, useDeleteRegistry, useJoinRegistry, useRegistryCategories } from "@/hooks/useRegistries";
+import { useRegistryItems } from "@/hooks/useItems";
 
 export function RegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
   const { user } = useAuth();
-  const { data: registry, isPending, isError, error } = useRegistry(slug ?? "");
+  const safeSlug = slug ?? "";
+  const { data: registry, isPending, isError, error } = useRegistry(safeSlug);
+  const { data: categories = [] } = useRegistryCategories(safeSlug);
+  const { data: items = [] } = useRegistryItems(safeSlug);
   const deleteRegistry = useDeleteRegistry();
-  const joinRegistry = useJoinRegistry(slug ?? "");
+  const joinRegistry = useJoinRegistry(safeSlug);
 
   if (isPending) {
     return (
@@ -46,6 +51,11 @@ export function RegistryPage(): React.ReactElement {
   if (registry === undefined) return <></>;
 
   const isOwner = user !== null && user.id === registry.ownerId;
+
+  const categoriesWithItems = categories
+    .map((cat) => ({ cat, catItems: items.filter((i) => i.categoryId === cat.id) }))
+    .filter(({ catItems }) => catItems.length > 0);
+  const uncategorizedItems = items.filter((i) => i.categoryId === null);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-10">
@@ -101,7 +111,36 @@ export function RegistryPage(): React.ReactElement {
 
       {isOwner && <InviteLinkCard slug={registry.slug} />}
 
-      <p className="text-muted-foreground py-8 text-center text-sm">Items coming soon.</p>
+      {isOwner && (
+        <div className="flex justify-end">
+          <Button asChild size="sm">
+            <Link to={`/r/${registry.slug}/items/new`}>Add item</Link>
+          </Button>
+        </div>
+      )}
+
+      {items.length === 0 && (
+        <p className="text-muted-foreground py-8 text-center text-sm">
+          {isOwner ? "No items yet. Add your first item above." : "No items yet."}
+        </p>
+      )}
+
+      {categoriesWithItems.map(({ cat, catItems }) => (
+        <div key={cat.id} className="space-y-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">{cat.name}</h2>
+          {catItems.map((item) => (
+            <ItemCard key={item.id} item={item} slug={registry.slug} isOwner={isOwner} />
+          ))}
+        </div>
+      ))}
+
+      {uncategorizedItems.length > 0 && (
+        <div className="space-y-2">
+          {uncategorizedItems.map((item) => (
+            <ItemCard key={item.id} item={item} slug={registry.slug} isOwner={isOwner} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

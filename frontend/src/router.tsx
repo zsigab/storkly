@@ -11,6 +11,8 @@ import { DashboardPage } from "@/pages/DashboardPage";
 import { CreateRegistryPage } from "@/pages/registry/CreateRegistryPage";
 import { EditRegistryPage } from "@/pages/registry/EditRegistryPage";
 import { RegistryPage } from "@/pages/registry/RegistryPage";
+import { AddItemPage } from "@/pages/registry/AddItemPage";
+import { EditItemPage } from "@/pages/registry/EditItemPage";
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +47,22 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <EditRegistryPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "r/:slug/items/new",
+        element: (
+          <RequireAuth>
+            <AddItemPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "r/:slug/items/:id/edit",
+        element: (
+          <RequireAuth>
+            <EditItemPage />
           </RequireAuth>
         ),
       },
