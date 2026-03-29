@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -18,6 +18,8 @@ type FormValues = z.infer<typeof schema>;
 
 export function LoginPage(): React.ReactElement {
   const login = useLogin();
+  const location = useLocation();
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
   const {
     register,
     handleSubmit,
@@ -34,7 +36,7 @@ export function LoginPage(): React.ReactElement {
       <form
         noValidate
         className="space-y-4"
-        onSubmit={handleSubmit((values) => login.mutate(values))}
+        onSubmit={handleSubmit((values) => login.mutate({ ...values, ...(from !== undefined && { from }) }))}
       >
         <FormField label="Email" htmlFor="email" error={errors.email?.message}>
           <Input id="email" type="email" autoComplete="email" {...register("email")} />

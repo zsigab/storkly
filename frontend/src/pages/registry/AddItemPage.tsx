@@ -7,7 +7,7 @@ export function AddItemPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
   const safeSlug = slug ?? "";
   const createItem = useCreateItem(safeSlug);
-  const { data: categories = [] } = useRegistryCategories(safeSlug);
+  const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);
 
   return (
     <div className="mx-auto max-w-lg space-y-6 py-10">
@@ -17,14 +17,18 @@ export function AddItemPage(): React.ReactElement {
         </Link>
         <h1 className="text-3xl font-semibold tracking-tight">Add item</h1>
       </div>
-      <ItemForm
-        categories={categories}
-        onSubmit={(values) => createItem.mutate(values)}
-        isPending={createItem.isPending}
-        isError={createItem.isError}
-        error={createItem.error}
-        submitLabel="Add item"
-      />
+      {categoriesPending ? (
+        <p className="text-muted-foreground">Loading…</p>
+      ) : (
+        <ItemForm
+          categories={categories ?? []}
+          onSubmit={(values) => createItem.mutate(values)}
+          isPending={createItem.isPending}
+          isError={createItem.isError}
+          error={createItem.error}
+          submitLabel="Add item"
+        />
+      )}
     </div>
   );
 }

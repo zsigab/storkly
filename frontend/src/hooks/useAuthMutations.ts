@@ -9,16 +9,18 @@ export function useLogin() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (values: { email: string; password: string }) => {
-      const { data, error } = await api.POST("/api/auth/login", { body: values });
+    mutationFn: async (values: { email: string; password: string; from?: string }) => {
+      const { data, error } = await api.POST("/api/auth/login", {
+        body: { email: values.email, password: values.password },
+      });
       if (error !== undefined) throw error;
       if (data === undefined || data === null) throw new Error("No response from server");
-      return data;
+      return { user: data, from: values.from };
     },
-    onSuccess: (data) => {
-      login(data);
+    onSuccess: ({ user, from }) => {
+      login(user);
       void queryClient.invalidateQueries();
-      void navigate("/");
+      void navigate(from ?? "/");
     },
   });
 }

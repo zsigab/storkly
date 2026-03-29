@@ -44,14 +44,14 @@ describe("AddItemPage", () => {
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     renderPage();
     expect(screen.getByRole("heading", { name: /add item/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/title/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText(/title/i)).toBeInTheDocument());
   });
 
   it("shows validation error when title is empty", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     renderPage();
-    fireEvent.click(screen.getByRole("button", { name: /add item/i }));
+    await waitFor(() => fireEvent.click(screen.getByRole("button", { name: /add item/i })));
     await waitFor(() => expect(screen.getByText(/title is required/i)).toBeInTheDocument());
   });
 
@@ -70,6 +70,7 @@ describe("AddItemPage", () => {
       response: new Response(),
     });
     renderPage();
+    await waitFor(() => expect(screen.getByLabelText(/title/i)).toBeInTheDocument());
     fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Baby Carrier" } });
     fireEvent.click(screen.getByRole("button", { name: /add item/i }));
     await waitFor(() =>

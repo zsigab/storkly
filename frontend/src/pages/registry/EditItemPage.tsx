@@ -26,10 +26,10 @@ export function EditItemPage(): React.ReactElement {
   const safeSlug = slug ?? "";
   const safeId = id ?? "";
   const { data: item, isPending, isError } = useItem(safeId);
-  const { data: categories = [] } = useRegistryCategories(safeSlug);
+  const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);
   const updateItem = useUpdateItem(safeSlug);
 
-  if (isPending) {
+  if (isPending || categoriesPending) {
     return (
       <div className="mx-auto max-w-lg py-10 text-center">
         <p className="text-muted-foreground">Loading…</p>
@@ -65,7 +65,7 @@ export function EditItemPage(): React.ReactElement {
           quantityDesired: String(item.quantityDesired),
           notes: item.notes ?? "",
         }}
-        categories={categories}
+        categories={categories ?? []}
         onSubmit={(values) => updateItem.mutate({ id: safeId, ...values })}
         isPending={updateItem.isPending}
         isError={updateItem.isError}

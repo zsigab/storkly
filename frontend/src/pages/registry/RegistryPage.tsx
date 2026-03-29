@@ -31,19 +31,42 @@ export function RegistryPage(): React.ReactElement {
 
   if (isError) {
     const status = getApiErrorStatus(error);
+    const currentPath = `/r/${safeSlug}${inviteToken !== null ? `?invite=${inviteToken}` : ""}`;
     return (
       <div className="mx-auto max-w-2xl space-y-4 py-10 text-center">
         <h1 className="text-3xl font-semibold tracking-tight">
           {status === 403 ? "Private registry" : "Not found"}
         </h1>
-        <p className="text-muted-foreground">
-          {status === 403
-            ? "This registry is private. You need an invite to view it."
-            : "This registry doesn't exist."}
-        </p>
-        <Link to="/" className="text-primary text-sm hover:underline">
-          Go home
-        </Link>
+        {status === 403 && inviteToken !== null ? (
+          <>
+            <p className="text-muted-foreground">
+              You need an account to join this registry with your invite link.
+            </p>
+            <div className="flex justify-center gap-3">
+              <Button asChild>
+                <Link to="/register" state={{ from: { pathname: currentPath } }}>
+                  Create account
+                </Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/login" state={{ from: { pathname: currentPath } }}>
+                  Sign in
+                </Link>
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-muted-foreground">
+              {status === 403
+                ? "This registry is private. You need an invite to view it."
+                : "This registry doesn't exist."}
+            </p>
+            <Link to="/" className="text-primary text-sm hover:underline">
+              Go home
+            </Link>
+          </>
+        )}
       </div>
     );
   }
