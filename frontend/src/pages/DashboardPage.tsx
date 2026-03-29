@@ -4,12 +4,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RegistryCard } from "@/components/registry/RegistryCard";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
-import { useMyRegistries, useUnsubscribeRegistry } from "@/hooks/useRegistries";
+import { useMyRegistries } from "@/hooks/useRegistries";
 
 export function DashboardPage(): React.ReactElement {
   const { user } = useAuth();
   const { data: registries, isPending, isError, error } = useMyRegistries();
-  const unsubscribe = useUnsubscribeRegistry();
 
   const ownedRegistries = registries?.filter((r) => r.ownerId === user?.id) ?? [];
   const subscribedRegistries = registries?.filter((r) => r.ownerId !== user?.id) ?? [];
@@ -55,27 +54,9 @@ export function DashboardPage(): React.ReactElement {
           <h2 className="text-xl font-semibold tracking-tight">Following</h2>
           <div className="space-y-3">
             {subscribedRegistries.map((registry) => (
-              <div key={registry.id} className="flex items-stretch gap-2">
-                <div className="min-w-0 flex-1">
-                  <RegistryCard registry={registry} />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 self-center"
-                  onClick={() => unsubscribe.mutate(registry.slug)}
-                  disabled={unsubscribe.isPending}
-                >
-                  Unsubscribe
-                </Button>
-              </div>
+              <RegistryCard key={registry.id} registry={registry} />
             ))}
           </div>
-          {unsubscribe.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>{getApiErrorMessage(unsubscribe.error)}</AlertDescription>
-            </Alert>
-          )}
         </div>
       )}
     </div>

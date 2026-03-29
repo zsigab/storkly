@@ -12,8 +12,10 @@ import {
   useRegistry,
   useDeleteRegistry,
   useJoinRegistry,
+  useMyRegistries,
   useRegistryCategories,
   useRegistrySubscribers,
+  useUnsubscribeRegistry,
 } from "@/hooks/useRegistries";
 import { useRegistryItems } from "@/hooks/useItems";
 
@@ -28,9 +30,15 @@ export function RegistryPage(): React.ReactElement {
   const { data: items = [] } = useRegistryItems(safeSlug);
   const deleteRegistry = useDeleteRegistry();
   const joinRegistry = useJoinRegistry(safeSlug);
+  const unsubscribeRegistry = useUnsubscribeRegistry();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const isOwner = user !== null && registry !== undefined && user.id === registry.ownerId;
   const { data: subscribers = [] } = useRegistrySubscribers(safeSlug, isOwner);
+  const { data: myRegistries = [] } = useMyRegistries();
+  const isSubscriber =
+    user !== null &&
+    !isOwner &&
+    myRegistries.some((r) => r.slug === safeSlug && r.ownerId !== user.id);
 
   if (isPending) {
     return (
@@ -134,14 +142,20 @@ export function RegistryPage(): React.ReactElement {
           )}
         </div>
         {isOwner && (
-          <div className="flex shrink-0 gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-              Delete
-            </Button>
-          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
+          </Button>
+        )}
+        {isSubscriber && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => unsubscribeRegistry.mutate(registry.slug)}
+            disabled={unsubscribeRegistry.isPending}
+          >
+            {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
+          </Button>
         )}
       </div>
 
