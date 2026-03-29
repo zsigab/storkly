@@ -44,7 +44,13 @@ export function ConfirmNameDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 pt-2">
+        <form
+          className="space-y-4 pt-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (value === confirmName) onConfirm();
+          }}
+        >
           <p className="text-sm">
             Type <span className="font-semibold">{confirmName}</span> to confirm.
           </p>
@@ -55,18 +61,23 @@ export function ConfirmNameDialog({
             autoFocus
           />
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
             <Button
+              type="submit"
               variant="destructive"
-              onClick={onConfirm}
               disabled={value !== confirmName || isPending}
             >
               {isPending ? "Deleting…" : confirmLabel}
             </Button>
           </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   );
