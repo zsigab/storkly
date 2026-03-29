@@ -50,21 +50,42 @@ export function RegistryPage(): React.ReactElement {
         </h1>
         {status === 403 && inviteToken !== null ? (
           <>
-            <p className="text-muted-foreground">
-              You need an account to join this registry with your invite link.
-            </p>
-            <div className="flex justify-center gap-3">
-              <Button asChild>
-                <Link to="/register" state={{ from: { pathname: currentPath } }}>
-                  Create account
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link to="/login" state={{ from: { pathname: currentPath } }}>
-                  Sign in
-                </Link>
-              </Button>
-            </div>
+            {user !== null ? (
+              <>
+                <p className="text-muted-foreground">
+                  You have been invited to join this registry.
+                </p>
+                <Button
+                  onClick={() => joinRegistry.mutate(inviteToken)}
+                  disabled={joinRegistry.isPending}
+                >
+                  {joinRegistry.isPending ? "Joining…" : "Join registry"}
+                </Button>
+                {joinRegistry.isError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{getApiErrorMessage(joinRegistry.error)}</AlertDescription>
+                  </Alert>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-muted-foreground">
+                  You need an account to join this registry with your invite link.
+                </p>
+                <div className="flex justify-center gap-3">
+                  <Button asChild>
+                    <Link to="/register" state={{ from: { pathname: currentPath } }}>
+                      Create account
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link to="/login" state={{ from: { pathname: currentPath } }}>
+                      Sign in
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            )}
           </>
         ) : (
           <>
