@@ -67,7 +67,7 @@ class AuthServiceTest {
 
     @Test
     void register_success_savesUserAndSendsVerificationEmail() {
-        when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password123")).thenReturn("hashed");
         UUID savedId = UUID.randomUUID();
         User savedUser = User.builder()
@@ -89,8 +89,18 @@ class AuthServiceTest {
     }
 
     @Test
-    void register_emailAlreadyRegistered_throwsEmailAlreadyRegisteredException() {
-        when(userRepository.existsByEmail("alice@example.com")).thenReturn(true);
+    void register_verifiedEmailExists_throwsEmailAlreadyRegisteredException() {
+        User verified = User.builder()
+                .id(UUID.randomUUID())
+                .email("alice@example.com")
+                .passwordHash("hashed")
+                .displayName("Alice")
+                .emailVerifiedAt(OffsetDateTime.now())
+                .provider(AuthProvider.LOCAL)
+                .role(UserRole.USER)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(verified));
 
         assertThatThrownBy(() -> authService.register("alice@example.com", "password123", "Alice", "captcha-token"))
                 .isInstanceOf(EmailAlreadyRegisteredException.class)
@@ -101,9 +111,41 @@ class AuthServiceTest {
     }
 
     @Test
-    void register_captchaDisabled_doesNotCallTurnstileVerify() {
-        // TurnstileService.assertValid is a no-op when disabled — we just verify it is called
-        when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
+    void register_unverifiedEmailExists_deletesOldAndRegistersNew() {
+        UUID oldId = UUID.randomUUID();
+        User unverified = User.builder()
+                .id(oldId)
+                .email("alice@example.com")
+                .passwordHash("old-hash")
+                .displayName("Old Alice")
+                .provider(AuthProvider.LOCAL)
+                .role(UserRole.USER)
+                .createdAt(OffsetDateTime.now().minusHours(1))
+                .build();
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(unverified));
+        when(passwordEncoder.encode("password123")).thenReturn("new-hash");
+        UUID savedId = UUID.randomUUID();
+        User savedUser = User.builder()
+                .id(savedId)
+                .email("alice@example.com")
+                .passwordHash("new-hash")
+                .displayName("Alice")
+                .provider(AuthProvider.LOCAL)
+                .role(UserRole.USER)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+
+        authService.register("alice@example.com", "password123", "Alice", "captcha-token");
+
+        verify(userRepository).deleteById(oldId);
+        verify(userRepository).save(any(User.class));
+        verify(emailService).sendEmailVerification(eq("alice@example.com"), anyString());
+    }
+
+    @Test
+    void register_callsTurnstileValidation() {
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password123")).thenReturn("hashed");
         UUID savedId = UUID.randomUUID();
         User savedUser = User.builder()
@@ -119,7 +161,6 @@ class AuthServiceTest {
 
         authService.register("alice@example.com", "password123", "Alice", "any-token");
 
-        // assertValid is always called; when disabled it is a no-op in TurnstileService
         verify(turnstileService).assertValid("any-token");
     }
 

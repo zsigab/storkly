@@ -13,4 +13,8 @@ public interface UserRepository {
     Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerId);
 
     boolean existsByEmail(String email);
+
+    void deleteById(UUID id);
+
+    void deleteUnverifiedBefore(java.time.OffsetDateTime cutoff);
 }

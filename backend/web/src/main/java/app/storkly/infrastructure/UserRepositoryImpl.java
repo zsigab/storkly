@@ -2,6 +2,8 @@ package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.USER;
 
+import java.time.OffsetDateTime;
+
 import app.storkly.domain.generated.tables.records.UserRecord;
 import app.storkly.domain.user.AuthProvider;
 import app.storkly.domain.user.User;
@@ -81,6 +83,18 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public boolean existsByEmail(String email) {
         return dsl.fetchCount(USER, USER.EMAIL.eq(email)) > 0;
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        dsl.deleteFrom(USER).where(USER.ID.eq(id)).execute();
+    }
+
+    @Override
+    public void deleteUnverifiedBefore(OffsetDateTime cutoff) {
+        dsl.deleteFrom(USER)
+                .where(USER.EMAIL_VERIFIED_AT.isNull().and(USER.CREATED_AT.lt(cutoff)))
+                .execute();
     }
 
     private User toUser(UserRecord r) {

@@ -34,9 +34,13 @@ public class AuthService {
     @Transactional
     public void register(String email, String password, String displayName, String captchaToken) {
         turnstileService.assertValid(captchaToken);
-        if (userRepository.existsByEmail(email)) {
-            throw new EmailAlreadyRegisteredException(email);
-        }
+        userRepository.findByEmail(email).ifPresent(existing -> {
+            if (existing.emailVerifiedAt() != null) {
+                throw new EmailAlreadyRegisteredException(email);
+            }
+            // Unverified account — delete it so re-registration can proceed
+            userRepository.deleteById(existing.id());
+        });
         User user = User.builder()
                 .email(email)
                 .passwordHash(passwordEncoder.encode(password))
