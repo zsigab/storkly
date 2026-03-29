@@ -121,10 +121,19 @@ export function RegistryPage(): React.ReactElement {
 
   if (registry === undefined) return <></>;
 
+  const claimedItemIds = new Set(allClaims.map((c) => c.itemId));
+  const sortByClaimed = (a: { id: string }, b: { id: string }): number => {
+    const aClaimed = claimedItemIds.has(a.id) ? 1 : 0;
+    const bClaimed = claimedItemIds.has(b.id) ? 1 : 0;
+    return aClaimed - bClaimed;
+  };
   const categoriesWithItems = categories
-    .map((cat) => ({ cat, catItems: items.filter((i) => i.categoryId === cat.id) }))
+    .map((cat) => ({
+      cat,
+      catItems: items.filter((i) => i.categoryId === cat.id).sort(sortByClaimed),
+    }))
     .filter(({ catItems }) => catItems.length > 0);
-  const uncategorizedItems = items.filter((i) => i.categoryId === null);
+  const uncategorizedItems = items.filter((i) => i.categoryId === null).sort(sortByClaimed);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-10">
