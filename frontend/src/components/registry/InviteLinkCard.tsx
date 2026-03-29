@@ -30,29 +30,24 @@ export function InviteLinkCard({ slug }: InviteLinkCardProps): React.ReactElemen
   };
 
   return (
-    <div className="border-border space-y-3 rounded-lg border p-4">
-      <h3 className="text-sm font-semibold">Invite link</h3>
-      {inviteUrl !== null ? (
-        <>
-          <div className="flex gap-2">
-            <Input value={inviteUrl} readOnly className="text-xs" />
-            <Button variant="outline" size="sm" onClick={handleCopy}>
-              {copied ? "Copied!" : "Copy"}
-            </Button>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGenerate}
-            disabled={generateInvite.isPending}
-          >
-            Generate new link
-          </Button>
-        </>
-      ) : (
-        <Button variant="outline" onClick={handleGenerate} disabled={generateInvite.isPending}>
+    <div className="space-y-2">
+      {inviteUrl === null && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleGenerate}
+          disabled={generateInvite.isPending}
+        >
           {generateInvite.isPending ? "Generating…" : "Get invite link"}
         </Button>
+      )}
+      {inviteUrl !== null && (
+        <div className="flex gap-2">
+          <Input value={inviteUrl} readOnly className="text-xs" />
+          <Button variant="outline" size="sm" onClick={handleCopy}>
+            {copied ? "Copied!" : "Copy"}
+          </Button>
+        </div>
       )}
       {generateInvite.isError && (
         <Alert variant="destructive">
