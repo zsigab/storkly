@@ -1,9 +1,11 @@
 package app.storkly.service.item;
 
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.item.Item;
+import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.item.ItemFlag;
 import app.storkly.domain.item.ItemRepository;
 import app.storkly.domain.item.SourceSite;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ItemService {
 
     private final ItemRepository itemRepository;
+    private final ClaimRepository claimRepository;
     private final RegistryRepository registryRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
     private final RegistrySubscriptionRepository subscriptionRepository;
@@ -136,6 +139,9 @@ public class ItemService {
                 .orElseThrow(
                         () -> new RegistryNotFoundException(item.registryId().toString()));
         assertWriteAccess(registry, currentUserId);
+        if (claimRepository.existsActiveByItemId(id)) {
+            throw new ItemHasClaimsException(id);
+        }
         itemRepository.deleteById(id);
     }
 

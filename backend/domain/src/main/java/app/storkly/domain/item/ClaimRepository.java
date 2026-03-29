@@ -14,5 +14,7 @@ public interface ClaimRepository {
 
     List<Claim> findActiveByItemId(UUID itemId);
 
+    boolean existsActiveByItemId(UUID itemId);
+
     void release(UUID id, OffsetDateTime releasedAt);
 }

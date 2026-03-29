@@ -67,6 +67,11 @@ public class ClaimRepositoryImpl implements ClaimRepository {
     }
 
     @Override
+    public boolean existsActiveByItemId(UUID itemId) {
+        return dsl.fetchCount(CLAIM, CLAIM.ITEM_ID.eq(itemId).and(CLAIM.RELEASED_AT.isNull())) > 0;
+    }
+
+    @Override
     public void release(UUID id, OffsetDateTime releasedAt) {
         dsl.update(CLAIM)
                 .set(CLAIM.RELEASED_AT, releasedAt)

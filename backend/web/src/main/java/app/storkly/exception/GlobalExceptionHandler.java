@@ -2,6 +2,7 @@ package app.storkly.exception;
 
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.AlreadySubscribedException;
+import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.CategoryNotFoundException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
@@ -33,8 +34,8 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler(AlreadySubscribedException.class)
-    public ProblemDetail handleConflictSubscription(AlreadySubscribedException ex) {
+    @ExceptionHandler({AlreadySubscribedException.class, ItemHasClaimsException.class})
+    public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }
 
