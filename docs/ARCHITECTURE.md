@@ -43,9 +43,11 @@ Storkly is a self-hosted, open-source gift registry web application. Users creat
 |---|---|---|
 | F-10 | User can create multiple registries | 1 |
 | F-11 | Each registry has a unique shareable invite link | 1 |
-| F-12 | Registry can be public (view without account) or private (invite + account) | 1 |
+| F-12 | Registry can be public, private (invite + account), or hidden (owner + co-owners only) | 1 |
 | F-13 | Owner can edit registry name, description, visibility | 1 |
-| F-14 | Owner can delete a registry | 1 |
+| F-14 | Owner can delete a registry (name-confirmation popup, like GitHub repo deletion) | 1 |
+| F-15 | Registry page shows subscriber list (owner view) | 1 |
+| F-16 | Subscriber can unsubscribe from a registry via dashboard | 1 |
 
 ### 3.3 Item Management
 
@@ -60,7 +62,7 @@ Storkly is a self-hosted, open-source gift registry web application. Users creat
 | F-26 | Desired quantity per item (default: 1) | 1 |
 | F-27 | Assign item to category | 1 |
 | F-28 | Reorder items within a category | 1 |
-| F-29 | Delete / archive items | 1 |
+| F-29 | Delete / archive items (blocked if item has claims) | 1 |
 | F-30 | No automatic price re-scanning (price captured once at add time) | — |
 
 ### 3.4 Item Flags
@@ -228,7 +230,7 @@ User
 
 Registry
   id (UUID), owner_id → User, name, slug (unique URL-safe),
-  description, visibility (PUBLIC | PRIVATE), created_at
+  description, visibility (PUBLIC | PRIVATE | HIDDEN), created_at
 
 RegistryCoOwner
   registry_id → Registry, user_id → User, added_at
@@ -573,6 +575,42 @@ services:
 **1M: DataSeeder Verification**
 - Confirm full UI traversal works with seeded data
 - Document how to run: `SEED_DATA=true ./gradlew :web:bootRun`
+
+**1N: Safe Deletion**
+- Registry delete: confirmation popup requiring user to type registry name (GitHub-style)
+- Item delete: block deletion of items that have active claims (backend returns 409 Conflict)
+
+**1O: Contributor Dashboard**
+- Dashboard shows subscribed registries alongside owned ones
+- Unsubscribe button on subscribed registries
+
+**1P: Unverified Account Cleanup**
+- `@Scheduled` job deletes unverified users older than 24 hours
+- Handle re-registration of the same email gracefully (upsert or delete-then-insert)
+
+**1Q: Navigation UX**
+- Logo links to dashboard when logged in, landing page when not
+- Remove "Dashboard" link from header
+- Add "Back to dashboard" breadcrumb/link on registry pages
+
+**1R: Item Card Redesign**
+- Horizontal layout: [image | text/description | buttons]
+- Category-based placeholder images when no scraped image exists
+- Remove red delete buttons from the registry item list
+
+**1S: Item Edit UX**
+- Move delete action into the edit form (no standalone delete button on list)
+- Quantity reduced to 0 on unsaved item → grey "Discard" button replaces "Save Changes"
+- Quantity reduced to 0 on saved item → red "Delete" button replaces "Save Changes"
+
+**1T: Registry Edit UX**
+- Move delete button to edit screen (top-right, greyscale, not red)
+- Delete requires name-confirmation popup (GitHub-style)
+- Add `HIDDEN` visibility option (owner + co-owners only)
+- Back button at top of edit screen returns to registry without saving
+
+**1U: Registry Subscribers**
+- Show subscriber list on registry page (visible to owner)
 
 ---
 
