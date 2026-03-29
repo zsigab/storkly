@@ -16,7 +16,7 @@ const schema = z.object({
   currency: z.string(),
   categoryId: z.string(),
   flag: z.enum(["EXACT_ONLY", "SIMILAR_OK", "SIMILAR_CHEAPER"]),
-  quantityDesired: z.coerce.number().int().min(1, "Quantity must be at least 1"),
+  quantityDesired: z.string().refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1, "Quantity must be at least 1"),
   notes: z.string(),
 });
 
@@ -67,7 +67,7 @@ export function ItemForm({
       currency: "",
       categoryId: categories.find((c) => c.isDefault)?.id ?? categories[0]?.id ?? "",
       flag: "EXACT_ONLY",
-      quantityDesired: 1,
+      quantityDesired: "1",
       notes: "",
       ...defaultValues,
     },
@@ -87,7 +87,7 @@ export function ItemForm({
           currency: values.currency.length > 0 ? values.currency : null,
           categoryId: values.categoryId.length > 0 ? values.categoryId : null,
           flag: values.flag,
-          quantityDesired: values.quantityDesired,
+          quantityDesired: parseInt(values.quantityDesired, 10),
           notes: values.notes.length > 0 ? values.notes : null,
         }),
       )}

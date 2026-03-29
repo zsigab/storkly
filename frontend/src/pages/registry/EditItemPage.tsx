@@ -62,7 +62,7 @@ export function EditItemPage(): React.ReactElement {
           currency: item.currency ?? "",
           categoryId: item.categoryId ?? "",
           flag: item.flag,
-          quantityDesired: item.quantityDesired,
+          quantityDesired: String(item.quantityDesired),
           notes: item.notes ?? "",
         }}
         categories={categories}

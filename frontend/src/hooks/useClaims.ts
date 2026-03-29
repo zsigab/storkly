@@ -26,12 +26,12 @@ export function useClaimItem(slug: string) {
       claimerEmail,
     }: {
       itemId: string;
-      claimerName?: string | null;
-      claimerEmail?: string | null;
+      claimerName?: string;
+      claimerEmail?: string;
     }): Promise<ClaimResponse> => {
       const { data, error } = await api.POST("/api/items/{id}/claims", {
         params: { path: { id: itemId } },
-        body: { claimerName, claimerEmail, quantityClaimed: 1 },
+        body: { claimerName: claimerName ?? null, claimerEmail: claimerEmail ?? null, quantityClaimed: 1 },
       });
       if (error !== undefined) throw error;
       if (data === undefined || data === null) throw new Error("No response from server");
