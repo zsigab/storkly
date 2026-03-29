@@ -41,6 +41,7 @@ export function RegistryPage(): React.ReactElement {
     subscribers.map((s) => [s.userId, s.displayName]),
   );
   const [hasUnsubscribed, setHasUnsubscribed] = useState(false);
+  const [subscribersOpen, setSubscribersOpen] = useState(false);
   const userHasClaims = user !== null && allClaims.some((c) => c.claimerUserId === user.id);
 
   useEffect(() => {
@@ -206,40 +207,48 @@ export function RegistryPage(): React.ReactElement {
 
       {isOwner && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold">
-            Subscribers{" "}
-            <span className="text-muted-foreground text-base font-normal">
-              ({subscribers.length})
-            </span>
-          </h2>
-          {subscribers.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No subscribers yet.</p>
-          ) : (
-            <ul className="space-y-2">
-              {subscribers.map((subscriber) => {
-                const claimedItems = allClaims
-                  .filter((c) => c.claimerUserId === subscriber.userId)
-                  .map((c) => items.find((i) => i.id === c.itemId))
-                  .filter((i) => i !== undefined);
-                return (
-                  <li key={subscriber.userId} className="space-y-1 rounded-lg border px-3 py-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{subscriber.displayName}</span>
-                      <span className="text-muted-foreground text-xs">
-                        {new Date(subscriber.joinedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {claimedItems.length > 0 && (
-                      <p className="text-muted-foreground text-xs">
-                        {"Claimed: "}
-                        {claimedItems.map((i) => i.title).join(", ")}
-                      </p>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <button
+            type="button"
+            className="flex items-center gap-1 text-left"
+            onClick={() => setSubscribersOpen((o) => !o)}
+          >
+            <h2 className="text-lg font-semibold">
+              Subscribers{" "}
+              <span className="text-muted-foreground text-base font-normal">
+                ({subscribers.length})
+              </span>
+            </h2>
+            <span className="text-muted-foreground text-sm">{subscribersOpen ? "▲" : "▼"}</span>
+          </button>
+          {subscribersOpen &&
+            (subscribers.length === 0 ? (
+              <p className="text-muted-foreground text-sm">No subscribers yet.</p>
+            ) : (
+              <ul className="space-y-2">
+                {subscribers.map((subscriber) => {
+                  const claimedItems = allClaims
+                    .filter((c) => c.claimerUserId === subscriber.userId)
+                    .map((c) => items.find((i) => i.id === c.itemId))
+                    .filter((i) => i !== undefined);
+                  return (
+                    <li key={subscriber.userId} className="space-y-1 rounded-lg border px-3 py-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{subscriber.displayName}</span>
+                        <span className="text-muted-foreground text-xs">
+                          {new Date(subscriber.joinedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {claimedItems.length > 0 && (
+                        <p className="text-muted-foreground text-xs">
+                          {"Claimed: "}
+                          {claimedItems.map((i) => i.title).join(", ")}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            ))}
         </div>
       )}
 
