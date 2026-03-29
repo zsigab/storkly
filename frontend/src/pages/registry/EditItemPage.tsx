@@ -33,7 +33,7 @@ export function EditItemPage(): React.ReactElement {
 
   if (isPending || categoriesPending) {
     return (
-      <div className="mx-auto max-w-lg py-10 text-center">
+      <div className="mx-auto max-w-2xl py-10 text-center">
         <p className="text-muted-foreground">Loading…</p>
       </div>
     );
@@ -41,7 +41,7 @@ export function EditItemPage(): React.ReactElement {
 
   if (isError || item === undefined) {
     return (
-      <div className="mx-auto max-w-lg py-10 text-center">
+      <div className="mx-auto max-w-2xl py-10 text-center">
         <p className="text-muted-foreground">Item not found.</p>
       </div>
     );
@@ -56,7 +56,7 @@ export function EditItemPage(): React.ReactElement {
   };
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 py-10">
+    <div className="mx-auto max-w-2xl space-y-6 py-10">
       <div className="space-y-1">
         <Link to={`/r/${safeSlug}`} className="text-muted-foreground hover:text-foreground text-sm">
           ← Back to registry

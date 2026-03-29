@@ -10,7 +10,7 @@ export function AddItemPage(): React.ReactElement {
   const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 py-10">
+    <div className="mx-auto max-w-2xl space-y-6 py-10">
       <div className="space-y-1">
         <Link to={`/r/${safeSlug}`} className="text-muted-foreground hover:text-foreground text-sm">
           ← Back to registry
