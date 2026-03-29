@@ -154,7 +154,7 @@ export function RegistryPage(): React.ReactElement {
         )}
       </div>
 
-      {inviteToken !== null && !isOwner && (
+      {inviteToken !== null && !isOwner && !isSubscriber && (
         <div className="border-border space-y-3 rounded-lg border p-4">
           <p className="text-sm font-medium">You've been invited to join this registry.</p>
           {joinRegistry.isSuccess ? (
