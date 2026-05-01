@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryInviteRepository;
@@ -13,6 +14,7 @@ import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistrySubscriber;
 import app.storkly.domain.registry.RegistrySubscriptionRepository;
 import app.storkly.domain.registry.RegistryVisibility;
+import app.storkly.service.registry.RegistryAccessService;
 import app.storkly.service.registry.RegistryService;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -39,12 +41,23 @@ class RegistryServiceTest {
     @Mock
     private RegistryCoOwnerRepository coOwnerRepository;
 
+    @Mock
+    private RegistryAccessService registryAccessService;
+
+    @Mock
+    private ClaimRepository claimRepository;
+
     private RegistryService registryService;
 
     @BeforeEach
     void setUp() {
-        registryService =
-                new RegistryService(registryRepository, inviteRepository, subscriptionRepository, coOwnerRepository);
+        registryService = new RegistryService(
+                registryRepository,
+                inviteRepository,
+                subscriptionRepository,
+                coOwnerRepository,
+                registryAccessService,
+                claimRepository);
     }
 
     @Test
