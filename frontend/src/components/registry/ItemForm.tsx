@@ -48,6 +48,7 @@ interface ItemFormProps {
   submitLabel: string;
   onDelete?: () => void;
   isDeletePending?: boolean;
+  isClaimed?: boolean;
 }
 
 export function ItemForm({
@@ -60,6 +61,7 @@ export function ItemForm({
   submitLabel,
   onDelete,
   isDeletePending = false,
+  isClaimed = false,
 }: ItemFormProps): React.ReactElement {
   const {
     register,
@@ -215,10 +217,15 @@ export function ItemForm({
             variant="destructive"
             className="w-full"
             onClick={onDelete}
-            disabled={isDeletePending}
+            disabled={isDeletePending || isClaimed}
           >
             {isDeletePending ? "Deleting…" : "Delete item"}
           </Button>
+          {isClaimed && (
+            <p className="text-muted-foreground text-center text-sm">
+              This item has been claimed and cannot be deleted.
+            </p>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -235,15 +242,22 @@ export function ItemForm({
             {isPending ? "Saving…" : submitLabel}
           </Button>
           {onDelete !== undefined && (
-            <Button
-              type="button"
-              variant="destructive"
-              className="w-full"
-              onClick={onDelete}
-              disabled={isDeletePending}
-            >
-              {isDeletePending ? "Deleting…" : "Delete item"}
-            </Button>
+            <>
+              <Button
+                type="button"
+                variant="destructive"
+                className="w-full"
+                onClick={onDelete}
+                disabled={isDeletePending || isClaimed}
+              >
+                {isDeletePending ? "Deleting…" : "Delete item"}
+              </Button>
+              {isClaimed && (
+                <p className="text-muted-foreground text-center text-sm">
+                  This item has been claimed and cannot be deleted.
+                </p>
+              )}
+            </>
           )}
         </>
       )}

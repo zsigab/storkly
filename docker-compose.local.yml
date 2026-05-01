@@ -7,6 +7,7 @@
 
 services:
   caddy:
+    container_name: storkly-caddy
     image: caddy:2-alpine
     ports:
       - "3000:8080"
@@ -18,6 +19,7 @@ services:
     restart: unless-stopped
 
   api:
+    container_name: storkly-api
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -41,6 +43,7 @@ services:
     restart: unless-stopped
 
   postgres:
+    container_name: storkly-postgres
     image: postgres:16-alpine
     ports:
       - "5432:5432"
@@ -58,6 +61,7 @@ services:
     restart: unless-stopped
 
   mailpit:
+    container_name: storkly-mailpit
     image: axllent/mailpit:latest
     ports:
       - "8025:8025"

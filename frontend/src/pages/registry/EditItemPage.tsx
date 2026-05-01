@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router";
 import { ItemForm } from "@/components/registry/ItemForm";
 import { useUpdateItem, useDeleteItem } from "@/hooks/useItems";
+import { useItemClaims } from "@/hooks/useClaims";
 import { useRegistryCategories } from "@/hooks/useRegistries";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/api";
@@ -28,8 +29,11 @@ export function EditItemPage(): React.ReactElement {
   const safeId = id ?? "";
   const { data: item, isPending, isError } = useItem(safeId);
   const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);
+  const { data: claims } = useItemClaims(safeId);
   const updateItem = useUpdateItem(safeSlug);
   const deleteItem = useDeleteItem(safeSlug);
+
+  const isClaimed = (claims ?? []).reduce((sum, c) => sum + c.quantityClaimed, 0) > 0;
 
   if (isPending || categoriesPending) {
     return (
@@ -84,6 +88,7 @@ export function EditItemPage(): React.ReactElement {
         submitLabel="Save changes"
         onDelete={handleDelete}
         isDeletePending={deleteItem.isPending}
+        isClaimed={isClaimed}
       />
     </div>
   );
