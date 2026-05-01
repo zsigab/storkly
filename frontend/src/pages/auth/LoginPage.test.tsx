@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LoginPage } from "./LoginPage";
@@ -22,14 +22,19 @@ function makeClient() {
 function renderPage() {
   render(
     <QueryClientProvider client={makeClient()}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/login"]}>
         <AuthProvider>
-          <LoginPage />
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/dashboard" element={<div>Dashboard</div>} />
+          </Routes>
         </AuthProvider>
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
+
+const storedUser = JSON.stringify({ id: "1", email: "a@b.com", displayName: "Alice" });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -91,5 +96,12 @@ describe("LoginPage", () => {
     fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "wrongpass" } });
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
     await waitFor(() => expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument());
+  });
+
+  it("redirects to /dashboard when already logged in", () => {
+    vi.mocked(window.localStorage.getItem).mockReturnValue(storedUser);
+    renderPage();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /sign in/i })).not.toBeInTheDocument();
   });
 });

@@ -1,13 +1,14 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useLocation } from "react-router";
+import { Link, Navigate, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormField } from "@/components/common/FormField";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useLogin } from "@/hooks/useAuthMutations";
+import { useAuth } from "@/hooks/useAuth";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -17,6 +18,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 export function LoginPage(): React.ReactElement {
+  const { user } = useAuth();
   const login = useLogin();
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
@@ -25,6 +27,10 @@ export function LoginPage(): React.ReactElement {
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+
+  if (user !== null) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="mx-auto max-w-md space-y-6 py-16">
