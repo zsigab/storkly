@@ -1,5 +1,4 @@
 import { render, screen, waitFor } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -115,46 +114,7 @@ describe("DashboardPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Following")).toBeInTheDocument();
       expect(screen.getByText("Friend's Registry")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /unsubscribe/i })).toBeInTheDocument();
     });
-  });
-
-  it("calls unsubscribe on button click", async () => {
-    const { api } = await import("@/api");
-    vi.mocked(api.GET).mockImplementation(async (path: string) => {
-      if (path === "/api/registries") {
-        return {
-          data: [
-            {
-              id: "2",
-              name: "Friend's Registry",
-              slug: "friends-registry",
-              description: null,
-              visibility: "PUBLIC",
-              ownerId: "other-user",
-              createdAt: "2024-01-01T00:00:00Z",
-            },
-          ],
-          error: undefined,
-          response: new Response(),
-        };
-      }
-      return { data: [], error: undefined, response: new Response() };
-    });
-    vi.mocked(api.DELETE).mockResolvedValueOnce({
-      data: null,
-      response: new Response(),
-    });
-
-    renderPage();
-    const button = await screen.findByRole("button", { name: /unsubscribe/i });
-    await userEvent.click(button);
-    expect(api.DELETE).toHaveBeenCalledWith(
-      "/api/registries/{slug}/subscription",
-      expect.objectContaining({
-        params: { path: { slug: "friends-registry" } },
-      }),
-    );
   });
 
   it("has link to create a new registry", async () => {

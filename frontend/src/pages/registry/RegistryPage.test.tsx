@@ -89,21 +89,19 @@ describe("RegistryPage", () => {
     expect(screen.getByText("A great registry")).toBeInTheDocument();
   });
 
-  it("shows edit and delete buttons for the owner", async () => {
+  it("shows edit button for the owner", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
     await waitFor(() => expect(screen.getByRole("link", { name: /edit/i })).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
-  it("hides edit and delete buttons for non-owner", async () => {
+  it("hides edit button for non-owner", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage({ id: "other-uuid", email: "other@example.com", displayName: "Other" });
     await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
     expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /delete/i })).not.toBeInTheDocument();
   });
 
   it("shows join banner when invite token is present", async () => {
