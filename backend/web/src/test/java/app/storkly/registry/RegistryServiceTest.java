@@ -2,13 +2,20 @@ package app.storkly.registry;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.AlreadySubscribedException;
+import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
+import app.storkly.domain.registry.RegistryInvite;
 import app.storkly.domain.registry.RegistryInviteRepository;
 import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistrySubscriber;
@@ -120,5 +127,136 @@ class RegistryServiceTest {
 
         assertThatThrownBy(() -> registryService.findSubscribers(slug, UUID.randomUUID()))
                 .isInstanceOf(RegistryNotFoundException.class);
+    }
+
+    @Test
+    void unsubscribe_noClaims_deletesSubscription() {
+        UUID userId = UUID.randomUUID();
+        String slug = "test-registry";
+        UUID registryId = UUID.randomUUID();
+        Registry registry = Registry.builder()
+                .id(registryId)
+                .ownerId(UUID.randomUUID())
+                .name("Test")
+                .slug(slug)
+                .visibility(RegistryVisibility.PUBLIC)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
+        when(claimRepository.existsActiveByUserAndRegistry(userId, registryId)).thenReturn(false);
+
+        registryService.unsubscribe(slug, userId);
+
+        verify(subscriptionRepository).delete(userId, registryId);
+    }
+
+    @Test
+    void unsubscribe_withActiveClaims_throwsSubscriberHasClaimsException() {
+        UUID userId = UUID.randomUUID();
+        String slug = "test-registry";
+        UUID registryId = UUID.randomUUID();
+        Registry registry = Registry.builder()
+                .id(registryId)
+                .ownerId(UUID.randomUUID())
+                .name("Test")
+                .slug(slug)
+                .visibility(RegistryVisibility.PUBLIC)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
+        when(claimRepository.existsActiveByUserAndRegistry(userId, registryId)).thenReturn(true);
+
+        assertThatThrownBy(() -> registryService.unsubscribe(slug, userId))
+                .isInstanceOf(SubscriberHasClaimsException.class);
+
+        verify(subscriptionRepository, never()).delete(any(), any());
+    }
+
+    @Test
+    void join_validToken_savesSubscription() {
+        UUID userId = UUID.randomUUID();
+        String slug = "test-registry";
+        UUID registryId = UUID.randomUUID();
+        String token = "invite-token";
+        Registry registry = Registry.builder()
+                .id(registryId)
+                .ownerId(UUID.randomUUID())
+                .name("Test")
+                .slug(slug)
+                .visibility(RegistryVisibility.PRIVATE)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        RegistryInvite invite = RegistryInvite.builder()
+                .registryId(registryId)
+                .token(token)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
+        when(inviteRepository.findByToken(token)).thenReturn(Optional.of(invite));
+        when(subscriptionRepository.exists(userId, registryId)).thenReturn(false);
+
+        registryService.join(slug, token, userId);
+
+        verify(subscriptionRepository).save(userId, registryId);
+    }
+
+    @Test
+    void join_alreadySubscribed_throwsAlreadySubscribedException() {
+        UUID userId = UUID.randomUUID();
+        String slug = "test-registry";
+        UUID registryId = UUID.randomUUID();
+        String token = "invite-token";
+        Registry registry = Registry.builder()
+                .id(registryId)
+                .ownerId(UUID.randomUUID())
+                .name("Test")
+                .slug(slug)
+                .visibility(RegistryVisibility.PRIVATE)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        RegistryInvite invite = RegistryInvite.builder()
+                .registryId(registryId)
+                .token(token)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
+        when(inviteRepository.findByToken(token)).thenReturn(Optional.of(invite));
+        when(subscriptionRepository.exists(userId, registryId)).thenReturn(true);
+
+        assertThatThrownBy(() -> registryService.join(slug, token, userId))
+                .isInstanceOf(AlreadySubscribedException.class);
+
+        verify(subscriptionRepository, never()).save(any(), any());
+    }
+
+    @Test
+    void join_tokenForDifferentRegistry_throwsInvalidToken() {
+        UUID userId = UUID.randomUUID();
+        String slug = "registry-a";
+        UUID registryAId = UUID.randomUUID();
+        UUID registryBId = UUID.randomUUID();
+        String token = "wrong-registry-token";
+        Registry registry = Registry.builder()
+                .id(registryAId)
+                .ownerId(UUID.randomUUID())
+                .name("A")
+                .slug(slug)
+                .visibility(RegistryVisibility.PRIVATE)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        RegistryInvite invite = RegistryInvite.builder()
+                .registryId(registryBId)
+                .token(token)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
+        when(inviteRepository.findByToken(token)).thenReturn(Optional.of(invite));
+
+        assertThatThrownBy(() -> registryService.join(slug, token, userId)).isInstanceOf(InvalidTokenException.class);
     }
 }
