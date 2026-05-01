@@ -17,14 +17,19 @@ import { FormField } from "@/components/common/FormField";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useClaimItem } from "@/hooks/useClaims";
 
-const schema = z.object({
-  claimerName: z.string().min(1, "Name is required"),
-  claimerEmail: z.string().email("Valid email is required"),
+const baseSchema = z.object({
+  claimerName: z.string(),
+  claimerEmail: z.string(),
   amount: z.string(),
   percentage: z.number().min(0).max(100),
 });
 
-type FormValues = z.infer<typeof schema>;
+const anonymousSchema = baseSchema.extend({
+  claimerName: z.string().min(1, "Name is required"),
+  claimerEmail: z.string().email("Valid email is required"),
+});
+
+type FormValues = z.infer<typeof baseSchema>;
 
 interface ClaimDialogProps {
   open: boolean;
@@ -34,6 +39,7 @@ interface ClaimDialogProps {
   slug: string;
   priceReference?: number | null;
   currency?: string | null;
+  isAuthenticated?: boolean;
 }
 
 export function ClaimDialog({
@@ -44,6 +50,7 @@ export function ClaimDialog({
   slug,
   priceReference,
   currency,
+  isAuthenticated = false,
 }: ClaimDialogProps): React.ReactElement {
   const claimItem = useClaimItem(slug);
   const [partialEnabled, setPartialEnabled] = useState(false);
@@ -58,7 +65,7 @@ export function ClaimDialog({
     watch,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(isAuthenticated ? baseSchema : anonymousSchema),
     defaultValues: { claimerName: "", claimerEmail: "", amount: "", percentage: 100 },
   });
 
@@ -98,8 +105,9 @@ export function ClaimDialog({
     claimItem.mutate(
       {
         itemId,
-        claimerName: values.claimerName,
-        claimerEmail: values.claimerEmail,
+        ...(isAuthenticated
+          ? {}
+          : { claimerName: values.claimerName, claimerEmail: values.claimerEmail }),
         amountContributed,
         percentageContributed,
       },
@@ -121,17 +129,34 @@ export function ClaimDialog({
           <DialogDescription className="line-clamp-1">{itemTitle}</DialogDescription>
         </DialogHeader>
         <form className="space-y-4 pt-2" noValidate onSubmit={handleSubmit(onSubmit)}>
-          <FormField label="Your name" htmlFor="claimerName" error={errors.claimerName?.message}>
-            <Input id="claimerName" type="text" autoComplete="name" {...register("claimerName")} />
-          </FormField>
-          <FormField label="Your email" htmlFor="claimerEmail" error={errors.claimerEmail?.message}>
-            <Input
-              id="claimerEmail"
-              type="email"
-              autoComplete="email"
-              {...register("claimerEmail")}
-            />
-          </FormField>
+          {!isAuthenticated && (
+            <>
+              <FormField
+                label="Your name"
+                htmlFor="claimerName"
+                error={errors.claimerName?.message}
+              >
+                <Input
+                  id="claimerName"
+                  type="text"
+                  autoComplete="name"
+                  {...register("claimerName")}
+                />
+              </FormField>
+              <FormField
+                label="Your email"
+                htmlFor="claimerEmail"
+                error={errors.claimerEmail?.message}
+              >
+                <Input
+                  id="claimerEmail"
+                  type="email"
+                  autoComplete="email"
+                  {...register("claimerEmail")}
+                />
+              </FormField>
+            </>
+          )}
 
           <label className="flex cursor-pointer items-center gap-3">
             <input
@@ -189,9 +214,11 @@ export function ClaimDialog({
             </div>
           )}
 
-          <p className="text-muted-foreground text-xs">
-            We'll send you a link to un-claim this item if your plans change.
-          </p>
+          {!isAuthenticated && (
+            <p className="text-muted-foreground text-xs">
+              We'll send you a link to un-claim this item if your plans change.
+            </p>
+          )}
           {claimItem.isError && (
             <Alert variant="destructive">
               <AlertDescription>{getApiErrorMessage(claimItem.error)}</AlertDescription>

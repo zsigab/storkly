@@ -59,11 +59,7 @@ describe("UnclaimPage", () => {
 
   it("shows success state after claim is released", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.DELETE).mockResolvedValueOnce({
-      data: undefined,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.DELETE).mockResolvedValueOnce({ response: new Response() } as never);
     mockSearchParams.set("token", "valid-token");
     renderPage();
     await waitFor(() =>
@@ -74,7 +70,6 @@ describe("UnclaimPage", () => {
   it("shows error state when token is invalid", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.DELETE).mockResolvedValueOnce({
-      data: undefined,
       error: { status: 401, detail: "This claim has already been released" },
       response: new Response(),
     });

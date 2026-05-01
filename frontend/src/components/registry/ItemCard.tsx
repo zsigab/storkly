@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ClaimDialog } from "./ClaimDialog";
 import { getApiErrorMessage } from "@/api/helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useItemClaims, useClaimItem, useUnclaimItem } from "@/hooks/useClaims";
+import { useItemClaims, useUnclaimItem } from "@/hooks/useClaims";
 import { useAuth } from "@/hooks/useAuth";
 import type { ItemFlag, ItemResponse } from "@/api/schema";
 
@@ -57,7 +57,6 @@ export function ItemCard({
 }: ItemCardProps): React.ReactElement {
   const { user } = useAuth();
   const { data: claims = [] } = useItemClaims(item.id);
-  const claimItem = useClaimItem(slug);
   const unclaimItem = useUnclaimItem(slug);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
 
@@ -73,10 +72,6 @@ export function ItemCard({
 
   const myAuthenticatedClaim =
     user !== null ? claims.find((c) => c.claimerUserId === user.id) : undefined;
-
-  const handleAuthenticatedClaim = (): void => {
-    claimItem.mutate({ itemId: item.id });
-  };
 
   const handleUnclaim = (): void => {
     if (myAuthenticatedClaim === undefined) return;
@@ -174,10 +169,6 @@ export function ItemCard({
             </Button>
           ) : isClaimed ? (
             <span className="text-muted-foreground text-sm">Claimed</span>
-          ) : user !== null ? (
-            <Button size="sm" onClick={handleAuthenticatedClaim} disabled={claimItem.isPending}>
-              {claimItem.isPending ? "Claiming…" : "Claim"}
-            </Button>
           ) : (
             <Button size="sm" onClick={() => setClaimDialogOpen(true)}>
               Claim
@@ -223,11 +214,9 @@ export function ItemCard({
         </div>
       )}
 
-      {(claimItem.isError || unclaimItem.isError) && (
+      {unclaimItem.isError && (
         <Alert variant="destructive">
-          <AlertDescription>
-            {getApiErrorMessage(claimItem.error ?? unclaimItem.error)}
-          </AlertDescription>
+          <AlertDescription>{getApiErrorMessage(unclaimItem.error)}</AlertDescription>
         </Alert>
       )}
 
@@ -239,6 +228,7 @@ export function ItemCard({
         slug={slug}
         priceReference={item.priceReference}
         currency={item.currency}
+        isAuthenticated={user !== null}
       />
     </div>
   );

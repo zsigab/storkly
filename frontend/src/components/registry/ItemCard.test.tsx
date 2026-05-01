@@ -44,6 +44,7 @@ const base: ItemResponse = {
   flag: "EXACT_ONLY",
   notes: null,
   sortOrder: 0,
+  alreadyOwned: false,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };
