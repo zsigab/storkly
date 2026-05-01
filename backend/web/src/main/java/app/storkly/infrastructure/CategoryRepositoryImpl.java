@@ -8,6 +8,7 @@ import app.storkly.domain.generated.tables.records.CategoryRecord;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
 import org.springframework.stereotype.Repository;
@@ -70,12 +71,15 @@ public class CategoryRepositoryImpl implements CategoryRepository {
 
     @Override
     public void updateSortOrders(List<UUID> orderedIds) {
-        for (int i = 0; i < orderedIds.size(); i++) {
-            dsl.update(CATEGORY)
-                    .set(CATEGORY.SORT_ORDER, i)
-                    .where(CATEGORY.ID.eq(orderedIds.get(i)))
-                    .execute();
+        if (orderedIds.isEmpty()) {
+            return;
         }
+        dsl.batch(IntStream.range(0, orderedIds.size())
+                        .mapToObj(i -> dsl.update(CATEGORY)
+                                .set(CATEGORY.SORT_ORDER, i)
+                                .where(CATEGORY.ID.eq(orderedIds.get(i))))
+                        .toList())
+                .execute();
     }
 
     private Category toCategory(CategoryRecord r) {
