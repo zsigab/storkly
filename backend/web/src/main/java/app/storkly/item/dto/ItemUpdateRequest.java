@@ -17,4 +17,5 @@ public record ItemUpdateRequest(
         @Nullable ItemFlag flag,
         @Nullable @Min(1) Integer quantityDesired,
         @Nullable String notes,
-        @Nullable Integer sortOrder) {}
+        @Nullable Integer sortOrder,
+        @Nullable Boolean alreadyOwned) {}

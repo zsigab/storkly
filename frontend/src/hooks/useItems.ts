@@ -32,6 +32,7 @@ export function useCreateItem(slug: string) {
       flag: ItemFlag;
       quantityDesired: number;
       notes: string | null;
+      alreadyOwned: boolean;
     }): Promise<ItemResponse> => {
       const { data, error } = await api.POST("/api/registries/{slug}/items", {
         params: { path: { slug } },
@@ -67,6 +68,7 @@ export function useUpdateItem(slug: string) {
       flag: ItemFlag;
       quantityDesired: number;
       notes: string | null;
+      alreadyOwned: boolean;
     }): Promise<ItemResponse> => {
       const { data, error } = await api.PATCH("/api/items/{id}", {
         params: { path: { id } },

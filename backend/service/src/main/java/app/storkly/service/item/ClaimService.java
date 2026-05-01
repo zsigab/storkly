@@ -3,6 +3,7 @@ package app.storkly.service.item;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.ItemAlreadyOwnedException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.item.Claim;
@@ -46,6 +47,9 @@ public class ClaimService {
             int quantityClaimed,
             @Nullable UUID currentUserId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
+        if (item.alreadyOwned()) {
+            throw new ItemAlreadyOwnedException();
+        }
         Registry registry = registryRepository
                 .findById(item.registryId())
                 .orElseThrow(

@@ -45,6 +45,7 @@ const itemFixture = {
   flag: "EXACT_ONLY" as const,
   notes: "Blue preferred",
   sortOrder: 0,
+  alreadyOwned: false,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };

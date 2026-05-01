@@ -41,6 +41,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                     .set(ITEM.FLAG, mapFlag(item.flag()))
                     .set(ITEM.NOTES, item.notes())
                     .set(ITEM.SORT_ORDER, item.sortOrder())
+                    .set(ITEM.ALREADY_OWNED, item.alreadyOwned())
                     .set(ITEM.CREATED_AT, item.createdAt())
                     .set(ITEM.UPDATED_AT, item.updatedAt())
                     .execute();
@@ -61,6 +62,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                     .flag(item.flag())
                     .notes(item.notes())
                     .sortOrder(item.sortOrder())
+                    .alreadyOwned(item.alreadyOwned())
                     .createdAt(item.createdAt())
                     .updatedAt(item.updatedAt())
                     .build();
@@ -77,6 +79,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                     .set(ITEM.FLAG, mapFlag(item.flag()))
                     .set(ITEM.NOTES, item.notes())
                     .set(ITEM.SORT_ORDER, item.sortOrder())
+                    .set(ITEM.ALREADY_OWNED, item.alreadyOwned())
                     .set(ITEM.UPDATED_AT, item.updatedAt())
                     .where(ITEM.ID.eq(item.id()))
                     .execute();
@@ -121,6 +124,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                 .flag(mapFlag(r.getFlag()))
                 .notes(r.getNotes())
                 .sortOrder(r.getSortOrder())
+                .alreadyOwned(r.getAlreadyOwned())
                 .createdAt(r.getCreatedAt())
                 .updatedAt(r.getUpdatedAt())
                 .build();

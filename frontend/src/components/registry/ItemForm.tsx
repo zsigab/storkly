@@ -20,6 +20,7 @@ const schema = z.object({
     .string()
     .refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1, "Quantity must be at least 1"),
   notes: z.string(),
+  alreadyOwned: z.boolean(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -34,6 +35,7 @@ interface ItemFormValues {
   flag: ItemFlag;
   quantityDesired: number;
   notes: string | null;
+  alreadyOwned: boolean;
 }
 
 interface ItemFormProps {
@@ -77,12 +79,14 @@ export function ItemForm({
       flag: "EXACT_ONLY",
       quantityDesired: "1",
       notes: "",
+      alreadyOwned: false,
       ...defaultValues,
     },
   });
 
   const quantityValue = watch("quantityDesired");
   const isQuantityZero = quantityValue === "0";
+  const alreadyOwnedValue = watch("alreadyOwned");
 
   return (
     <form
@@ -100,6 +104,7 @@ export function ItemForm({
           flag: values.flag,
           quantityDesired: parseInt(values.quantityDesired, 10),
           notes: values.notes.length > 0 ? values.notes : null,
+          alreadyOwned: values.alreadyOwned,
         }),
       )}
     >
@@ -185,6 +190,17 @@ export function ItemForm({
           {...register("notes")}
         />
       </FormField>
+
+      <label className="flex cursor-pointer items-center gap-3">
+        <input
+          id="alreadyOwned"
+          type="checkbox"
+          className="h-4 w-4 rounded border-gray-300"
+          checked={alreadyOwnedValue}
+          onChange={(e) => setValue("alreadyOwned", e.target.checked)}
+        />
+        <span className="text-sm font-medium">We already have this</span>
+      </label>
 
       {isError && (
         <Alert variant="destructive">

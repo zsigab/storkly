@@ -7,6 +7,7 @@ import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.ItemAlreadyOwnedException;
 import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
@@ -37,6 +38,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({
         AlreadySubscribedException.class,
+        ItemAlreadyOwnedException.class,
         ItemHasClaimsException.class,
         SubscriberHasClaimsException.class
     })

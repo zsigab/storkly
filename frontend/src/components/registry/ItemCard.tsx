@@ -143,7 +143,16 @@ export function ItemCard({
 
         {/* Action buttons */}
         <div className="flex shrink-0 flex-col items-end gap-2">
-          {isOwner ? (
+          {item.alreadyOwned ? (
+            <>
+              {isOwner && (
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/r/${slug}/items/${item.id}/edit`}>Edit</Link>
+                </Button>
+              )}
+              <Badge variant="secondary">Already owned</Badge>
+            </>
+          ) : isOwner ? (
             <Button asChild variant="outline" size="sm">
               <Link to={`/r/${slug}/items/${item.id}/edit`}>Edit</Link>
             </Button>

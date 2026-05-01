@@ -18,4 +18,5 @@ public record ItemCreateRequest(
         @Nullable UUID categoryId,
         @NotNull ItemFlag flag,
         @Min(1) int quantityDesired,
-        @Nullable String notes) {}
+        @Nullable String notes,
+        boolean alreadyOwned) {}

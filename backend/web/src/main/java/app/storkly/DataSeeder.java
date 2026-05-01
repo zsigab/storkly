@@ -226,6 +226,25 @@ public class DataSeeder {
                 .set(ITEM.UPDATED_AT, OffsetDateTime.now())
                 .execute();
 
+        // Already owned — no gifting needed
+        dsl.insertInto(ITEM)
+                .set(ITEM.ID, UUID.fromString("00000000-0000-0000-0000-000000000035"))
+                .set(ITEM.REGISTRY_ID, registryId)
+                .set(ITEM.CATEGORY_ID, defaultCategoryId)
+                .set(ITEM.ADDED_BY_USER_ID, ownerId)
+                .set(ITEM.SOURCE_SITE, SourceSite.MANUAL)
+                .set(ITEM.TITLE, "Braun No Touch + Forehead Thermometer")
+                .set(ITEM.DESCRIPTION, "In-ear and forehead thermometer for babies")
+                .set(ITEM.PRICE_REFERENCE, new BigDecimal("49.99"))
+                .set(ITEM.CURRENCY, "USD")
+                .set(ITEM.QUANTITY_DESIRED, 1)
+                .set(ITEM.FLAG, ItemFlag.EXACT_ONLY)
+                .set(ITEM.ALREADY_OWNED, true)
+                .set(ITEM.SORT_ORDER, 5)
+                .set(ITEM.CREATED_AT, OffsetDateTime.now())
+                .set(ITEM.UPDATED_AT, OffsetDateTime.now())
+                .execute();
+
         // Anonymous claim — gifter left their name but is not a registered user
         dsl.insertInto(CLAIM)
                 .set(CLAIM.ID, UUID.fromString("00000000-0000-0000-0000-000000000040"))

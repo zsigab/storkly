@@ -61,6 +61,7 @@ public class ItemService {
             ItemFlag flag,
             int quantityDesired,
             @Nullable String notes,
+            boolean alreadyOwned,
             UUID addedByUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
         assertWriteAccess(registry, addedByUserId);
@@ -81,6 +82,7 @@ public class ItemService {
                 .quantityDesired(quantityDesired)
                 .flag(flag)
                 .notes(notes)
+                .alreadyOwned(alreadyOwned)
                 .sortOrder(nextSortOrder)
                 .createdAt(now)
                 .updatedAt(now)
@@ -101,6 +103,7 @@ public class ItemService {
             @Nullable Integer quantityDesired,
             @Nullable String notes,
             @Nullable Integer sortOrder,
+            @Nullable Boolean alreadyOwned,
             UUID currentUserId) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new ItemNotFoundException(id));
         Registry registry = registryRepository
@@ -125,6 +128,7 @@ public class ItemService {
                 .flag(flag != null ? flag : item.flag())
                 .notes(notes != null ? notes : item.notes())
                 .sortOrder(sortOrder != null ? sortOrder : item.sortOrder())
+                .alreadyOwned(alreadyOwned != null ? alreadyOwned : item.alreadyOwned())
                 .createdAt(item.createdAt())
                 .updatedAt(OffsetDateTime.now())
                 .build());

@@ -65,6 +65,7 @@ export interface ItemResponse {
   flag: ItemFlag;
   notes: string | null;
   sortOrder: number;
+  alreadyOwned: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -229,6 +230,7 @@ export type paths = {
             flag: ItemFlag;
             quantityDesired: number;
             notes?: string | null;
+            alreadyOwned?: boolean;
           };
         };
       };
@@ -256,6 +258,7 @@ export type paths = {
             quantityDesired?: number | null;
             notes?: string | null;
             sortOrder?: number | null;
+            alreadyOwned?: boolean | null;
           };
         };
       };

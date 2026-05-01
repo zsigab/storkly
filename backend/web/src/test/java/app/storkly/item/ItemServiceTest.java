@@ -89,7 +89,7 @@ class ItemServiceTest {
         when(itemRepository.save(any(Item.class))).thenReturn(saved);
 
         Item result = itemService.create(
-                slug, "Crib", null, null, null, null, null, null, ItemFlag.EXACT_ONLY, 1, null, ownerId);
+                slug, "Crib", null, null, null, null, null, null, ItemFlag.EXACT_ONLY, 1, null, false, ownerId);
 
         assertThat(result.title()).isEqualTo("Crib");
         verify(itemRepository).save(any(Item.class));
@@ -103,7 +103,19 @@ class ItemServiceTest {
         when(coOwnerRepository.isCoOwner(registryId, stranger)).thenReturn(false);
 
         assertThatThrownBy(() -> itemService.create(
-                        slug, "Crib", null, null, null, null, null, null, ItemFlag.EXACT_ONLY, 1, null, stranger))
+                        slug,
+                        "Crib",
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        ItemFlag.EXACT_ONLY,
+                        1,
+                        null,
+                        false,
+                        stranger))
                 .isInstanceOf(AccessDeniedException.class);
 
         verify(itemRepository, never()).save(any());

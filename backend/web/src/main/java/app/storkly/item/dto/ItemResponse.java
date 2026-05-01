@@ -24,5 +24,6 @@ public record ItemResponse(
         ItemFlag flag,
         @Nullable String notes,
         int sortOrder,
+        boolean alreadyOwned,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt) {}
