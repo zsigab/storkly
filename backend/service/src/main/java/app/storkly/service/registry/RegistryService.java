@@ -4,6 +4,8 @@ import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.AlreadySubscribedException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.exception.SubscriberHasClaimsException;
+import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryInvite;
@@ -32,6 +34,8 @@ public class RegistryService {
     private final RegistryInviteRepository inviteRepository;
     private final RegistrySubscriptionRepository subscriptionRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
+    private final RegistryAccessService registryAccessService;
+    private final ClaimRepository claimRepository;
 
     @Transactional
     public Registry create(String name, @Nullable String description, RegistryVisibility visibility, UUID ownerId) {
@@ -50,21 +54,7 @@ public class RegistryService {
     public Registry findBySlug(String slug, @Nullable UUID currentUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
 
-        if (registry.visibility() == RegistryVisibility.HIDDEN) {
-            if (currentUserId == null || !registry.ownerId().equals(currentUserId)) {
-                throw new AccessDeniedException("Registry is hidden");
-            }
-        } else if (registry.visibility() == RegistryVisibility.PRIVATE) {
-            if (currentUserId == null) {
-                throw new AccessDeniedException("Registry is private");
-            }
-            boolean hasAccess = registry.ownerId().equals(currentUserId)
-                    || coOwnerRepository.isCoOwner(registry.id(), currentUserId)
-                    || subscriptionRepository.exists(currentUserId, registry.id());
-            if (!hasAccess) {
-                throw new AccessDeniedException("Registry is private");
-            }
-        }
+        registryAccessService.assertReadAccess(registry, currentUserId);
         return registry;
     }
 
@@ -143,6 +133,9 @@ public class RegistryService {
     @Transactional
     public void unsubscribe(String slug, UUID currentUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        if (claimRepository.existsActiveByUserAndRegistry(currentUserId, registry.id())) {
+            throw new SubscriberHasClaimsException();
+        }
         subscriptionRepository.delete(currentUserId, registry.id());
     }
 

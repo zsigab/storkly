@@ -16,5 +16,7 @@ public interface ClaimRepository {
 
     boolean existsActiveByItemId(UUID itemId);
 
+    boolean existsActiveByUserAndRegistry(UUID userId, UUID registryId);
+
     void release(UUID id, OffsetDateTime releasedAt);
 }

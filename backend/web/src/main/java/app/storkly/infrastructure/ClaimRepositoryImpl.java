@@ -1,6 +1,7 @@
 package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.CLAIM;
+import static app.storkly.domain.generated.Tables.ITEM;
 
 import app.storkly.domain.generated.tables.records.ClaimRecord;
 import app.storkly.domain.item.Claim;
@@ -69,6 +70,19 @@ public class ClaimRepositoryImpl implements ClaimRepository {
     @Override
     public boolean existsActiveByItemId(UUID itemId) {
         return dsl.fetchCount(CLAIM, CLAIM.ITEM_ID.eq(itemId).and(CLAIM.RELEASED_AT.isNull())) > 0;
+    }
+
+    @Override
+    public boolean existsActiveByUserAndRegistry(UUID userId, UUID registryId) {
+        return dsl.fetchCount(dsl.selectOne()
+                        .from(CLAIM)
+                        .join(ITEM)
+                        .on(CLAIM.ITEM_ID.eq(ITEM.ID))
+                        .where(ITEM.REGISTRY_ID
+                                .eq(registryId)
+                                .and(CLAIM.CLAIMER_USER_ID.eq(userId))
+                                .and(CLAIM.RELEASED_AT.isNull())))
+                > 0;
     }
 
     @Override

@@ -8,7 +8,7 @@ import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryRepository;
-import app.storkly.domain.registry.RegistryVisibility;
+import app.storkly.service.registry.RegistryAccessService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +23,11 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final RegistryRepository registryRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
+    private final RegistryAccessService registryAccessService;
 
     public List<Category> findByRegistry(String slug, @Nullable UUID currentUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
-        if (registry.visibility() == RegistryVisibility.PRIVATE && currentUserId == null) {
-            throw new AccessDeniedException("Registry is private");
-        }
+        registryAccessService.assertReadAccess(registry, currentUserId);
         return categoryRepository.findByRegistryId(registry.id());
     }
 

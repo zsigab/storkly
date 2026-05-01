@@ -10,6 +10,7 @@ import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.exception.UserNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,7 +35,11 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
-    @ExceptionHandler({AlreadySubscribedException.class, ItemHasClaimsException.class})
+    @ExceptionHandler({
+        AlreadySubscribedException.class,
+        ItemHasClaimsException.class,
+        SubscriberHasClaimsException.class
+    })
     public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
     }

@@ -12,9 +12,8 @@ import app.storkly.domain.item.ItemRepository;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryRepository;
-import app.storkly.domain.registry.RegistrySubscriptionRepository;
-import app.storkly.domain.registry.RegistryVisibility;
 import app.storkly.service.email.EmailService;
+import app.storkly.service.registry.RegistryAccessService;
 import app.storkly.util.TokenUtil;
 import java.time.OffsetDateTime;
 import java.util.List;
@@ -34,7 +33,7 @@ public class ClaimService {
     private final ItemRepository itemRepository;
     private final RegistryRepository registryRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
-    private final RegistrySubscriptionRepository subscriptionRepository;
+    private final RegistryAccessService registryAccessService;
     private final EmailService emailService;
 
     public record ClaimListView(List<Claim> claims, boolean viewerIsOwnerOrCoOwner) {}
@@ -108,16 +107,6 @@ public class ClaimService {
     }
 
     private void assertReadAccess(Registry registry, @Nullable UUID currentUserId) {
-        if (registry.visibility() == RegistryVisibility.PRIVATE) {
-            if (currentUserId == null) {
-                throw new AccessDeniedException("Registry is private");
-            }
-            boolean hasAccess = registry.ownerId().equals(currentUserId)
-                    || coOwnerRepository.isCoOwner(registry.id(), currentUserId)
-                    || subscriptionRepository.exists(currentUserId, registry.id());
-            if (!hasAccess) {
-                throw new AccessDeniedException("Registry is private");
-            }
-        }
+        registryAccessService.assertReadAccess(registry, currentUserId);
     }
 }
