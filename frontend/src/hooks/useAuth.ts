@@ -1,4 +1,11 @@
-import { createContext, createElement, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  createElement,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import type { TokenResponse } from "@/api";
 
 const STORAGE_KEY = "storkly-user";
@@ -50,6 +57,15 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
   };
+
+  useEffect(() => {
+    function handleUnauthorized() {
+      setUser(null);
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    window.addEventListener("storkly:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("storkly:unauthorized", handleUnauthorized);
+  }, []);
 
   return createElement(AuthContext.Provider, { value: { user, login, logout } }, children);
 }

@@ -7,3 +7,12 @@ export const api = createClient<paths>({
   baseUrl: BASE_URL,
   credentials: "include",
 });
+
+api.use({
+  onResponse({ response }) {
+    if (response.status === 401) {
+      window.dispatchEvent(new CustomEvent("storkly:unauthorized"));
+    }
+    return response;
+  },
+});
