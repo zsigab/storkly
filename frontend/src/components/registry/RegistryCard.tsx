@@ -13,7 +13,11 @@ export function RegistryCard({ registry }: RegistryCardProps): React.ReactElemen
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold">{registry.name}</h3>
           <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
-            {registry.visibility === "PUBLIC" ? "Public" : "Private"}
+            {registry.visibility === "PUBLIC"
+              ? "Public"
+              : registry.visibility === "HIDDEN"
+                ? "Hidden"
+                : "Private"}
           </Badge>
         </div>
         {registry.description !== null && (

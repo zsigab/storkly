@@ -141,12 +141,63 @@ describe("RegistryPage", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValueOnce({
       data: undefined,
-      error: { status: 403, detail: "Forbidden" },
+      error: { status: 403, detail: "Registry is private" },
       response: new Response(),
     });
     renderPage();
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: /private registry/i })).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/you need an invite/i)).toBeInTheDocument();
+  });
+
+  it("shows hidden error state for hidden registry", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: undefined,
+      error: { status: 403, detail: "Registry is hidden" },
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: /hidden registry/i })).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/hidden by its owner/i)).toBeInTheDocument();
+    expect(screen.queryByText(/invite/i)).not.toBeInTheDocument();
+  });
+
+  it("does not show invite link card for hidden registry", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation((path: string) => {
+      if (path === "/api/registries/{slug}") {
+        return Promise.resolve({
+          data: { ...registryFixture, visibility: "HIDDEN" as const },
+          error: undefined,
+          response: new Response(),
+        });
+      }
+      return Promise.resolve({ data: [], error: undefined, response: new Response() });
+    });
+    renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
+    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /get invite link/i })).not.toBeInTheDocument();
+  });
+
+  it("shows invite link card for private registry owner", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation((path: string) => {
+      if (path === "/api/registries/{slug}") {
+        return Promise.resolve({
+          data: { ...registryFixture, visibility: "PRIVATE" as const },
+          error: undefined,
+          response: new Response(),
+        });
+      }
+      return Promise.resolve({ data: [], error: undefined, response: new Response() });
+    });
+    renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /get invite link/i })).toBeInTheDocument(),
     );
   });
 

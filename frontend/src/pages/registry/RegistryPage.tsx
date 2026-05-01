@@ -58,13 +58,15 @@ export function RegistryPage(): React.ReactElement {
 
   if (isError) {
     const status = getApiErrorStatus(error);
+    const errorDetail = getApiErrorMessage(error);
+    const isHidden = errorDetail.toLowerCase().includes("hidden");
     const currentPath = `/r/${safeSlug}${inviteToken !== null ? `?invite=${inviteToken}` : ""}`;
     return (
       <div className="mx-auto max-w-2xl space-y-4 py-10 text-center">
         <h1 className="text-3xl font-semibold tracking-tight">
-          {status === 403 ? "Private registry" : "Not found"}
+          {status === 403 ? (isHidden ? "Hidden registry" : "Private registry") : "Not found"}
         </h1>
-        {status === 403 && inviteToken !== null ? (
+        {status === 403 && !isHidden && inviteToken !== null ? (
           <>
             {user !== null ? (
               <>
@@ -107,7 +109,9 @@ export function RegistryPage(): React.ReactElement {
           <>
             <p className="text-muted-foreground">
               {status === 403
-                ? "This registry is private. You need an invite to view it."
+                ? isHidden
+                  ? "This registry has been hidden by its owner."
+                  : "This registry is private. You need an invite to view it."
                 : "This registry doesn't exist."}
             </p>
             <Link to="/" className="text-primary text-sm hover:underline">
@@ -212,7 +216,7 @@ export function RegistryPage(): React.ReactElement {
         </div>
       )}
 
-      {isOwner && <InviteLinkCard slug={registry.slug} />}
+      {isOwner && registry.visibility === "PRIVATE" && <InviteLinkCard slug={registry.slug} />}
 
       {isOwner && (
         <div className="space-y-3">
