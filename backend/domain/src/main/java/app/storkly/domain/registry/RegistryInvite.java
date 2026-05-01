@@ -6,9 +6,4 @@ import lombok.Builder;
 import org.jspecify.annotations.Nullable;
 
 @Builder
-public record RegistryInvite(
-        @Nullable UUID id,
-        UUID registryId,
-        String token,
-        OffsetDateTime createdAt,
-        @Nullable OffsetDateTime usedAt) {}
+public record RegistryInvite(@Nullable UUID id, UUID registryId, String token, OffsetDateTime createdAt) {}

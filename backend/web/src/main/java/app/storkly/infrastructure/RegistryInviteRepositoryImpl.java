@@ -55,7 +55,6 @@ public class RegistryInviteRepositoryImpl implements RegistryInviteRepository {
                 .registryId(r.getRegistryId())
                 .token(r.getToken())
                 .createdAt(r.getCreatedAt())
-                .usedAt(r.getUsedAt())
                 .build();
     }
 }
