@@ -34,7 +34,13 @@ public class ClaimController {
             @AuthenticationPrincipal @Nullable User currentUser) {
         UUID userId = currentUser != null ? currentUser.id() : null;
         Claim claim = claimService.claim(
-                id, request.claimerName(), request.claimerEmail(), request.quantityClaimed(), userId);
+                id,
+                request.claimerName(),
+                request.claimerEmail(),
+                request.quantityClaimed(),
+                request.amountContributed(),
+                request.percentageContributed(),
+                userId);
         return toResponse(claim, true);
     }
 
@@ -70,6 +76,8 @@ public class ClaimController {
                 showClaimerDetails ? claim.claimerName() : null,
                 showClaimerDetails ? claim.claimerEmail() : null,
                 claim.quantityClaimed(),
+                claim.amountContributed(),
+                claim.percentageContributed(),
                 claim.claimedAt());
     }
 }

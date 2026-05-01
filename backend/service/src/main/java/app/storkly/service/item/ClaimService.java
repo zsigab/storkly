@@ -16,6 +16,7 @@ import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.service.email.EmailService;
 import app.storkly.service.registry.RegistryAccessService;
 import app.storkly.util.TokenUtil;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +46,8 @@ public class ClaimService {
             @Nullable String name,
             @Nullable String email,
             int quantityClaimed,
+            @Nullable BigDecimal amountContributed,
+            @Nullable Integer percentageContributed,
             @Nullable UUID currentUserId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
         if (item.alreadyOwned()) {
@@ -65,6 +68,8 @@ public class ClaimService {
                 .claimerName(claimerName)
                 .claimerEmail(claimerEmail)
                 .quantityClaimed(quantityClaimed)
+                .amountContributed(amountContributed)
+                .percentageContributed(percentageContributed)
                 .claimToken(token)
                 .claimedAt(OffsetDateTime.now())
                 .build());

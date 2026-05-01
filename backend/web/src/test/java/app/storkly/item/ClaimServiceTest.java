@@ -82,7 +82,7 @@ class ClaimServiceTest {
         Claim saved = claim(UUID.randomUUID(), itemId, claimerId, null);
         when(claimRepository.save(any(Claim.class))).thenReturn(saved);
 
-        Claim result = claimService.claim(itemId, null, null, 1, claimerId);
+        Claim result = claimService.claim(itemId, null, null, 1, null, null, claimerId);
 
         assertThat(result.claimerUserId()).isEqualTo(claimerId);
         verify(emailService, never()).sendClaimConfirmation(any(), any(), any(), any());
@@ -98,7 +98,7 @@ class ClaimServiceTest {
         Claim saved = claim(UUID.randomUUID(), itemId, null, null);
         when(claimRepository.save(any(Claim.class))).thenReturn(saved);
 
-        claimService.claim(itemId, "Alice", "alice@example.com", 1, null);
+        claimService.claim(itemId, "Alice", "alice@example.com", 1, null, null, null);
 
         verify(emailService).sendClaimConfirmation(any(), any(), any(), any());
     }

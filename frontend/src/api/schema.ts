@@ -77,6 +77,8 @@ export interface ClaimResponse {
   claimerName: string | null;
   claimerEmail: string | null;
   quantityClaimed: number;
+  amountContributed: number | null;
+  percentageContributed: number | null;
   claimedAt: string;
 }
 
@@ -282,6 +284,8 @@ export type paths = {
             claimerName?: string | null;
             claimerEmail?: string | null;
             quantityClaimed: number;
+            amountContributed?: number | null;
+            percentageContributed?: number | null;
           };
         };
       };

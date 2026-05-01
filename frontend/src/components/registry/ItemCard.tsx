@@ -64,6 +64,13 @@ export function ItemCard({
   const quantityClaimed = claims.reduce((sum, c) => sum + c.quantityClaimed, 0);
   const isClaimed = quantityClaimed >= item.quantityDesired;
 
+  const totalContributed = claims.reduce((sum, c) => sum + (c.amountContributed ?? 0), 0);
+  const hasPartialContributions =
+    item.priceReference != null && claims.some((c) => c.amountContributed != null);
+  const fundingPercent = hasPartialContributions
+    ? Math.min(100, Math.round((totalContributed / item.priceReference!) * 100))
+    : 0;
+
   const myAuthenticatedClaim =
     user !== null ? claims.find((c) => c.claimerUserId === user.id) : undefined;
 
@@ -197,6 +204,25 @@ export function ItemCard({
         </div>
       )}
 
+      {hasPartialContributions && (
+        <div className="space-y-1 border-t pt-2">
+          <div className="text-muted-foreground flex justify-between text-xs">
+            <span>
+              {item.currency ?? ""} {totalContributed.toFixed(2)} contributed
+            </span>
+            <span>
+              {fundingPercent}% of {item.currency ?? ""} {item.priceReference!.toFixed(2)}
+            </span>
+          </div>
+          <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+            <div
+              className="bg-primary h-full rounded-full transition-all"
+              style={{ width: `${fundingPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {(claimItem.isError || unclaimItem.isError) && (
         <Alert variant="destructive">
           <AlertDescription>
@@ -211,6 +237,8 @@ export function ItemCard({
         itemId={item.id}
         itemTitle={item.title}
         slug={slug}
+        priceReference={item.priceReference}
+        currency={item.currency}
       />
     </div>
   );

@@ -74,7 +74,13 @@ describe("ClaimDialog", () => {
     await waitFor(() =>
       expect(api.POST).toHaveBeenCalledWith("/api/items/{id}/claims", {
         params: { path: { id: "item-1" } },
-        body: { claimerName: "Alice", claimerEmail: "alice@example.com", quantityClaimed: 1 },
+        body: {
+          claimerName: "Alice",
+          claimerEmail: "alice@example.com",
+          quantityClaimed: 1,
+          amountContributed: null,
+          percentageContributed: null,
+        },
       }),
     );
   });

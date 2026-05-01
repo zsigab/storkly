@@ -1,5 +1,6 @@
 package app.storkly.domain.item;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import lombok.Builder;
@@ -13,6 +14,8 @@ public record Claim(
         String claimerName,
         String claimerEmail,
         int quantityClaimed,
+        @Nullable BigDecimal amountContributed,
+        @Nullable Integer percentageContributed,
         String claimToken,
         OffsetDateTime claimedAt,
         @Nullable OffsetDateTime releasedAt) {}

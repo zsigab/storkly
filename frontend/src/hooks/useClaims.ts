@@ -41,10 +41,14 @@ export function useClaimItem(slug: string) {
       itemId,
       claimerName,
       claimerEmail,
+      amountContributed,
+      percentageContributed,
     }: {
       itemId: string;
       claimerName?: string;
       claimerEmail?: string;
+      amountContributed?: number | null;
+      percentageContributed?: number | null;
     }): Promise<ClaimResponse> => {
       const { data, error } = await api.POST("/api/items/{id}/claims", {
         params: { path: { id: itemId } },
@@ -52,6 +56,8 @@ export function useClaimItem(slug: string) {
           claimerName: claimerName ?? null,
           claimerEmail: claimerEmail ?? null,
           quantityClaimed: 1,
+          amountContributed: amountContributed ?? null,
+          percentageContributed: percentageContributed ?? null,
         },
       });
       if (error !== undefined) throw error;

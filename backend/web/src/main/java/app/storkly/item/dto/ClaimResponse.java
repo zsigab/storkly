@@ -1,5 +1,6 @@
 package app.storkly.item.dto;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
@@ -11,4 +12,6 @@ public record ClaimResponse(
         @Nullable String claimerName,
         @Nullable String claimerEmail,
         int quantityClaimed,
+        @Nullable BigDecimal amountContributed,
+        @Nullable Integer percentageContributed,
         OffsetDateTime claimedAt) {}

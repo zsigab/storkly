@@ -30,6 +30,8 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                 .set(CLAIM.CLAIMER_NAME, claim.claimerName())
                 .set(CLAIM.CLAIMER_EMAIL, claim.claimerEmail())
                 .set(CLAIM.QUANTITY_CLAIMED, claim.quantityClaimed())
+                .set(CLAIM.AMOUNT_CONTRIBUTED, claim.amountContributed())
+                .set(CLAIM.PERCENTAGE_CONTRIBUTED, claim.percentageContributed())
                 .set(CLAIM.CLAIM_TOKEN, claim.claimToken())
                 .set(CLAIM.CLAIMED_AT, claim.claimedAt())
                 .execute();
@@ -40,6 +42,8 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                 .claimerName(claim.claimerName())
                 .claimerEmail(claim.claimerEmail())
                 .quantityClaimed(claim.quantityClaimed())
+                .amountContributed(claim.amountContributed())
+                .percentageContributed(claim.percentageContributed())
                 .claimToken(claim.claimToken())
                 .claimedAt(claim.claimedAt())
                 .build();
@@ -101,6 +105,8 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                 .claimerName(r.getClaimerName())
                 .claimerEmail(r.getClaimerEmail())
                 .quantityClaimed(r.getQuantityClaimed())
+                .amountContributed(r.getAmountContributed())
+                .percentageContributed(r.getPercentageContributed())
                 .claimToken(r.getClaimToken())
                 .claimedAt(r.getClaimedAt())
                 .releasedAt(r.getReleasedAt())
