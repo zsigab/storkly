@@ -21,7 +21,12 @@ public class SelectAccountAuthorizationRequestResolver implements OAuth2Authoriz
     @Override
     public OAuth2AuthorizationRequest resolve(HttpServletRequest request) {
         OAuth2AuthorizationRequest req = delegate.resolve(request);
-        return req != null ? withSelectAccount(req, null) : null;
+        if (req == null) {
+            return null;
+        }
+        String path = request.getRequestURI();
+        String registrationId = path.substring(path.lastIndexOf('/') + 1);
+        return withSelectAccount(req, registrationId);
     }
 
     @Override
@@ -32,10 +37,11 @@ public class SelectAccountAuthorizationRequestResolver implements OAuth2Authoriz
 
     private OAuth2AuthorizationRequest withSelectAccount(
             OAuth2AuthorizationRequest request, String clientRegistrationId) {
-        Map<String, Object> params = new HashMap<>(request.getAdditionalParameters());
-        if ("google".equals(clientRegistrationId)) {
-            params.put("prompt", "select_account");
+        if (!"google".equals(clientRegistrationId)) {
+            return request;
         }
+        Map<String, Object> params = new HashMap<>(request.getAdditionalParameters());
+        params.put("prompt", "select_account");
         return OAuth2AuthorizationRequest.from(request)
                 .additionalParameters(params)
                 .build();
