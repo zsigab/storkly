@@ -452,7 +452,7 @@ volumes:
 
 ### Caddyfile
 ```
-storkly.app {
+storkly.cc {
   handle /api/* {
     reverse_proxy api:8080
   }

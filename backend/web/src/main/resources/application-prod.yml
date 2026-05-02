@@ -7,12 +7,12 @@ spring:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: openid,email,profile
-            redirect-uri: https://storkly.app/login/oauth2/code/google
+            redirect-uri: https://storkly.cc/login/oauth2/code/google
           facebook:
             client-id: ${FACEBOOK_CLIENT_ID}
             client-secret: ${FACEBOOK_CLIENT_SECRET}
             scope: email,public_profile
-            redirect-uri: https://storkly.app/login/oauth2/code/facebook
+            redirect-uri: https://storkly.cc/login/oauth2/code/facebook
         provider:
           facebook:
             user-info-uri: https://graph.facebook.com/me?fields=id,name,email
@@ -35,7 +35,7 @@ storkly:
     enabled: true
     secret-key: ${TURNSTILE_SECRET_KEY}
   mail:
-    frontend-url: https://storkly.app
+    frontend-url: https://storkly.cc
   jwt:
     secret: ${JWT_SECRET}
     access-token-expiry: PT15M
@@ -44,7 +44,7 @@ storkly:
     secure: true
   cors:
     allowed-origins:
-      - https://storkly.app
+      - https://storkly.cc
 
 logging:
   level:

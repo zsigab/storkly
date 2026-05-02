@@ -27,4 +27,4 @@ springdoc:
 
 storkly:
   mail:
-    from: noreply@storkly.app
+    from: noreply@storkly.cc

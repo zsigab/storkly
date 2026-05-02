@@ -1,5 +1,5 @@
-# Production — storkly.app
-storkly.app {
+# Production — storkly.cc
+storkly.cc {
     handle /api/* {
         reverse_proxy api:8080
     }
