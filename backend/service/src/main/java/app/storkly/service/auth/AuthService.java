@@ -3,7 +3,6 @@ package app.storkly.service.auth;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.UserNotFoundException;
-import app.storkly.domain.user.AuthProvider;
 import app.storkly.domain.user.EmailVerificationRepository;
 import app.storkly.domain.user.PasswordResetRepository;
 import app.storkly.domain.user.User;
@@ -45,7 +44,6 @@ public class AuthService {
                 .email(email)
                 .passwordHash(passwordEncoder.encode(password))
                 .displayName(displayName)
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -66,8 +64,6 @@ public class AuthService {
                 .passwordHash(user.passwordHash())
                 .displayName(user.displayName())
                 .emailVerifiedAt(OffsetDateTime.now())
-                .provider(user.provider())
-                .providerId(user.providerId())
                 .role(user.role())
                 .createdAt(user.createdAt())
                 .build();
@@ -106,8 +102,6 @@ public class AuthService {
                 .passwordHash(passwordEncoder.encode(newPassword))
                 .displayName(user.displayName())
                 .emailVerifiedAt(user.emailVerifiedAt())
-                .provider(user.provider())
-                .providerId(user.providerId())
                 .role(user.role())
                 .createdAt(user.createdAt())
                 .build();

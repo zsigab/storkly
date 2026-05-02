@@ -12,6 +12,8 @@ public interface UserRepository {
 
     Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerId);
 
+    void addOAuthProvider(UUID userId, AuthProvider provider, String providerId);
+
     boolean existsByEmail(String email);
 
     void deleteById(UUID id);

@@ -1,6 +1,7 @@
 package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.USER;
+import static app.storkly.domain.generated.Tables.USER_OAUTH_PROVIDER;
 
 import app.storkly.domain.generated.tables.records.UserRecord;
 import app.storkly.domain.user.AuthProvider;
@@ -30,8 +31,6 @@ public class UserRepositoryImpl implements UserRepository {
                     .set(USER.PASSWORD_HASH, user.passwordHash())
                     .set(USER.DISPLAY_NAME, user.displayName())
                     .set(USER.EMAIL_VERIFIED_AT, user.emailVerifiedAt())
-                    .set(USER.PROVIDER, mapProvider(user.provider()))
-                    .set(USER.PROVIDER_ID, user.providerId())
                     .set(USER.ROLE, mapRole(user.role()))
                     .set(USER.CREATED_AT, user.createdAt())
                     .execute();
@@ -41,8 +40,6 @@ public class UserRepositoryImpl implements UserRepository {
                     .passwordHash(user.passwordHash())
                     .displayName(user.displayName())
                     .emailVerifiedAt(user.emailVerifiedAt())
-                    .provider(user.provider())
-                    .providerId(user.providerId())
                     .role(user.role())
                     .createdAt(user.createdAt())
                     .build();
@@ -52,8 +49,6 @@ public class UserRepositoryImpl implements UserRepository {
                     .set(USER.PASSWORD_HASH, user.passwordHash())
                     .set(USER.DISPLAY_NAME, user.displayName())
                     .set(USER.EMAIL_VERIFIED_AT, user.emailVerifiedAt())
-                    .set(USER.PROVIDER, mapProvider(user.provider()))
-                    .set(USER.PROVIDER_ID, user.providerId())
                     .set(USER.ROLE, mapRole(user.role()))
                     .where(USER.ID.eq(user.id()))
                     .execute();
@@ -73,10 +68,29 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findByProviderAndProviderId(AuthProvider provider, String providerId) {
-        return dsl.selectFrom(USER)
-                .where(USER.PROVIDER.eq(mapProvider(provider)).and(USER.PROVIDER_ID.eq(providerId)))
+        return dsl.select(USER.fields())
+                .from(USER)
+                .join(USER_OAUTH_PROVIDER)
+                .on(USER_OAUTH_PROVIDER.USER_ID.eq(USER.ID))
+                .where(USER_OAUTH_PROVIDER
+                        .PROVIDER
+                        .eq(mapProvider(provider))
+                        .and(USER_OAUTH_PROVIDER.PROVIDER_ID.eq(providerId)))
                 .fetchOptional()
-                .map(this::toUser);
+                .map(r -> toUser(r.into(USER)));
+    }
+
+    @Override
+    public void addOAuthProvider(UUID userId, AuthProvider provider, String providerId) {
+        dsl.insertInto(USER_OAUTH_PROVIDER)
+                .set(USER_OAUTH_PROVIDER.USER_ID, userId)
+                .set(USER_OAUTH_PROVIDER.PROVIDER, mapProvider(provider))
+                .set(USER_OAUTH_PROVIDER.PROVIDER_ID, providerId)
+                .set(USER_OAUTH_PROVIDER.LINKED_AT, OffsetDateTime.now())
+                .onConflict(USER_OAUTH_PROVIDER.USER_ID, USER_OAUTH_PROVIDER.PROVIDER)
+                .doUpdate()
+                .set(USER_OAUTH_PROVIDER.PROVIDER_ID, providerId)
+                .execute();
     }
 
     @Override
@@ -103,8 +117,6 @@ public class UserRepositoryImpl implements UserRepository {
                 .passwordHash(r.getPasswordHash())
                 .displayName(r.getDisplayName())
                 .emailVerifiedAt(r.getEmailVerifiedAt())
-                .provider(mapProvider(r.getProvider()))
-                .providerId(r.getProviderId())
                 .role(mapRole(r.getRole()))
                 .createdAt(r.getCreatedAt())
                 .build();
@@ -114,21 +126,14 @@ public class UserRepositoryImpl implements UserRepository {
         return app.storkly.domain.generated.enums.AuthProvider.valueOf(p.name());
     }
 
-    private AuthProvider mapProvider(app.storkly.domain.generated.enums.AuthProvider p) {
-        if (p == null) {
-            return AuthProvider.LOCAL;
-        }
-        return AuthProvider.valueOf(p.name());
-    }
-
-    private app.storkly.domain.generated.enums.UserRole mapRole(UserRole r) {
-        return app.storkly.domain.generated.enums.UserRole.valueOf(r.name());
-    }
-
     private UserRole mapRole(app.storkly.domain.generated.enums.UserRole r) {
         if (r == null) {
             return UserRole.USER;
         }
         return UserRole.valueOf(r.name());
+    }
+
+    private app.storkly.domain.generated.enums.UserRole mapRole(UserRole r) {
+        return app.storkly.domain.generated.enums.UserRole.valueOf(r.name());
     }
 }

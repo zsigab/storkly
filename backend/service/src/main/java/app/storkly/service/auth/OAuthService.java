@@ -39,19 +39,9 @@ public class OAuthService {
                 .findByEmail(email)
                 .map(existing -> {
                     if (existing.emailVerifiedAt() != null) {
-                        // Verified LOCAL user: link the OAuth identity and return
-                        User linked = User.builder()
-                                .id(existing.id())
-                                .email(existing.email())
-                                .passwordHash(existing.passwordHash())
-                                .displayName(existing.displayName())
-                                .emailVerifiedAt(existing.emailVerifiedAt())
-                                .provider(existing.provider())
-                                .providerId(providerId)
-                                .role(existing.role())
-                                .createdAt(existing.createdAt())
-                                .build();
-                        return userRepository.save(linked);
+                        // Verified LOCAL user: link the OAuth provider and return
+                        userRepository.addOAuthProvider(existing.id(), provider, providerId);
+                        return existing;
                     } else {
                         // Unverified LOCAL stub: replace with OAuth user
                         userRepository.deleteById(existing.id());
@@ -66,11 +56,11 @@ public class OAuthService {
                 .email(email)
                 .displayName(displayName)
                 .emailVerifiedAt(OffsetDateTime.now())
-                .provider(provider)
-                .providerId(providerId)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
-        return userRepository.save(newUser);
+        User saved = userRepository.save(newUser);
+        userRepository.addOAuthProvider(saved.id(), provider, providerId);
+        return saved;
     }
 }

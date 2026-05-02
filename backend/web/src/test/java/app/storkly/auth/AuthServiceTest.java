@@ -11,7 +11,6 @@ import static org.mockito.Mockito.when;
 
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
-import app.storkly.domain.user.AuthProvider;
 import app.storkly.domain.user.EmailVerificationRepository;
 import app.storkly.domain.user.PasswordResetRepository;
 import app.storkly.domain.user.User;
@@ -75,7 +74,6 @@ class AuthServiceTest {
                 .email("alice@example.com")
                 .passwordHash("hashed")
                 .displayName("Alice")
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -96,7 +94,6 @@ class AuthServiceTest {
                 .passwordHash("hashed")
                 .displayName("Alice")
                 .emailVerifiedAt(OffsetDateTime.now())
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -118,7 +115,6 @@ class AuthServiceTest {
                 .email("alice@example.com")
                 .passwordHash("old-hash")
                 .displayName("Old Alice")
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now().minusHours(1))
                 .build();
@@ -130,7 +126,6 @@ class AuthServiceTest {
                 .email("alice@example.com")
                 .passwordHash("new-hash")
                 .displayName("Alice")
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -153,7 +148,6 @@ class AuthServiceTest {
                 .email("alice@example.com")
                 .passwordHash("hashed")
                 .displayName("Alice")
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -172,7 +166,6 @@ class AuthServiceTest {
                 .passwordHash("hashed")
                 .displayName("Alice")
                 .emailVerifiedAt(OffsetDateTime.now())
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -191,7 +184,6 @@ class AuthServiceTest {
                 .email("alice@example.com")
                 .passwordHash("hashed")
                 .displayName("Alice")
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -221,7 +213,6 @@ class AuthServiceTest {
                 .email("alice@example.com")
                 .passwordHash("old-hash")
                 .displayName("Alice")
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();

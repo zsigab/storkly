@@ -54,8 +54,6 @@ class StorklyFacebookOAuth2UserServiceTest {
                 .email("john@example.com")
                 .displayName("John Doe")
                 .emailVerifiedAt(OffsetDateTime.now())
-                .provider(AuthProvider.FACEBOOK)
-                .providerId("fb-123")
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now())
                 .build();

@@ -6,7 +6,6 @@ import static app.storkly.domain.generated.Tables.ITEM;
 import static app.storkly.domain.generated.Tables.REGISTRY;
 import static app.storkly.domain.generated.Tables.USER;
 
-import app.storkly.domain.generated.enums.AuthProvider;
 import app.storkly.domain.generated.enums.ItemFlag;
 import app.storkly.domain.generated.enums.RegistryVisibility;
 import app.storkly.domain.generated.enums.SourceSite;
@@ -63,7 +62,6 @@ public class DataSeeder {
                 .set(USER.PASSWORD_HASH, passwordHash)
                 .set(USER.DISPLAY_NAME, "Registry Owner")
                 .set(USER.EMAIL_VERIFIED_AT, now)
-                .set(USER.PROVIDER, AuthProvider.LOCAL)
                 .set(USER.ROLE, UserRole.USER)
                 .set(USER.CREATED_AT, now)
                 .execute();
@@ -74,7 +72,6 @@ public class DataSeeder {
                 .set(USER.PASSWORD_HASH, passwordHash)
                 .set(USER.DISPLAY_NAME, "Generous Gifter")
                 .set(USER.EMAIL_VERIFIED_AT, now)
-                .set(USER.PROVIDER, AuthProvider.LOCAL)
                 .set(USER.ROLE, UserRole.USER)
                 .set(USER.CREATED_AT, now)
                 .execute();

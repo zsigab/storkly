@@ -17,7 +17,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,15 +38,14 @@ class OAuthServiceTest {
         when(userRepository.findByProviderAndProviderId(AuthProvider.GOOGLE, "google-sub-123"))
                 .thenReturn(Optional.empty());
         when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
+        UUID savedId = UUID.randomUUID();
         when(userRepository.save(any())).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             return User.builder()
-                    .id(UUID.randomUUID())
+                    .id(savedId)
                     .email(u.email())
                     .displayName(u.displayName())
                     .emailVerifiedAt(u.emailVerifiedAt())
-                    .provider(u.provider())
-                    .providerId(u.providerId())
                     .role(u.role())
                     .createdAt(u.createdAt())
                     .build();
@@ -56,10 +54,9 @@ class OAuthServiceTest {
         User result = oAuthService.findOrCreate(AuthProvider.GOOGLE, "google-sub-123", "new@example.com", "New User");
 
         assertThat(result.email()).isEqualTo("new@example.com");
-        assertThat(result.provider()).isEqualTo(AuthProvider.GOOGLE);
-        assertThat(result.providerId()).isEqualTo("google-sub-123");
         assertThat(result.emailVerifiedAt()).isNotNull();
         assertThat(result.passwordHash()).isNull();
+        verify(userRepository).addOAuthProvider(savedId, AuthProvider.GOOGLE, "google-sub-123");
     }
 
     @Test
@@ -67,8 +64,6 @@ class OAuthServiceTest {
         User existing = User.builder()
                 .id(UUID.randomUUID())
                 .email("existing@example.com")
-                .provider(AuthProvider.GOOGLE)
-                .providerId("google-sub-123")
                 .emailVerifiedAt(OffsetDateTime.now().minusDays(1))
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now().minusDays(1))
@@ -79,7 +74,7 @@ class OAuthServiceTest {
         User result = oAuthService.findOrCreate(AuthProvider.GOOGLE, "google-sub-123", "existing@example.com", "User");
 
         assertThat(result).isEqualTo(existing);
-        verify(userRepository, never()).save(any());
+        verify(userRepository, never()).addOAuthProvider(any(), any(), any());
     }
 
     @Test
@@ -91,24 +86,19 @@ class OAuthServiceTest {
                 .passwordHash("hashed")
                 .displayName("Local User")
                 .emailVerifiedAt(OffsetDateTime.now().minusDays(7))
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now().minusDays(7))
                 .build();
         when(userRepository.findByProviderAndProviderId(AuthProvider.GOOGLE, "google-sub-999"))
                 .thenReturn(Optional.empty());
         when(userRepository.findByEmail("local@example.com")).thenReturn(Optional.of(localUser));
-        when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         User result =
                 oAuthService.findOrCreate(AuthProvider.GOOGLE, "google-sub-999", "local@example.com", "Local User");
 
-        ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
-        verify(userRepository).save(saved.capture());
-        assertThat(saved.getValue().providerId()).isEqualTo("google-sub-999");
-        assertThat(saved.getValue().provider()).isEqualTo(AuthProvider.LOCAL);
-        assertThat(saved.getValue().passwordHash()).isEqualTo("hashed");
-        assertThat(result.id()).isEqualTo(userId);
+        assertThat(result).isEqualTo(localUser);
+        verify(userRepository).addOAuthProvider(userId, AuthProvider.GOOGLE, "google-sub-999");
+        verify(userRepository, never()).save(any());
     }
 
     @Test
@@ -118,22 +108,20 @@ class OAuthServiceTest {
                 .id(staleId)
                 .email("stale@example.com")
                 .passwordHash("hashed")
-                .provider(AuthProvider.LOCAL)
                 .role(UserRole.USER)
                 .createdAt(OffsetDateTime.now().minusHours(2))
                 .build();
+        UUID newId = UUID.randomUUID();
         when(userRepository.findByProviderAndProviderId(AuthProvider.GOOGLE, "google-sub-new"))
                 .thenReturn(Optional.empty());
         when(userRepository.findByEmail("stale@example.com")).thenReturn(Optional.of(unverified));
         when(userRepository.save(any())).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             return User.builder()
-                    .id(UUID.randomUUID())
+                    .id(newId)
                     .email(u.email())
                     .displayName(u.displayName())
                     .emailVerifiedAt(u.emailVerifiedAt())
-                    .provider(u.provider())
-                    .providerId(u.providerId())
                     .role(u.role())
                     .createdAt(u.createdAt())
                     .build();
@@ -142,7 +130,7 @@ class OAuthServiceTest {
         User result = oAuthService.findOrCreate(AuthProvider.GOOGLE, "google-sub-new", "stale@example.com", "New");
 
         verify(userRepository).deleteById(staleId);
-        assertThat(result.provider()).isEqualTo(AuthProvider.GOOGLE);
         assertThat(result.emailVerifiedAt()).isNotNull();
+        verify(userRepository).addOAuthProvider(newId, AuthProvider.GOOGLE, "google-sub-new");
     }
 }

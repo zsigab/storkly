@@ -17,8 +17,6 @@ public record User(
         @Nullable String passwordHash,
         String displayName,
         @Nullable OffsetDateTime emailVerifiedAt,
-        AuthProvider provider,
-        @Nullable String providerId,
         UserRole role,
         OffsetDateTime createdAt)
         implements UserDetails {
