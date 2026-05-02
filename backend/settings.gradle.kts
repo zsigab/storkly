@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "storkly-backend"
 
-include("util", "domain", "service", "web")
+include("util", "domain", "service", "scraper", "web")

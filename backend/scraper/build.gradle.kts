@@ -1,6 +1,3 @@
-// Phase 2: scrapers (Playwright + Jsoup).
-// Playwright and Jsoup dependencies are added in Phase 2C.
-
 plugins {
     id("io.spring.dependency-management")
 }
@@ -17,5 +14,8 @@ dependencies {
     annotationProcessor(libs.lombok)
     compileOnly(libs.jspecify)
     implementation(libs.springBootStarter)
+    implementation(libs.playwright)
+    implementation(libs.jsoup)
     testImplementation(libs.springBootStarterTest)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

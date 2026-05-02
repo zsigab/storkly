@@ -11,6 +11,7 @@ dependencyManagement {
 
 dependencies {
     implementation(project(":service"))
+    implementation(project(":scraper"))
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     compileOnly(libs.jspecify)

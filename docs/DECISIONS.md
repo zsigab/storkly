@@ -15,3 +15,4 @@ This index provides a quick summary and links.
 | [008](decisions/008-records-over-lombok-value.md) | Java records for DTOs, drop Lombok @Value | Accepted | 2026-03-27 |
 | [009](decisions/009-jwt-httponly-cookies.md) | JWT stored in httpOnly cookies, not localStorage | Accepted | 2026-03-28 |
 | [010](decisions/010-oauth-cookie-state.md) | Cookie-based OAuth2 authorization request state (no server session) | Accepted | 2026-05-01 |
+| [011](decisions/011-scraper-strategy-pattern.md) | Scraper interface design — strategy pattern with Spring bean list | Accepted | 2026-05-02 |

@@ -13,6 +13,7 @@ import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.exception.UserNotFoundException;
+import app.storkly.scraper.ScrapingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -81,6 +82,11 @@ public class GlobalExceptionHandler {
                         .map(e -> e.getField() + ": " + e.getDefaultMessage())
                         .toList());
         return detail;
+    }
+
+    @ExceptionHandler(ScrapingException.class)
+    public ProblemDetail handleScrapingException(ScrapingException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)

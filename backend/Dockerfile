@@ -48,6 +48,7 @@ WORKDIR /app
 RUN groupadd --system --gid 1001 storkly && \
     useradd --system --uid 1001 --gid 1001 storkly
 
+# TODO 2D: RUN java -cp app.jar com.microsoft.playwright.CLI install chromium
 COPY --from=builder /workspace/web/build/libs/storkly.jar app.jar
 
 USER storkly
