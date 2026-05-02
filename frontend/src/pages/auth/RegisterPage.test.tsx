@@ -60,6 +60,12 @@ describe("RegisterPage", () => {
     expect(googleLink).toHaveAttribute("href", "/api/auth/oauth/google/authorize");
   });
 
+  it("renders Facebook OAuth button pointing to backend", () => {
+    renderPage();
+    const facebookLink = screen.getByRole("link", { name: /continue with facebook/i });
+    expect(facebookLink).toHaveAttribute("href", "/api/auth/oauth/facebook/authorize");
+  });
+
   it("shows validation errors when submitting empty form", async () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));

@@ -103,11 +103,18 @@ export function RegisterPage(): React.ReactElement {
         <div className="border-border flex-grow border-t" />
       </div>
 
-      <a href="/api/auth/oauth/google/authorize" className="block">
-        <Button variant="outline" className="w-full" type="button">
-          Continue with Google
-        </Button>
-      </a>
+      <div className="space-y-2">
+        <a href="/api/auth/oauth/google/authorize" className="block">
+          <Button variant="outline" className="w-full" type="button">
+            Continue with Google
+          </Button>
+        </a>
+        <a href="/api/auth/oauth/facebook/authorize" className="block">
+          <Button variant="outline" className="w-full" type="button">
+            Continue with Facebook
+          </Button>
+        </a>
+      </div>
 
       <p className="text-muted-foreground text-center text-sm">
         Already have an account?{" "}

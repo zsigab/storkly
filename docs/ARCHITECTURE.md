@@ -225,8 +225,22 @@ React is built to static files and served directly by Caddy. No Node.js process 
 ```
 User
   id (UUID), email, password_hash, display_name,
-  email_verified_at, provider (LOCAL | GOOGLE | FACEBOOK),
-  provider_id, role (USER | ADMIN), created_at
+  email_verified_at, provider (LOCAL | GOOGLE | FACEBOOK),  -- see note below
+  provider_id,                                               -- see note below
+  role (USER | ADMIN), created_at
+
+-- NOTE (deferred — see 2B2): provider + provider_id on User only store one
+-- OAuth identity per account. The second social login silently overwrites the
+-- first, breaking the original. The fix is to extract these into a join table:
+--
+-- UserOAuthProvider  (replaces provider + provider_id on User)
+--   id, user_id → User, provider (GOOGLE | FACEBOOK), provider_id (unique per provider),
+--   linked_at
+--   UNIQUE (provider, provider_id)
+--
+-- User.provider becomes LOCAL-only flag (or is dropped in favour of
+-- checking whether a password_hash exists).
+-- Migration: copy existing rows into the new table, drop columns from User.
 
 Registry
   id (UUID), owner_id → User, name, slug (unique URL-safe),
@@ -625,6 +639,13 @@ services:
 - Register app in Facebook Developer Console
 - Wire Facebook provider
 - Frontend OAuth button
+
+**2B2: Multi-Provider OAuth (deferred)**
+- Replace `provider` + `provider_id` columns on `User` with a `UserOAuthProvider` join table
+- Flyway migration: copy existing rows, add table, drop columns
+- Update `OAuthService.findOrCreate` to insert/lookup via the join table
+- A user can then have both Google and Facebook linked simultaneously
+- `User.provider` becomes redundant; distinguish LOCAL vs OAuth by presence of `password_hash`
 
 **2C: Scraper Infrastructure**
 - `ScraperService` interface + `ScrapeResult` DTO

@@ -7,7 +7,7 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.OidcUserInfo;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
-public class StorklyOAuth2User extends DefaultOidcUser {
+public class StorklyOAuth2User extends DefaultOidcUser implements StorklyUserHolder {
 
     private final User storklyUser;
 
@@ -20,6 +20,7 @@ public class StorklyOAuth2User extends DefaultOidcUser {
         this.storklyUser = storklyUser;
     }
 
+    @Override
     public User getStorklyUser() {
         return storklyUser;
     }

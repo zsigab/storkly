@@ -76,11 +76,18 @@ export function LoginPage(): React.ReactElement {
         <div className="border-border flex-grow border-t" />
       </div>
 
-      <a href="/api/auth/oauth/google/authorize" className="block">
-        <Button variant="outline" className="w-full" type="button">
-          Continue with Google
-        </Button>
-      </a>
+      <div className="space-y-2">
+        <a href="/api/auth/oauth/google/authorize" className="block">
+          <Button variant="outline" className="w-full" type="button">
+            Continue with Google
+          </Button>
+        </a>
+        <a href="/api/auth/oauth/facebook/authorize" className="block">
+          <Button variant="outline" className="w-full" type="button">
+            Continue with Facebook
+          </Button>
+        </a>
+      </div>
 
       <div className="space-y-1 text-center text-sm">
         <p>

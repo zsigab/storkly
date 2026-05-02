@@ -26,7 +26,7 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(
             HttpServletRequest request, HttpServletResponse response, Authentication authentication)
             throws IOException {
-        StorklyOAuth2User principal = (StorklyOAuth2User) authentication.getPrincipal();
+        StorklyUserHolder principal = (StorklyUserHolder) authentication.getPrincipal();
         User user = principal.getStorklyUser();
 
         String accessToken = jwtService.generateAccessToken(user);

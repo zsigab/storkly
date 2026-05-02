@@ -4,6 +4,7 @@ import app.storkly.auth.HttpCookieOAuth2AuthorizationRequestRepository;
 import app.storkly.auth.JwtAuthenticationFilter;
 import app.storkly.auth.OAuthSuccessHandler;
 import app.storkly.auth.SelectAccountAuthorizationRequestResolver;
+import app.storkly.auth.StorklyFacebookOAuth2UserService;
 import app.storkly.auth.StorklyOAuth2UserService;
 import app.storkly.service.email.EmailProperties;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,6 +32,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final CorsProperties corsProperties;
     private final StorklyOAuth2UserService oAuth2UserService;
+    private final StorklyFacebookOAuth2UserService facebookOAuth2UserService;
     private final OAuthSuccessHandler oAuthSuccessHandler;
     private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
     private final SelectAccountAuthorizationRequestResolver authorizationRequestResolver;
@@ -86,7 +88,8 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.authorizationRequestRepository(
                                         cookieAuthorizationRequestRepository)
                                 .authorizationRequestResolver(authorizationRequestResolver))
-                        .userInfoEndpoint(info -> info.oidcUserService(oAuth2UserService))
+                        .userInfoEndpoint(
+                                info -> info.oidcUserService(oAuth2UserService).userService(facebookOAuth2UserService))
                         .successHandler(oAuthSuccessHandler)
                         .failureHandler((request, response, exception) -> {
                             response.sendRedirect(emailProperties.frontendUrl() + "/login?error=oauth");

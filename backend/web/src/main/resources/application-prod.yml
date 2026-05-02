@@ -8,6 +8,14 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: openid,email,profile
             redirect-uri: https://storkly.app/login/oauth2/code/google
+          facebook:
+            client-id: ${FACEBOOK_CLIENT_ID}
+            client-secret: ${FACEBOOK_CLIENT_SECRET}
+            scope: email,public_profile
+            redirect-uri: https://storkly.app/login/oauth2/code/facebook
+        provider:
+          facebook:
+            user-info-uri: https://graph.facebook.com/me?fields=id,name,email
   datasource:
     url: jdbc:postgresql://db:5432/storkly
     username: ${DB_USER}

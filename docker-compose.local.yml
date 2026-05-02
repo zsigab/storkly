@@ -37,6 +37,8 @@ services:
       STORKLY_SEED_DATA: "true"
       STORKLY_MAIL_FRONTEND_URL: "http://localhost:3000"
       STORKLY_CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:5173"
+      FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-not-configured}
+      FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-not-configured}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-not-configured}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-not-configured}
     depends_on:
