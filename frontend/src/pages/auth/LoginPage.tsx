@@ -70,6 +70,18 @@ export function LoginPage(): React.ReactElement {
         </Button>
       </form>
 
+      <div className="relative flex items-center">
+        <div className="border-border flex-grow border-t" />
+        <span className="text-muted-foreground mx-3 text-xs">or</span>
+        <div className="border-border flex-grow border-t" />
+      </div>
+
+      <a href="/api/auth/oauth/google/authorize" className="block">
+        <Button variant="outline" className="w-full" type="button">
+          Continue with Google
+        </Button>
+      </a>
+
       <div className="space-y-1 text-center text-sm">
         <p>
           <Link to="/forgot-password" className="text-primary hover:underline">

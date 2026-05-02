@@ -59,6 +59,12 @@ describe("LoginPage", () => {
     expect(screen.getByRole("link", { name: /forgot your password/i })).toBeInTheDocument();
   });
 
+  it("renders Google OAuth button pointing to backend", () => {
+    renderPage();
+    const googleLink = screen.getByRole("link", { name: /continue with google/i });
+    expect(googleLink).toHaveAttribute("href", "/api/auth/oauth/google/authorize");
+  });
+
   it("shows validation error for invalid email", async () => {
     renderPage();
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "not-an-email" } });

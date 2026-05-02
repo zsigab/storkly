@@ -9,6 +9,8 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": "http://localhost:8081",
+      "/oauth2": "http://localhost:8081",
+      "/login/oauth2": "http://localhost:8081",
     },
   },
   resolve: {

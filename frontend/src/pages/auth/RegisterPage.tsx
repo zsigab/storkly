@@ -97,6 +97,18 @@ export function RegisterPage(): React.ReactElement {
         </Button>
       </form>
 
+      <div className="relative flex items-center">
+        <div className="border-border flex-grow border-t" />
+        <span className="text-muted-foreground mx-3 text-xs">or</span>
+        <div className="border-border flex-grow border-t" />
+      </div>
+
+      <a href="/api/auth/oauth/google/authorize" className="block">
+        <Button variant="outline" className="w-full" type="button">
+          Continue with Google
+        </Button>
+      </a>
+
       <p className="text-muted-foreground text-center text-sm">
         Already have an account?{" "}
         <Link to="/login" className="text-primary hover:underline">

@@ -3,6 +3,12 @@
     handle /api/* {
         reverse_proxy api:8081
     }
+    handle /oauth2/* {
+        reverse_proxy api:8081
+    }
+    handle /login/oauth2/* {
+        reverse_proxy api:8081
+    }
     handle {
         root * /srv/frontend
         try_files {path} /index.html

@@ -54,6 +54,12 @@ describe("RegisterPage", () => {
     expect(screen.getByTestId("turnstile")).toBeInTheDocument();
   });
 
+  it("renders Google OAuth button pointing to backend", () => {
+    renderPage();
+    const googleLink = screen.getByRole("link", { name: /continue with google/i });
+    expect(googleLink).toHaveAttribute("href", "/api/auth/oauth/google/authorize");
+  });
+
   it("shows validation errors when submitting empty form", async () => {
     renderPage();
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));

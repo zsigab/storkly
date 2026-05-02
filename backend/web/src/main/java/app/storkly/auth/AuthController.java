@@ -16,7 +16,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -35,6 +37,11 @@ public class AuthController {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final CookieProperties cookieProperties;
+
+    @GetMapping("/me")
+    public TokenResponse me(@AuthenticationPrincipal User user) {
+        return new TokenResponse(user.id(), user.email(), user.displayName());
+    }
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)

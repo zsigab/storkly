@@ -135,4 +135,9 @@ class AuthControllerIntegrationTest {
                 .expectStatus()
                 .isUnauthorized();
     }
+
+    @Test
+    void me_unauthenticated_returnsUnauthorized() {
+        restTestClient.get().uri("/api/auth/me").exchange().expectStatus().isUnauthorized();
+    }
 }

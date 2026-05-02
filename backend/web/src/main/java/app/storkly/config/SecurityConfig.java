@@ -1,6 +1,12 @@
 package app.storkly.config;
 
+import app.storkly.auth.HttpCookieOAuth2AuthorizationRequestRepository;
 import app.storkly.auth.JwtAuthenticationFilter;
+import app.storkly.auth.OAuthSuccessHandler;
+import app.storkly.auth.SelectAccountAuthorizationRequestResolver;
+import app.storkly.auth.StorklyOAuth2UserService;
+import app.storkly.service.email.EmailProperties;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -24,11 +30,21 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
     private final CorsProperties corsProperties;
+    private final StorklyOAuth2UserService oAuth2UserService;
+    private final OAuthSuccessHandler oAuthSuccessHandler;
+    private final HttpCookieOAuth2AuthorizationRequestRepository cookieAuthorizationRequestRepository;
+    private final SelectAccountAuthorizationRequestResolver authorizationRequestResolver;
+    private final EmailProperties emailProperties;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex.authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"status\":401,\"detail\":\"Unauthorized\"}");
+                }))
                 .authorizeHttpRequests(auth -> auth.requestMatchers(HttpMethod.POST, "/api/auth/register")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login")
@@ -44,6 +60,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/logout")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/oauth/**")
+                        .permitAll()
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/registries/{slug}")
                         .permitAll()
@@ -65,6 +83,14 @@ public class SecurityConfig {
                         .permitAll()
                         .anyRequest()
                         .authenticated())
+                .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.authorizationRequestRepository(
+                                        cookieAuthorizationRequestRepository)
+                                .authorizationRequestResolver(authorizationRequestResolver))
+                        .userInfoEndpoint(info -> info.oidcUserService(oAuth2UserService))
+                        .successHandler(oAuthSuccessHandler)
+                        .failureHandler((request, response, exception) -> {
+                            response.sendRedirect(emailProperties.frontendUrl() + "/login?error=oauth");
+                        }))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()));
 

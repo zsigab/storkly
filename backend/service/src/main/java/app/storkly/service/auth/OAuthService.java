@@ -3,22 +3,12 @@ package app.storkly.service.auth;
 import app.storkly.domain.user.AuthProvider;
 import app.storkly.domain.user.User;
 import app.storkly.domain.user.UserRepository;
+import app.storkly.domain.user.UserRole;
+import java.time.OffsetDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Stub OAuth service — Phase 2 will implement provider-specific flows
- * (Google, Facebook) via Spring Security's OAuth2 client support.
- *
- * <p>Phase 2 responsibilities:
- * <ul>
- *   <li>Register a {@code OAuth2UserService<OAuth2UserRequest, OAuth2User>} that delegates
- *       here to find or create users.
- *   <li>Register an {@code AuthenticationSuccessHandler} that calls
- *       {@code JwtService} and sets httpOnly JWT cookies.
- *   <li>Wire real Google / Facebook client registrations in {@code application-prod.yml}.
- * </ul>
- */
 @Service
 @RequiredArgsConstructor
 public class OAuthService {
@@ -26,24 +16,61 @@ public class OAuthService {
     private final UserRepository userRepository;
 
     /**
-     * Finds an existing user by OAuth provider and provider-issued user ID, or creates a
-     * new verified user if none exists.
+     * Finds or creates a user for an OAuth login.
      *
-     * <p>OAuth users are created with {@code emailVerifiedAt} set to the current time because
-     * the provider has already verified the email address. The {@code passwordHash} is left null
-     * since OAuth users authenticate via the provider, not a local password.
-     *
-     * <p>Phase 2: implement using {@code OAuth2UserRequest} and provider-specific attribute
-     * extraction (Google: {@code sub}; Facebook: {@code id}).
-     *
-     * @param provider    the OAuth provider (GOOGLE or FACEBOOK)
-     * @param providerId  the provider-issued unique user identifier
-     * @param email       the user's email address from the provider
-     * @param displayName the user's display name from the provider
-     * @return the found or newly created {@link User}
-     * @throws UnsupportedOperationException always — Phase 2 not yet implemented
+     * <p>Lookup order:
+     * <ol>
+     *   <li>By provider + providerId — returning OAuth user found last time.
+     *   <li>By email — verified LOCAL users are linked (providerId is persisted); unverified
+     *       LOCAL stubs are deleted and replaced with a new OAuth user.
+     *   <li>No match — a new OAuth-verified user is created.
+     * </ol>
      */
+    @Transactional
     public User findOrCreate(AuthProvider provider, String providerId, String email, String displayName) {
-        throw new UnsupportedOperationException("OAuth login not yet implemented — Phase 2");
+        // Fast path: exact match by provider + providerId
+        return userRepository
+                .findByProviderAndProviderId(provider, providerId)
+                .orElseGet(() -> findOrCreateByEmail(provider, providerId, email, displayName));
+    }
+
+    private User findOrCreateByEmail(AuthProvider provider, String providerId, String email, String displayName) {
+        return userRepository
+                .findByEmail(email)
+                .map(existing -> {
+                    if (existing.emailVerifiedAt() != null) {
+                        // Verified LOCAL user: link the OAuth identity and return
+                        User linked = User.builder()
+                                .id(existing.id())
+                                .email(existing.email())
+                                .passwordHash(existing.passwordHash())
+                                .displayName(existing.displayName())
+                                .emailVerifiedAt(existing.emailVerifiedAt())
+                                .provider(existing.provider())
+                                .providerId(providerId)
+                                .role(existing.role())
+                                .createdAt(existing.createdAt())
+                                .build();
+                        return userRepository.save(linked);
+                    } else {
+                        // Unverified LOCAL stub: replace with OAuth user
+                        userRepository.deleteById(existing.id());
+                        return createOAuthUser(provider, providerId, email, displayName);
+                    }
+                })
+                .orElseGet(() -> createOAuthUser(provider, providerId, email, displayName));
+    }
+
+    private User createOAuthUser(AuthProvider provider, String providerId, String email, String displayName) {
+        User newUser = User.builder()
+                .email(email)
+                .displayName(displayName)
+                .emailVerifiedAt(OffsetDateTime.now())
+                .provider(provider)
+                .providerId(providerId)
+                .role(UserRole.USER)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        return userRepository.save(newUser);
     }
 }

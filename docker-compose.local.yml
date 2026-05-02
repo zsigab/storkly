@@ -37,6 +37,8 @@ services:
       STORKLY_SEED_DATA: "true"
       STORKLY_MAIL_FRONTEND_URL: "http://localhost:3000"
       STORKLY_CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:5173"
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-not-configured}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-not-configured}
     depends_on:
       postgres:
         condition: service_healthy

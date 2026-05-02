@@ -13,6 +13,7 @@ import { EditRegistryPage } from "@/pages/registry/EditRegistryPage";
 import { RegistryPage } from "@/pages/registry/RegistryPage";
 import { AddItemPage } from "@/pages/registry/AddItemPage";
 import { EditItemPage } from "@/pages/registry/EditItemPage";
+import { OAuthCallbackPage } from "@/pages/auth/OAuthCallbackPage";
 import { UnclaimPage } from "@/pages/UnclaimPage";
 
 export const router = createBrowserRouter([
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "login", element: <LoginPage /> },
+      { path: "oauth/callback", element: <OAuthCallbackPage /> },
       { path: "un-claim", element: <UnclaimPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "verify-email", element: <VerifyEmailPage /> },

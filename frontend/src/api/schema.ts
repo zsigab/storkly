@@ -88,6 +88,11 @@ type Err = { content: { "application/json": ProblemDetail } };
 type Ok<T> = { content: { "application/json": T } };
 
 export type paths = {
+  "/api/auth/me": {
+    get: {
+      responses: { 200: Ok<TokenResponse>; 401: Err };
+    };
+  };
   "/api/auth/register": {
     post: {
       requestBody: {
