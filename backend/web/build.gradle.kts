@@ -24,6 +24,9 @@ dependencies {
     implementation(libs.springBootStarterMail)
     implementation(libs.springBootStarterValidation)
 
+    // Scraping
+    implementation(libs.playwright)
+
     // Database
     implementation(libs.springBootStarterJooq)
     implementation(libs.springBootStarterFlyway)
