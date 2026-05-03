@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -107,5 +108,71 @@ describe("AddItemPage", () => {
       ),
     );
     expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
+  });
+
+  it("auto-fills form fields after URL blur when scraping returns a result", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.POST).mockResolvedValueOnce({
+      data: {
+        url: "https://www.lazada.com.ph/products/stroller-123",
+        supported: true,
+        sourceSite: "LAZADA_PH",
+        title: "Baby Stroller Pro",
+        description: "Lightweight and foldable",
+        imageUrl: null,
+        priceReference: 4999.0,
+        currency: "PHP",
+      },
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByLabelText(/url/i)).toBeInTheDocument());
+
+    const urlInput = screen.getByLabelText(/url/i);
+    await userEvent.type(urlInput, "https://www.lazada.com.ph/products/stroller-123");
+    fireEvent.blur(urlInput);
+
+    await waitFor(() =>
+      expect(api.POST).toHaveBeenCalledWith(
+        "/api/link-preview",
+        expect.objectContaining({
+          body: { url: "https://www.lazada.com.ph/products/stroller-123" },
+        }),
+      ),
+    );
+    await waitFor(() => expect(screen.getByDisplayValue("Baby Stroller Pro")).toBeInTheDocument());
+    expect(screen.getByText(/fields auto-filled from url/i)).toBeInTheDocument();
+  });
+
+  it("does not show auto-filled banner when scraping returns unsupported", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.POST).mockResolvedValueOnce({
+      data: {
+        url: "https://unknown-shop.example.com/item-1",
+        supported: false,
+        sourceSite: "MANUAL",
+        title: null,
+        description: null,
+        imageUrl: null,
+        priceReference: null,
+        currency: null,
+      },
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByLabelText(/url/i)).toBeInTheDocument());
+
+    const urlInput = screen.getByLabelText(/url/i);
+    await userEvent.type(urlInput, "https://unknown-shop.example.com/item-1");
+    fireEvent.blur(urlInput);
+
+    await waitFor(() =>
+      expect(api.POST).toHaveBeenCalledWith("/api/link-preview", expect.anything()),
+    );
+    expect(screen.queryByText(/fields auto-filled from url/i)).not.toBeInTheDocument();
   });
 });

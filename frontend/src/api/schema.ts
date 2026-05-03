@@ -48,6 +48,21 @@ export interface CategoryResponse {
 export type ItemFlag = "EXACT_ONLY" | "SIMILAR_OK" | "SIMILAR_CHEAPER";
 export type SourceSite = "LAZADA_PH" | "SHOPEE_PH" | "AMAZON" | "GALAXUS" | "SM" | "ROBINSONS" | "MANUAL";
 
+export interface LinkPreviewResponse {
+  url: string;
+  supported: boolean;
+  sourceSite: SourceSite;
+  title: string | null;
+  description: string | null;
+  imageUrl: string | null;
+  priceReference: number | null;
+  currency: string | null;
+}
+
+export interface ImageUploadResponse {
+  url: string;
+}
+
 export interface ItemResponse {
   id: string;
   registryId: string;
@@ -314,6 +329,14 @@ export type paths = {
         content: { "application/json": { name: string } };
       };
       responses: { 201: Ok<CategoryResponse>; 403: Err; 404: Err };
+    };
+  };
+  "/api/link-preview": {
+    post: {
+      requestBody: {
+        content: { "application/json": { url: string } };
+      };
+      responses: { 200: Ok<LinkPreviewResponse>; 401: Err; 422: Err };
     };
   };
 };
