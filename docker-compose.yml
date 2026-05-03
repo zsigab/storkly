@@ -18,6 +18,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     env_file: .env
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -41,3 +43,4 @@ services:
 volumes:
   caddy_data:
   pg_data:
+  uploads_data:

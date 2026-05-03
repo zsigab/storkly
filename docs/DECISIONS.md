@@ -16,3 +16,4 @@ This index provides a quick summary and links.
 | [009](decisions/009-jwt-httponly-cookies.md) | JWT stored in httpOnly cookies, not localStorage | Accepted | 2026-03-28 |
 | [010](decisions/010-oauth-cookie-state.md) | Cookie-based OAuth2 authorization request state (no server session) | Accepted | 2026-05-01 |
 | [011](decisions/011-scraper-strategy-pattern.md) | Scraper interface design — strategy pattern with Spring bean list | Accepted | 2026-05-02 |
+| [012](decisions/012-drop-playwright-og-link-preview.md) | Drop Playwright — OG tags + JSON-LD for link preview | Accepted | 2026-05-03 |

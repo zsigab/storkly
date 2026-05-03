@@ -54,7 +54,8 @@ Storkly is a self-hosted, open-source gift registry web application. Users creat
 | ID | Requirement | Phase |
 |---|---|---|
 | F-20 | Add item manually (title, image URL, price, link, notes) | 1 |
-| F-21 | Add item by pasting URL — URL stored; scraping deferred | 1 |
+| F-21 | Add item by pasting URL — auto-fill via OG tags + JSON-LD link preview | 2C |
+| F-21a | Upload a custom item image (JPEG/PNG/WebP/GIF ≤5 MB) | 2C |
 | F-22 | Auto-scrape product data (title, image, price) from supported sites | 2 |
 | F-23 | Cross-marketplace search for lowest price | 2 |
 | F-24 | Manual entry fallback for unsupported sites | 1 |
@@ -84,18 +85,21 @@ Default set (pre-seeded):
 
 Owners can add, rename, reorder, and delete custom categories per registry.
 
-### 3.6 Supported Marketplaces (Phase 2 Scraping Whitelist)
+### 3.6 Supported Marketplaces
 
-| Site | Region | Method |
-|---|---|---|
-| Lazada PH | Philippines | Playwright (JS-rendered) |
-| Shopee PH | Philippines | Playwright (JS-rendered) |
-| Amazon | Global | Jsoup + JSON-LD |
-| Galaxus | CH / DE / AT | Jsoup + JSON-LD |
-| SM Superstores | Philippines | Jsoup (best-effort) |
-| Robinsons | Philippines | Jsoup (best-effort) |
+Phase 2C adds a **link preview** for any URL via OG tags + JSON-LD (no Playwright — ADR-012).
+Full per-site deep scrapers are Phase 2D–2H and use Jsoup where possible.
 
-Unsupported URL → user is informed and offered manual entry pre-filled with the URL.
+| Site | Region | Phase 2C Link Preview | Phase 2D–2H Deep Scraper |
+|---|---|---|---|
+| Lazada PH | Philippines | OG tags | TBD (previously Playwright — dropped, ADR-012) |
+| Shopee PH | Philippines | OG tags | TBD |
+| Amazon | Global | OG tags + JSON-LD | Jsoup + JSON-LD |
+| Galaxus | CH / DE / AT | OG tags + JSON-LD | Jsoup + JSON-LD |
+| SM Superstores | Philippines | OG tags (best-effort) | Jsoup (best-effort) |
+| Robinsons | Philippines | OG tags (best-effort) | Jsoup (best-effort) |
+
+Unsupported URL (link preview returns `supported: false`) → user is informed and offered manual entry pre-filled with the URL.
 
 ### 3.7 Claiming Flow
 
@@ -145,7 +149,9 @@ Unsupported URL → user is informed and offered manual entry pre-filled with th
 | **Auth** | Spring Security + Spring Authorization Server | Email/password now; OAuth2 (Google + Facebook) in Phase 2 |
 | **Passwords** | `Argon2PasswordEncoder` (Spring Security crypto) | OWASP recommended; no custom crypto |
 | **CAPTCHA** | Cloudflare Turnstile | Free, privacy-friendly, no image puzzles |
-| **Scraping** | Playwright (Java) + Jsoup | Phase 2; Playwright for JS-rendered sites |
+| **Link Preview** | Jsoup + OG tags + JSON-LD + Caffeine | Phase 2C; HTTP fetch → meta-tags + structured data → form auto-fill |
+| **Scraping** | Jsoup | Phase 2D–2H; full product scrapers; Playwright dropped in favour of OG approach (ADR-012) |
+| **Image Upload** | Spring Multipart + local filesystem | Phase 2C; JPEG/PNG/WebP/GIF ≤5 MB; served as `/uploads/{uuid}.ext` |
 | **Email** | Spring Mail + Mailpit (local dev) / Brevo (prod) | Verification, claim notifications |
 | **Reverse proxy** | Caddy 2 | Auto Let's Encrypt; minimal config |
 | **Containers** | Docker + Docker Compose | Same Compose file for Colima and Hetzner |
@@ -161,7 +167,7 @@ backend/                    ← Gradle root
   util/                     ← Pure Java, zero Spring deps (SlugUtil, TokenUtil, ...)
   domain/                   ← Entities, repository interfaces, enums, domain exceptions
   service/                  ← Application services + @Component helpers
-  scraper/                  ← Phase 2 scrapers (Playwright + Jsoup)
+  scraper/                  ← Link preview + item scrapers (Jsoup, OG tags + JSON-LD)
   web/                      ← Spring Boot main class, controllers, DTOs, security config
 ```
 
@@ -205,12 +211,13 @@ Internet
 │  └─────────┘    │                      │    └───────────┘  │
 │       │         │  REST API            │                   │
 │       │         │  Spring Security     │    ┌───────────┐  │
-│       ▼         │  ScraperService (P2) │───▶│ Playwright│  │
-│  ┌─────────┐    │  Email (async)       │    │ (Phase 2) │  │
-│  │  React  │    └──────────────────────┘    └───────────┘  │
-│  │  SPA    │                                               │
-│  │ (static)│    ┌──────────────────────┐                   │
-│  └─────────┘    │ Mailpit (local dev)  │                   │
+│       ▼         │  LinkPreviewService  │    │  uploads/ │  │
+│  ┌─────────┐    │  ImageService        │───▶│  volume   │  │
+│  │  React  │    │  Email (async)       │    │           │  │
+│  │  SPA    │    └──────────────────────┘    └───────────┘  │
+│  │ (static)│                                               │
+│  └─────────┘    ┌──────────────────────┐                   │
+│                 │ Mailpit (local dev)  │                   │
 │                 │ Brevo (prod)         │                   │
 │                 └──────────────────────┘                   │
 └─────────────────────────────────────────────────────────────┘
@@ -318,7 +325,8 @@ POST   /api/registries/{slug}/items
 GET    /api/items/{id}
 PATCH  /api/items/{id}
 DELETE /api/items/{id}
-POST   /api/scrape/preview   -- Phase 2: preview scraped data before saving
+POST   /api/link-preview     -- Phase 2C: OG-tag link preview (any URL); auto-fills item form
+POST   /api/images           -- Phase 2C: upload item image; returns /uploads/{uuid}.ext
 ```
 
 ### Claims
@@ -499,8 +507,6 @@ services:
 | Cloudflare Turnstile CAPTCHA | Free |
 | **Total monthly** | **~€5/mo** |
 
-> **Phase 2 note:** Playwright (headless Chromium) runs in-process or as a sidecar. The CX22 handles it fine for occasional scraping. If it becomes sluggish, upgrade to CX32 (4 vCPU, 8 GB RAM) for €8.57/mo.
-
 ---
 
 ## 12. Phased Delivery (Granular)
@@ -647,37 +653,34 @@ services:
 - A user can then have both Google and Facebook linked simultaneously
 - `User.provider` becomes redundant; distinguish LOCAL vs OAuth by presence of `password_hash`
 
-**2C: Scraper Infrastructure**
-- `ScraperService` interface + `ScrapeResult` DTO
-- Playwright dependency + Docker integration
-- `JsoupScraper` base class
+**2C: Link Preview / Item Import (ADR-012)**
+- `POST /api/link-preview` — Jsoup HTTP fetch (`facebookexternalhit/1.1` UA) → OG meta tags + JSON-LD → returns `{url, title, description, imageUrl, priceReference, currency, sourceSite, supported}`
+- Response cached with Caffeine (500 entries, 1h TTL)
+- Frontend: URL field `onBlur` → call link-preview → auto-fill empty fields; banner "Fields auto-filled from URL"
+- `POST /api/images` — multipart upload; validates MIME type + size (≤5 MB); saves as `{IMAGES_DIR}/{UUID}.ext`; returns `/uploads/{uuid}.ext`
+- `ImageSource` segmented pill on item form: **None / From URL / Upload**
+- Vite dev server proxies `/uploads/**` → backend; Caddy proxies `/uploads/**` → API in production
 
-**2D: Lazada PH Scraper**
-- Playwright-based scraper for `lazada.com.ph`
-- Extract: title, image, price, description
+**2D: Lazada PH Deep Scraper**
+- Jsoup-based scraper for `lazada.com.ph` (OG tags sufficient for preview; deep scraper for full data)
 
-**2E: Shopee PH Scraper**
-- Playwright-based scraper for `shopee.ph`
+**2E: Shopee PH Deep Scraper**
+- Jsoup-based scraper for `shopee.ph`
 
-**2F: Amazon Scraper**
+**2F: Amazon Deep Scraper**
 - Jsoup + JSON-LD structured data
 
-**2G: Galaxus Scraper**
+**2G: Galaxus Deep Scraper**
 - Jsoup + structured data
 
 **2H: SM / Robinsons Scrapers**
 - Best-effort Jsoup scrapers
 
-**2I: Scrape Preview Endpoint**
-- `POST /api/scrape/preview` — returns scraped data before item is saved
-- Frontend shows preview card; user confirms or edits
+**2I: Cross-Marketplace Price Comparison**
+- On item save, search supported sites by product title
+- Store results in `ItemMarketplaceHit`; show alternatives on item detail
 
-**2J: Cross-Marketplace Search**
-- On item save, search all supported sites by product title
-- Store results in `ItemMarketplaceHit`
-- Show lowest price + alternatives on item detail
-
-**2K: Partial Quantity Claiming**
+**2J: Partial Quantity Claiming**
 - Update claim model to support partial quantities
 - UI update for claim dialog
 

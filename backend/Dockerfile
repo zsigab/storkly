@@ -48,10 +48,9 @@ WORKDIR /app
 RUN groupadd --system --gid 1001 storkly && \
     useradd --system --uid 1001 --gid 1001 storkly
 
-# Copy JAR and install Playwright Chromium (must run as root)
 COPY --from=builder /workspace/web/build/libs/storkly.jar app.jar
-RUN java -cp app.jar com.microsoft.playwright.CLI install-deps chromium && \
-    java -cp app.jar com.microsoft.playwright.CLI install chromium
+
+RUN mkdir -p /app/uploads && chown storkly:storkly /app/uploads
 
 USER storkly
 
