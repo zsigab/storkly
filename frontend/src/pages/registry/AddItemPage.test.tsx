@@ -146,6 +146,38 @@ describe("AddItemPage", () => {
     expect(screen.getByText(/fields auto-filled from url/i)).toBeInTheDocument();
   });
 
+  it("shows source toggle when URL is pasted after manual title is entered", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.POST).mockResolvedValueOnce({
+      data: {
+        url: "https://www.lazada.com.ph/products/stroller-123",
+        supported: true,
+        sourceSite: "LAZADA_PH",
+        title: "Baby Stroller Pro",
+        description: null,
+        imageUrl: null,
+        priceReference: null,
+        currency: null,
+      },
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByLabelText(/title/i)).toBeInTheDocument());
+
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "My Custom Title" } });
+
+    const urlInput = screen.getByLabelText(/url/i);
+    await userEvent.type(urlInput, "https://www.lazada.com.ph/products/stroller-123");
+    fireEvent.blur(urlInput);
+
+    // "Custom" only appears on the conflict toggle, not in the image source selector
+    await waitFor(() => expect(screen.getByRole("button", { name: "Custom" })).toBeInTheDocument());
+    // Original title is preserved while source pill is on "custom"
+    expect(screen.getByDisplayValue("My Custom Title")).toBeInTheDocument();
+  });
+
   it("does not show auto-filled banner when scraping returns unsupported", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });

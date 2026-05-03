@@ -30,6 +30,22 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 type ImageSource = "none" | "url" | "upload";
+type TextFieldSource = "custom" | "url";
+type OverridableField = "title" | "description" | "price";
+
+interface ScrapedSnapshot {
+  title: string | null;
+  description: string | null;
+  priceReference: string | null;
+  currency: string | null;
+}
+
+interface CustomSnapshot {
+  title: string;
+  description: string;
+  priceReference: string;
+  currency: string;
+}
 
 interface ItemFormValues {
   title: string;
@@ -58,6 +74,33 @@ interface ItemFormProps {
   isClaimed?: boolean;
 }
 
+function SourcePill({
+  source,
+  onChange,
+}: {
+  source: TextFieldSource;
+  onChange: (s: TextFieldSource) => void;
+}): React.ReactElement {
+  return (
+    <div className="bg-muted flex w-fit gap-1 rounded-lg p-1">
+      {(["custom", "url"] as const).map((s) => (
+        <button
+          key={s}
+          type="button"
+          onClick={() => onChange(s)}
+          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+            source === s
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {s === "custom" ? "Custom" : "From URL"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function ItemForm({
   defaultValues,
   categories,
@@ -80,6 +123,14 @@ export function ItemForm({
   const [lastScrapedUrl, setLastScrapedUrl] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [scrapedSnapshot, setScrapedSnapshot] = useState<ScrapedSnapshot | null>(null);
+  const [customSnapshot, setCustomSnapshot] = useState<CustomSnapshot | null>(null);
+  const [fieldSources, setFieldSources] = useState<Record<OverridableField, TextFieldSource>>({
+    title: "custom",
+    description: "custom",
+    price: "custom",
+  });
 
   const {
     register,
@@ -111,6 +162,19 @@ export function ItemForm({
   const alreadyOwnedValue = watch("alreadyOwned");
   const imageUrlValue = watch("imageUrl");
 
+  const showTitleToggle =
+    scrapedSnapshot !== null &&
+    scrapedSnapshot.title !== null &&
+    (customSnapshot?.title ?? "") !== "";
+  const showDescriptionToggle =
+    scrapedSnapshot !== null &&
+    scrapedSnapshot.description !== null &&
+    (customSnapshot?.description ?? "") !== "";
+  const showPriceToggle =
+    scrapedSnapshot !== null &&
+    scrapedSnapshot.priceReference !== null &&
+    (customSnapshot?.priceReference ?? "") !== "";
+
   const { ref: urlRef, onChange: urlOnChange, onBlur: urlRhfOnBlur } = register("urlOriginal");
 
   async function handleUrlBlur(e: React.FocusEvent<HTMLInputElement>): Promise<void> {
@@ -121,31 +185,99 @@ export function ItemForm({
     try {
       const result = await fetchPreview(url);
       if (!result.supported) return;
+
+      const snap: CustomSnapshot = {
+        title: getValues("title"),
+        description: getValues("description"),
+        priceReference: getValues("priceReference"),
+        currency: getValues("currency"),
+      };
+      setCustomSnapshot(snap);
+
+      const scraped: ScrapedSnapshot = {
+        title: result.title,
+        description: result.description,
+        priceReference: result.priceReference !== null ? String(result.priceReference) : null,
+        currency: result.currency,
+      };
+      setScrapedSnapshot(scraped);
+
+      const newSources: Record<OverridableField, TextFieldSource> = {
+        title: "custom",
+        description: "custom",
+        price: "custom",
+      };
+
       let filled = false;
-      if (getValues("title") === "" && result.title !== null) {
-        setValue("title", result.title);
+
+      if (scraped.title !== null) {
+        if (snap.title === "") {
+          setValue("title", scraped.title);
+          newSources.title = "url";
+          filled = true;
+        }
+        // else: conflict — toggle appears at "custom", field value preserved
+      }
+
+      if (scraped.description !== null) {
+        if (snap.description === "") {
+          setValue("description", scraped.description);
+          newSources.description = "url";
+          filled = true;
+        }
+      }
+
+      if (scraped.priceReference !== null) {
+        if (snap.priceReference === "") {
+          setValue("priceReference", scraped.priceReference);
+          if (scraped.currency !== null) {
+            setValue("currency", scraped.currency);
+          }
+          newSources.price = "url";
+          filled = true;
+        }
+      } else if (scraped.currency !== null && snap.currency === "") {
+        setValue("currency", scraped.currency);
         filled = true;
       }
-      if (getValues("description") === "" && result.description !== null) {
-        setValue("description", result.description);
-        filled = true;
-      }
-      if (getValues("priceReference") === "" && result.priceReference !== null) {
-        setValue("priceReference", String(result.priceReference));
-        filled = true;
-      }
-      if (getValues("currency") === "" && result.currency !== null) {
-        setValue("currency", result.currency);
-        filled = true;
-      }
+
       if (getValues("imageUrl") === "" && result.imageUrl !== null) {
         setValue("imageUrl", result.imageUrl);
         setImageSource("url");
         filled = true;
       }
+
+      setFieldSources(newSources);
       setAutoFilled(filled);
     } catch {
       // preview failed — user fills manually
+    }
+  }
+
+  function handleFieldSourceChange(field: OverridableField, source: TextFieldSource): void {
+    setFieldSources((prev) => ({ ...prev, [field]: source }));
+    if (source === "url" && scrapedSnapshot !== null) {
+      if (field === "title" && scrapedSnapshot.title !== null) {
+        setValue("title", scrapedSnapshot.title);
+      } else if (field === "description" && scrapedSnapshot.description !== null) {
+        setValue("description", scrapedSnapshot.description);
+      } else if (field === "price") {
+        if (scrapedSnapshot.priceReference !== null) {
+          setValue("priceReference", scrapedSnapshot.priceReference);
+        }
+        if (scrapedSnapshot.currency !== null) {
+          setValue("currency", scrapedSnapshot.currency);
+        }
+      }
+    } else if (source === "custom" && customSnapshot !== null) {
+      if (field === "title") {
+        setValue("title", customSnapshot.title);
+      } else if (field === "description") {
+        setValue("description", customSnapshot.description);
+      } else if (field === "price") {
+        setValue("priceReference", customSnapshot.priceReference);
+        setValue("currency", customSnapshot.currency);
+      }
     }
   }
 
@@ -192,6 +324,12 @@ export function ItemForm({
       )}
     >
       <FormField label="Title" htmlFor="title" error={errors.title?.message}>
+        {showTitleToggle && (
+          <SourcePill
+            source={fieldSources.title}
+            onChange={(s) => handleFieldSourceChange("title", s)}
+          />
+        )}
         <Input id="title" type="text" autoComplete="off" {...register("title")} />
       </FormField>
 
@@ -326,6 +464,12 @@ export function ItemForm({
       </div>
 
       <FormField label="Description" htmlFor="description" error={errors.description?.message}>
+        {showDescriptionToggle && (
+          <SourcePill
+            source={fieldSources.description}
+            onChange={(s) => handleFieldSourceChange("description", s)}
+          />
+        )}
         <textarea
           id="description"
           rows={3}
@@ -334,26 +478,40 @@ export function ItemForm({
         />
       </FormField>
 
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="Price" htmlFor="priceReference" error={errors.priceReference?.message}>
-          <Input
-            id="priceReference"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            {...register("priceReference")}
-          />
-        </FormField>
-        <FormField label="Currency" htmlFor="currency" error={errors.currency?.message}>
-          <Input
-            id="currency"
-            type="text"
-            placeholder="USD"
-            maxLength={3}
-            {...register("currency")}
-          />
-        </FormField>
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-sm leading-none font-medium">Price</span>
+          {showPriceToggle && (
+            <SourcePill
+              source={fieldSources.price}
+              onChange={(s) => handleFieldSourceChange("price", s)}
+            />
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Input
+              id="priceReference"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              {...register("priceReference")}
+            />
+            {errors.priceReference?.message !== undefined && (
+              <p className="text-destructive text-sm">{errors.priceReference.message}</p>
+            )}
+          </div>
+          <FormField label="Currency" htmlFor="currency" error={errors.currency?.message}>
+            <Input
+              id="currency"
+              type="text"
+              placeholder="USD"
+              maxLength={3}
+              {...register("currency")}
+            />
+          </FormField>
+        </div>
       </div>
 
       <FormField label="Category" htmlFor="categoryId" error={errors.categoryId?.message}>

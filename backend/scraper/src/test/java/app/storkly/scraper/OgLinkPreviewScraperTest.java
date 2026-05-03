@@ -94,7 +94,24 @@ class OgLinkPreviewScraperTest {
     }
 
     @Test
-    void extract_withNoOgImage_returnsUnsupported() {
+    void extract_withNeitherTitleNorImage_returnsUnsupported() {
+        String html = """
+                <html>
+                <head>
+                  <meta name="description" content="A page without OG tags" />
+                </head>
+                </html>
+                """;
+
+        Document doc = Jsoup.parse(html);
+        ScrapeResult result = scraper.extract(doc, "https://example.com/product");
+
+        assertThat(result.supported()).isFalse();
+        assertThat(result.sourceSite()).isEqualTo(SourceSite.MANUAL);
+    }
+
+    @Test
+    void extract_withTitleButNoImage_returnsSupported() {
         String html = """
                 <html>
                 <head>
@@ -106,8 +123,31 @@ class OgLinkPreviewScraperTest {
         Document doc = Jsoup.parse(html);
         ScrapeResult result = scraper.extract(doc, "https://example.com/product");
 
-        assertThat(result.supported()).isFalse();
-        assertThat(result.sourceSite()).isEqualTo(SourceSite.MANUAL);
+        assertThat(result.supported()).isTrue();
+        assertThat(result.title()).isEqualTo("Some Product");
+        assertThat(result.imageUrl()).isNull();
+    }
+
+    @Test
+    void extract_withProductPriceMeta_extractsPrice() {
+        String html = """
+                <html>
+                <head>
+                  <meta property="og:title" content="Baby Stroller" />
+                  <meta property="og:image" content="https://img.lazcdn.com/stroller.jpg" />
+                  <meta property="product:price:amount" content="5999.00" />
+                  <meta property="product:price:currency" content="PHP" />
+                </head>
+                </html>
+                """;
+
+        Document doc = Jsoup.parse(html);
+        ScrapeResult result =
+                scraper.extract(doc, "https://www.lazada.com.ph/products/baby-stroller");
+
+        assertThat(result.supported()).isTrue();
+        assertThat(result.priceReference()).isEqualTo(new BigDecimal("5999.00"));
+        assertThat(result.currency()).isEqualTo("PHP");
     }
 
     @Test

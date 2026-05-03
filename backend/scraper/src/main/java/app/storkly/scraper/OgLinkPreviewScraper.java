@@ -24,16 +24,18 @@ public class OgLinkPreviewScraper extends JsoupScraper {
 
     @Override
     protected ScrapeResult extract(Document doc, String url) {
-        String imageUrl = doc.select("meta[property=og:image]").attr("content");
-        if (imageUrl.isEmpty()) {
-            log.debug("No og:image found for url={}", url);
-            return ScrapeResult.unsupported(url);
-        }
+        String imageUrl = emptyToNull(doc.select("meta[property=og:image]").attr("content"));
 
         String rawTitle = doc.select("meta[property=og:title]").attr("content");
         String title = rawTitle.isEmpty()
                 ? null
                 : rawTitle.replaceFirst("\\s\\|\\s.*$", "").strip();
+
+        if (title == null && imageUrl == null) {
+            log.debug("No og:title or og:image found for url={}", url);
+            return ScrapeResult.unsupported(url);
+        }
+
         String description =
                 emptyToNull(doc.select("meta[property=og:description]").attr("content"));
         String ogUrl = doc.select("meta[property=og:url]").attr("content");
@@ -58,6 +60,23 @@ public class OgLinkPreviewScraper extends JsoupScraper {
             } catch (Exception e) {
                 log.debug("Failed to parse JSON-LD for url={}: {}", url, e.getMessage());
             }
+        }
+
+        // Fallback: Facebook product OG tags used by Lazada PH, Shopee PH, and others
+        if (price == null) {
+            String priceStr =
+                    emptyToNull(doc.select("meta[property=product:price:amount]").attr("content"));
+            if (priceStr != null) {
+                try {
+                    price = new BigDecimal(priceStr.replace(",", ""));
+                } catch (NumberFormatException e) {
+                    log.debug("Failed to parse product:price:amount '{}': {}", priceStr, e.getMessage());
+                }
+            }
+        }
+        if (currency == null) {
+            currency = emptyToNull(
+                    doc.select("meta[property=product:price:currency]").attr("content"));
         }
 
         return ScrapeResult.builder()
