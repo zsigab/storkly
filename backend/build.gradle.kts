@@ -38,7 +38,7 @@ subprojects {
     }
 
     tasks.withType<JavaCompile>().configureEach {
-        options.compilerArgs.addAll(listOf("--enable-preview", "-Xlint:preview"))
+        options.compilerArgs.addAll(listOf("--enable-preview", "-Xlint:preview", "-parameters"))
         options.encoding = "UTF-8"
     }
 
