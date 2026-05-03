@@ -39,7 +39,7 @@ spring:
 
 storkly:
   images:
-    upload-dir: ${user.home}/.storkly/uploads
+    upload-dir: ${IMAGES_DIR:${user.home}/.storkly/uploads}
   captcha:
     enabled: true
     secret-key: "1x0000000000000000000000000000000AA"
