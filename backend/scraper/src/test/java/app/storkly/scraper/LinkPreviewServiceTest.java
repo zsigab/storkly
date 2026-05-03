@@ -12,7 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ScraperDispatcherTest {
+class LinkPreviewServiceTest {
 
     @Mock
     private Scraper scraper;
@@ -30,8 +30,8 @@ class ScraperDispatcherTest {
         when(scraper.supports(URL)).thenReturn(true);
         when(scraper.scrape(URL)).thenReturn(expected);
 
-        ScraperDispatcher dispatcher = new ScraperDispatcher(List.of(scraper));
-        ScrapeResult result = dispatcher.preview(URL);
+        LinkPreviewService service = new LinkPreviewService(List.of(scraper));
+        ScrapeResult result = service.preview(URL);
 
         assertThat(result).isEqualTo(expected);
     }
@@ -40,8 +40,8 @@ class ScraperDispatcherTest {
     void preview_withNoMatchingScraper_returnsUnsupportedResult() {
         when(scraper.supports(URL)).thenReturn(false);
 
-        ScraperDispatcher dispatcher = new ScraperDispatcher(List.of(scraper));
-        ScrapeResult result = dispatcher.preview(URL);
+        LinkPreviewService service = new LinkPreviewService(List.of(scraper));
+        ScrapeResult result = service.preview(URL);
 
         assertThat(result.supported()).isFalse();
         assertThat(result.sourceSite()).isEqualTo(SourceSite.MANUAL);
@@ -50,22 +50,10 @@ class ScraperDispatcherTest {
 
     @Test
     void preview_withEmptyScraperList_returnsUnsupportedResult() {
-        ScraperDispatcher dispatcher = new ScraperDispatcher(List.of());
-        ScrapeResult result = dispatcher.preview(URL);
+        LinkPreviewService service = new LinkPreviewService(List.of());
+        ScrapeResult result = service.preview(URL);
 
         assertThat(result.supported()).isFalse();
-    }
-
-    @Test
-    void preview_whenScraperThrowsScrapingException_propagatesIt() {
-        when(scraper.supports(URL)).thenReturn(true);
-        when(scraper.scrape(URL)).thenThrow(new ScrapingException(URL, "Connection refused"));
-
-        ScraperDispatcher dispatcher = new ScraperDispatcher(List.of(scraper));
-
-        assertThatThrownBy(() -> dispatcher.preview(URL))
-                .isInstanceOf(ScrapingException.class)
-                .hasMessage("Connection refused");
     }
 
     @Test
@@ -73,10 +61,23 @@ class ScraperDispatcherTest {
         when(scraper.supports(URL)).thenReturn(true);
         when(scraper.scrape(URL)).thenThrow(new RuntimeException("Unexpected"));
 
-        ScraperDispatcher dispatcher = new ScraperDispatcher(List.of(scraper));
+        LinkPreviewService service = new LinkPreviewService(List.of(scraper));
 
-        assertThatThrownBy(() -> dispatcher.preview(URL))
+        assertThatThrownBy(() -> service.preview(URL))
                 .isInstanceOf(ScrapingException.class)
                 .hasMessageContaining("Unexpected error");
+    }
+
+    @Test
+    void preview_whenScraperThrowsScrapingException_returnsUnsupportedAsFallback() {
+        when(scraper.supports(URL)).thenReturn(true);
+        when(scraper.scrape(URL)).thenThrow(new ScrapingException(URL, "Network timeout"));
+
+        LinkPreviewService service = new LinkPreviewService(List.of(scraper));
+        ScrapeResult result = service.preview(URL);
+
+        assertThat(result.supported()).isFalse();
+        assertThat(result.sourceSite()).isEqualTo(SourceSite.MANUAL);
+        assertThat(result.url()).isEqualTo(URL);
     }
 }

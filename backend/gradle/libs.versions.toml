@@ -10,7 +10,7 @@ jspecify = "1.0.0"
 postgresql = "42.7.5"
 springdoc = "3.0.2"
 jjwt = "0.12.6"
-playwright = "1.49.0"
+caffeine = "3.2.0"
 jsoup = "1.18.3"
 
 [libraries]
@@ -47,9 +47,11 @@ jjwtApi    = { module = "io.jsonwebtoken:jjwt-api",     version.ref = "jjwt" }
 jjwtImpl   = { module = "io.jsonwebtoken:jjwt-impl",    version.ref = "jjwt" }
 jjwtJackson = { module = "io.jsonwebtoken:jjwt-jackson", version.ref = "jjwt" }
 
-# Scraping
-playwright = { module = "com.microsoft.playwright:playwright", version.ref = "playwright" }
-jsoup      = { module = "org.jsoup:jsoup",                     version.ref = "jsoup"      }
+# Link preview / scraping
+springBootStarterCache = { module = "org.springframework.boot:spring-boot-starter-cache", version.ref = "springBoot" }
+caffeine               = { module = "com.github.ben-manes.caffeine:caffeine",              version.ref = "caffeine"   }
+jacksonDatabind        = { module = "tools.jackson.core:jackson-databind"                                            }
+jsoup                  = { module = "org.jsoup:jsoup",                                     version.ref = "jsoup"      }
 
 # Utilities
 lombok      = { module = "org.projectlombok:lombok",         version.ref = "lombok"   }

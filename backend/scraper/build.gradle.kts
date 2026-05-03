@@ -14,7 +14,7 @@ dependencies {
     annotationProcessor(libs.lombok)
     compileOnly(libs.jspecify)
     implementation(libs.springBootStarter)
-    implementation(libs.playwright)
+    implementation(libs.jacksonDatabind)
     implementation(libs.jsoup)
     testImplementation(libs.springBootStarterTest)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
