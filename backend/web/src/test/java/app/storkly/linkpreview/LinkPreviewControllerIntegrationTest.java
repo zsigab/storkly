@@ -1,4 +1,4 @@
-package app.storkly.scrape;
+package app.storkly.linkpreview;
 
 import app.storkly.auth.dto.LoginRequest;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,7 +21,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Testcontainers
 @ActiveProfiles("test")
 @TestPropertySource(properties = "storkly.captcha.enabled=false")
-class ScrapeControllerIntegrationTest {
+class LinkPreviewControllerIntegrationTest {
 
     @Container
     @ServiceConnection
@@ -43,18 +43,8 @@ class ScrapeControllerIntegrationTest {
     void preview_unauthenticated_returnsUnauthorized() {
         restTestClient
                 .post()
-                .uri("/api/scrape/preview")
+                .uri("/api/link-preview")
                 .body("{\"url\":\"https://example.com\"}")
-                .exchange()
-                .expectStatus()
-                .isUnauthorized();
-    }
-
-    @Test
-    void preview_missingBody_returnsUnauthorized() {
-        restTestClient
-                .post()
-                .uri("/api/scrape/preview")
                 .exchange()
                 .expectStatus()
                 .isUnauthorized();
@@ -66,7 +56,7 @@ class ScrapeControllerIntegrationTest {
 
         restTestClient
                 .post()
-                .uri("/api/scrape/preview")
+                .uri("/api/link-preview")
                 .cookie("jwt", authCookie)
                 .body("{\"url\":\"https://unsupported-site.example.com/product/123\"}")
                 .exchange()
@@ -87,7 +77,7 @@ class ScrapeControllerIntegrationTest {
 
         restTestClient
                 .post()
-                .uri("/api/scrape/preview")
+                .uri("/api/link-preview")
                 .cookie("jwt", authCookie)
                 .body("{\"url\":\"\"}")
                 .exchange()

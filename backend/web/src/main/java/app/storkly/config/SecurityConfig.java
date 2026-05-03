@@ -83,8 +83,8 @@ public class SecurityConfig {
                         .authenticated()
                         .requestMatchers("/api/docs/**", "/swagger-ui/**")
                         .permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/scrape/preview")
-                        .authenticated()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.authorizationRequestRepository(

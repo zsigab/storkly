@@ -8,6 +8,14 @@ spring:
     properties:
       "[mail.smtp.auth]": "true"
       "[mail.smtp.starttls.enable]": "true"
+  cache:
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=1h
+    cache-names: linkPreview
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 server:
   port: 8080
@@ -28,3 +36,6 @@ springdoc:
 storkly:
   mail:
     from: noreply@storkly.cc
+  images:
+    upload-dir: ${IMAGES_DIR:./uploads}
+    max-size-mb: 5

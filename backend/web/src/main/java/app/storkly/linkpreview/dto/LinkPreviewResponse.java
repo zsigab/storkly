@@ -1,10 +1,10 @@
-package app.storkly.scrape.dto;
+package app.storkly.linkpreview.dto;
 
 import app.storkly.domain.item.SourceSite;
 import java.math.BigDecimal;
 import org.jspecify.annotations.Nullable;
 
-public record ScrapePreviewResponse(
+public record LinkPreviewResponse(
         String url,
         boolean supported,
         SourceSite sourceSite,

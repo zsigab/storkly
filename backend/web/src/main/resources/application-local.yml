@@ -38,6 +38,8 @@ spring:
       "[mail.smtp.starttls.enable]": "false"
 
 storkly:
+  images:
+    upload-dir: ${user.home}/.storkly/uploads
   captcha:
     enabled: true
     secret-key: "1x0000000000000000000000000000000AA"

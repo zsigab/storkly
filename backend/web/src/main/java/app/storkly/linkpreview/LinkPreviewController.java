@@ -1,9 +1,9 @@
-package app.storkly.scrape;
+package app.storkly.linkpreview;
 
-import app.storkly.scrape.dto.ScrapePreviewRequest;
-import app.storkly.scrape.dto.ScrapePreviewResponse;
+import app.storkly.linkpreview.dto.LinkPreviewRequest;
+import app.storkly.linkpreview.dto.LinkPreviewResponse;
+import app.storkly.scraper.LinkPreviewService;
 import app.storkly.scraper.ScrapeResult;
-import app.storkly.scraper.ScraperDispatcher;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,14 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class ScrapeController {
+public class LinkPreviewController {
 
-    private final ScraperDispatcher scraperDispatcher;
+    private final LinkPreviewService linkPreviewService;
 
-    @PostMapping("/api/scrape/preview")
-    public ScrapePreviewResponse preview(@RequestBody @Valid ScrapePreviewRequest request) {
-        ScrapeResult result = scraperDispatcher.preview(request.url());
-        return new ScrapePreviewResponse(
+    @PostMapping("/api/link-preview")
+    public LinkPreviewResponse preview(@RequestBody @Valid LinkPreviewRequest request) {
+        ScrapeResult result = linkPreviewService.preview(request.url());
+        return new LinkPreviewResponse(
                 result.url(),
                 result.supported(),
                 result.sourceSite(),

@@ -24,8 +24,9 @@ dependencies {
     implementation(libs.springBootStarterMail)
     implementation(libs.springBootStarterValidation)
 
-    // Scraping
-    implementation(libs.playwright)
+    // Link preview cache
+    implementation(libs.springBootStarterCache)
+    runtimeOnly(libs.caffeine)
 
     // Database
     implementation(libs.springBootStarterJooq)
