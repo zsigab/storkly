@@ -110,6 +110,55 @@ describe("AddItemPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
   });
 
+  it("strips query params from product URL before saving", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.POST).mockResolvedValueOnce({
+      data: {
+        id: "item-1",
+        registryId: "reg-1",
+        categoryId: null,
+        addedByUserId: "u1",
+        urlOriginal: "https://www.lazada.com.ph/products/pdp-i123.html",
+        sourceSite: "LAZADA_PH",
+        title: "Baby Carrier",
+        description: null,
+        imageUrl: null,
+        priceReference: null,
+        currency: null,
+        priceCapturedAt: null,
+        quantityDesired: 1,
+        flag: "EXACT_ONLY",
+        notes: null,
+        sortOrder: 0,
+        createdAt: "2024-01-01T00:00:00Z",
+        updatedAt: "2024-01-01T00:00:00Z",
+      },
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByLabelText(/title/i)).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Baby Carrier" } });
+    fireEvent.change(screen.getByLabelText(/product url/i), {
+      target: {
+        value:
+          "https://www.lazada.com.ph/products/pdp-i123.html?clickTrackInfo=query%3A%3Bnid%3A123&source=search&spm=a2o4l",
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /add item/i }));
+    await waitFor(() =>
+      expect(api.POST).toHaveBeenCalledWith(
+        "/api/registries/{slug}/items",
+        expect.objectContaining({
+          body: expect.objectContaining({
+            urlOriginal: "https://www.lazada.com.ph/products/pdp-i123.html",
+          }),
+        }),
+      ),
+    );
+  });
+
   it("auto-fills form fields after URL blur when scraping returns a result", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });

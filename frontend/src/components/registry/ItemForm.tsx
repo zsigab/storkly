@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,7 +29,7 @@ const schema = z.object({
 });
 
 type FormValues = z.infer<typeof schema>;
-type ImageSource = "none" | "url" | "upload";
+type ImageSource = "none" | "product-url" | "url" | "upload";
 type TextFieldSource = "custom" | "url";
 type OverridableField = "title" | "description" | "price";
 
@@ -38,6 +38,7 @@ interface ScrapedSnapshot {
   description: string | null;
   priceReference: string | null;
   currency: string | null;
+  imageUrl: string | null;
 }
 
 interface CustomSnapshot {
@@ -94,11 +95,20 @@ function SourcePill({
               : "text-muted-foreground hover:text-foreground"
           }`}
         >
-          {s === "custom" ? "Custom" : "From URL"}
+          {s === "custom" ? "Custom" : "From Product URL"}
         </button>
       ))}
     </div>
   );
+}
+
+function stripUrlParams(url: string): string {
+  try {
+    const parsed = new URL(url);
+    return parsed.origin + parsed.pathname;
+  } catch {
+    return url;
+  }
 }
 
 export function ItemForm({
@@ -119,10 +129,15 @@ export function ItemForm({
   const initialImageSource: ImageSource =
     defaultValues?.imageUrl !== undefined && defaultValues.imageUrl !== "" ? "url" : "none";
   const [imageSource, setImageSource] = useState<ImageSource>(initialImageSource);
+  const [customImageUrl, setCustomImageUrl] = useState(
+    initialImageSource !== "none" ? (defaultValues?.imageUrl ?? "") : "",
+  );
+  const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [autoFilled, setAutoFilled] = useState(false);
-  const [lastScrapedUrl, setLastScrapedUrl] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageWrapperRef = useRef<HTMLDivElement>(null);
+  const capturedHeight = useRef<number | null>(null);
 
   const [scrapedSnapshot, setScrapedSnapshot] = useState<ScrapedSnapshot | null>(null);
   const [customSnapshot, setCustomSnapshot] = useState<CustomSnapshot | null>(null);
@@ -162,26 +177,108 @@ export function ItemForm({
   const alreadyOwnedValue = watch("alreadyOwned");
   const imageUrlValue = watch("imageUrl");
 
-  const showTitleToggle =
-    scrapedSnapshot !== null &&
-    scrapedSnapshot.title !== null &&
-    (customSnapshot?.title ?? "") !== "";
-  const showDescriptionToggle =
-    scrapedSnapshot !== null &&
-    scrapedSnapshot.description !== null &&
-    (customSnapshot?.description ?? "") !== "";
-  const showPriceToggle =
-    scrapedSnapshot !== null &&
-    scrapedSnapshot.priceReference !== null &&
-    (customSnapshot?.priceReference ?? "") !== "";
+  // When editing an existing item, re-scrape the saved URL to restore toggle state.
+  useEffect(() => {
+    const initialUrl = defaultValues?.urlOriginal;
+    if (!initialUrl) return;
+    let cancelled = false;
+    fetchPreview(initialUrl)
+      .then((result) => {
+        if (cancelled || !result.supported) return;
+        const snap: CustomSnapshot = {
+          title: getValues("title"),
+          description: getValues("description"),
+          priceReference: getValues("priceReference"),
+          currency: getValues("currency"),
+        };
+        setCustomSnapshot(snap);
+        const scraped: ScrapedSnapshot = {
+          title: result.title,
+          description: result.description,
+          priceReference: result.priceReference !== null ? String(result.priceReference) : null,
+          currency: result.currency,
+          imageUrl: result.imageUrl,
+        };
+        setScrapedSnapshot(scraped);
+        setFieldSources({
+          title: scraped.title !== null && snap.title === scraped.title ? "url" : "custom",
+          description:
+            scraped.description !== null && snap.description === scraped.description
+              ? "url"
+              : "custom",
+          price:
+            scraped.priceReference !== null && snap.priceReference === scraped.priceReference
+              ? "url"
+              : "custom",
+        });
+        // Any saved imageUrl is treated as a custom URL in edit mode.
+        // "From Product URL" tab is still available for manual selection.
+      })
+      .catch(() => {
+        /* silent — edit still works, just without source toggles */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { ref: urlRef, onChange: urlOnChange, onBlur: urlRhfOnBlur } = register("urlOriginal");
+  // FLIP: animate wrapper height after imageSource causes a content change.
+  // capturedHeight is set synchronously in the event handler (before re-render),
+  // so here we always know both the "from" and the new natural "to" height.
+  useLayoutEffect(() => {
+    const el = imageWrapperRef.current;
+    const from = capturedHeight.current;
+    if (!el || from === null) return;
+    capturedHeight.current = null;
+    const to = el.scrollHeight;
+    if (Math.abs(from - to) < 1) return;
+    el.animate([{ height: `${from}px` }, { height: `${to}px` }], {
+      duration: 200,
+      easing: "ease-in-out",
+    });
+  }, [imageSource]);
+
+  const hasScrapedData = scrapedSnapshot !== null;
+  const showTitleToggle = hasScrapedData && scrapedSnapshot.title !== null;
+  const showDescriptionToggle = hasScrapedData && scrapedSnapshot.description !== null;
+  const showPriceToggle = hasScrapedData && scrapedSnapshot.priceReference !== null;
+  const imageSourceOptions: ImageSource[] =
+    hasScrapedData && scrapedSnapshot.imageUrl !== null
+      ? ["none", "product-url", "url", "upload"]
+      : ["none", "url", "upload"];
+
+  function imageSourceLabel(source: ImageSource): string {
+    if (source === "none") return "None";
+    if (source === "product-url") return "From Product URL";
+    if (source === "url") return "From URL";
+    return "Upload";
+  }
+
+  const urlRegistration = register("urlOriginal");
+  const imageUrlRegistration = register("imageUrl");
+  const urlAtFocus = useRef("");
+
+  function handleUrlFocus(e: React.FocusEvent<HTMLInputElement>): void {
+    urlAtFocus.current = e.target.value;
+  }
+
+  function handleUrlChange(e: React.ChangeEvent<HTMLInputElement>): void {
+    void urlRegistration.onChange(e);
+    if (e.target.value === "") {
+      setScrapedSnapshot(null);
+      setCustomSnapshot(null);
+      setFieldSources({ title: "custom", description: "custom", price: "custom" });
+      if (imageSource === "product-url") {
+        setImageSource("none");
+        setValue("imageUrl", "");
+      }
+    }
+  }
 
   async function handleUrlBlur(e: React.FocusEvent<HTMLInputElement>): Promise<void> {
-    urlRhfOnBlur(e);
+    void urlRegistration.onBlur(e);
     const url = e.target.value.trim();
-    if (!url || url === lastScrapedUrl) return;
-    setLastScrapedUrl(url);
+    if (!url || url === urlAtFocus.current.trim()) return;
     try {
       const result = await fetchPreview(url);
       if (!result.supported) return;
@@ -199,6 +296,7 @@ export function ItemForm({
         description: result.description,
         priceReference: result.priceReference !== null ? String(result.priceReference) : null,
         currency: result.currency,
+        imageUrl: result.imageUrl,
       };
       setScrapedSnapshot(scraped);
 
@@ -241,9 +339,9 @@ export function ItemForm({
         filled = true;
       }
 
-      if (getValues("imageUrl") === "" && result.imageUrl !== null) {
-        setValue("imageUrl", result.imageUrl);
-        setImageSource("url");
+      if (scraped.imageUrl !== null && imageSource === "none") {
+        setValue("imageUrl", scraped.imageUrl);
+        setImageSource("product-url");
         filled = true;
       }
 
@@ -255,6 +353,20 @@ export function ItemForm({
   }
 
   function handleFieldSourceChange(field: OverridableField, source: TextFieldSource): void {
+    if (source === "url") {
+      // Read values NOW — before setValue() runs and mutates RHF's store.
+      // Using a functional updater calls getValues() lazily after setValue(), capturing the wrong value.
+      const currentTitle = getValues("title");
+      const currentDescription = getValues("description");
+      const currentPriceReference = getValues("priceReference");
+      const currentCurrency = getValues("currency");
+      setCustomSnapshot((prev) => {
+        const base = prev ?? { title: "", description: "", priceReference: "", currency: "" };
+        if (field === "title") return { ...base, title: currentTitle };
+        if (field === "description") return { ...base, description: currentDescription };
+        return { ...base, priceReference: currentPriceReference, currency: currentCurrency };
+      });
+    }
     setFieldSources((prev) => ({ ...prev, [field]: source }));
     if (source === "url" && scrapedSnapshot !== null) {
       if (field === "title" && scrapedSnapshot.title !== null) {
@@ -269,23 +381,39 @@ export function ItemForm({
           setValue("currency", scrapedSnapshot.currency);
         }
       }
-    } else if (source === "custom" && customSnapshot !== null) {
-      if (field === "title") {
+    } else if (source === "custom") {
+      // Only overwrite if the snapshot has a non-empty value.
+      // If empty (field was auto-filled from URL, no prior custom entry), keep the current form
+      // value so the user can edit the URL value as a starting point rather than seeing a blank field.
+      if (field === "title" && customSnapshot?.title) {
         setValue("title", customSnapshot.title);
-      } else if (field === "description") {
+      } else if (field === "description" && customSnapshot?.description) {
         setValue("description", customSnapshot.description);
       } else if (field === "price") {
-        setValue("priceReference", customSnapshot.priceReference);
-        setValue("currency", customSnapshot.currency);
+        if (customSnapshot?.priceReference)
+          setValue("priceReference", customSnapshot.priceReference);
+        if (customSnapshot?.currency) setValue("currency", customSnapshot.currency);
       }
     }
   }
 
   function handleImageSourceChange(source: ImageSource): void {
+    if (imageWrapperRef.current) {
+      capturedHeight.current = imageWrapperRef.current.getBoundingClientRect().height;
+      imageWrapperRef.current.getAnimations().forEach((a) => a.cancel());
+    }
     setImageSource(source);
     setUploadError(null);
     if (source === "none") {
       setValue("imageUrl", "");
+    } else if (source === "product-url") {
+      if (scrapedSnapshot?.imageUrl !== null && scrapedSnapshot?.imageUrl !== undefined) {
+        setValue("imageUrl", scrapedSnapshot.imageUrl);
+      }
+    } else if (source === "url") {
+      setValue("imageUrl", customImageUrl);
+    } else if (source === "upload") {
+      setValue("imageUrl", uploadedImageUrl);
     }
   }
 
@@ -296,6 +424,7 @@ export function ItemForm({
     try {
       const url = await uploadImage(file);
       setValue("imageUrl", url);
+      setUploadedImageUrl(url);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Upload failed");
       setValue("imageUrl", "");
@@ -310,7 +439,7 @@ export function ItemForm({
         onSubmit({
           title: values.title,
           description: values.description.length > 0 ? values.description : null,
-          urlOriginal: values.urlOriginal.length > 0 ? values.urlOriginal : null,
+          urlOriginal: values.urlOriginal.length > 0 ? stripUrlParams(values.urlOriginal) : null,
           imageUrl: values.imageUrl.length > 0 ? values.imageUrl : null,
           priceReference:
             values.priceReference.length > 0 ? parseFloat(values.priceReference) : null,
@@ -330,17 +459,25 @@ export function ItemForm({
             onChange={(s) => handleFieldSourceChange("title", s)}
           />
         )}
-        <Input id="title" type="text" autoComplete="off" {...register("title")} />
+        <Input
+          id="title"
+          type="text"
+          autoComplete="off"
+          disabled={fieldSources.title === "url"}
+          {...register("title")}
+        />
       </FormField>
 
       <FormField label="Product URL" htmlFor="urlOriginal" error={errors.urlOriginal?.message}>
         <div className="relative">
           <Input
+            {...urlRegistration}
             id="urlOriginal"
             type="url"
             placeholder="https://…"
-            ref={urlRef}
-            onChange={urlOnChange}
+            defaultValue={defaultValues?.urlOriginal ?? ""}
+            onChange={handleUrlChange}
+            onFocus={handleUrlFocus}
             onBlur={(e) => void handleUrlBlur(e)}
             className={isFetching ? "pr-8" : ""}
           />
@@ -359,7 +496,7 @@ export function ItemForm({
       <div className="space-y-2">
         <span className="text-sm leading-none font-medium">Image</span>
         <div className="bg-muted flex w-fit gap-1 rounded-lg p-1">
-          {(["none", "url", "upload"] as const).map((source) => (
+          {imageSourceOptions.map((source) => (
             <button
               key={source}
               type="button"
@@ -370,97 +507,115 @@ export function ItemForm({
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {source === "none" ? "None" : source === "url" ? "From URL" : "Upload"}
+              {imageSourceLabel(source)}
             </button>
           ))}
         </div>
 
-        {imageSource === "url" && (
-          <div className="space-y-2">
-            <Input id="imageUrl" type="url" placeholder="https://…" {...register("imageUrl")} />
-            {imageUrlValue.length > 0 && (
-              <div className="relative w-fit">
-                <img
-                  src={imageUrlValue}
-                  alt="Preview"
-                  className="h-24 w-24 rounded-md object-cover"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = "none";
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setValue("imageUrl", "")}
-                  className="bg-background border-border absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border shadow-sm"
-                  aria-label="Clear image"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {imageSource === "upload" && (
-          <div className="space-y-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              className="hidden"
-              onChange={(e) => void handleFileChange(e)}
-            />
-            {imageUrlValue.length === 0 ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
-                className="flex gap-2"
-              >
-                {isUploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Upload className="h-4 w-4" />
-                )}
-                {isUploading ? "Uploading…" : "Choose image"}
-              </Button>
-            ) : (
-              <div className="flex items-center gap-3">
+        <div ref={imageWrapperRef} className="overflow-hidden">
+          {(imageSource === "product-url" || imageSource === "url") && (
+            <div className="space-y-2 pt-2">
+              <Input
+                {...imageUrlRegistration}
+                id="imageUrl"
+                type="url"
+                placeholder="https://…"
+                disabled={imageSource === "product-url"}
+                onChange={(e) => {
+                  void imageUrlRegistration.onChange(e);
+                  setCustomImageUrl(e.target.value);
+                }}
+              />
+              {imageUrlValue.length > 0 && (
                 <div className="relative w-fit">
                   <img
                     src={imageUrlValue}
-                    alt="Uploaded"
+                    alt="Preview"
                     className="h-24 w-24 rounded-md object-cover"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setValue("imageUrl", "");
-                      if (fileInputRef.current !== null) {
-                        fileInputRef.current.value = "";
-                      }
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).style.display = "none";
                     }}
-                    className="bg-background border-border absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border shadow-sm"
-                    aria-label="Remove image"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
+                  />
+                  {imageSource === "url" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue("imageUrl", "");
+                        setCustomImageUrl("");
+                      }}
+                      className="bg-background border-border absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border shadow-sm"
+                      aria-label="Clear image"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
+              )}
+            </div>
+          )}
+
+          {imageSource === "upload" && (
+            <div className="space-y-2 pt-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => void handleFileChange(e)}
+              />
+              {uploadedImageUrl.length === 0 ? (
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
+                  className="flex gap-2"
                 >
-                  Change
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Upload className="h-4 w-4" />
+                  )}
+                  {isUploading ? "Uploading…" : "Choose image"}
                 </Button>
-              </div>
-            )}
-            {uploadError !== null && <p className="text-destructive text-sm">{uploadError}</p>}
-          </div>
-        )}
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="relative w-fit">
+                    <img
+                      src={uploadedImageUrl}
+                      alt="Uploaded"
+                      className="h-24 w-24 rounded-md object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue("imageUrl", "");
+                        setUploadedImageUrl("");
+                        if (fileInputRef.current !== null) {
+                          fileInputRef.current.value = "";
+                        }
+                      }}
+                      className="bg-background border-border absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full border shadow-sm"
+                      aria-label="Remove image"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    Change
+                  </Button>
+                </div>
+              )}
+              {uploadError !== null && <p className="text-destructive text-sm">{uploadError}</p>}
+            </div>
+          )}
+        </div>
       </div>
 
       <FormField label="Description" htmlFor="description" error={errors.description?.message}>
@@ -473,41 +628,39 @@ export function ItemForm({
         <textarea
           id="description"
           rows={3}
-          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+          disabled={fieldSources.description === "url"}
+          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring disabled:bg-muted flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           {...register("description")}
         />
       </FormField>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm leading-none font-medium">Price</span>
-          {showPriceToggle && (
-            <SourcePill
-              source={fieldSources.price}
-              onChange={(s) => handleFieldSourceChange("price", s)}
-            />
-          )}
-        </div>
+        <span className="text-sm leading-none font-medium">Price</span>
+        {showPriceToggle && (
+          <SourcePill
+            source={fieldSources.price}
+            onChange={(s) => handleFieldSourceChange("price", s)}
+          />
+        )}
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+          <FormField label="Amount" htmlFor="priceReference" error={errors.priceReference?.message}>
             <Input
               id="priceReference"
               type="number"
               step="0.01"
               min="0"
               placeholder="0.00"
+              disabled={fieldSources.price === "url"}
               {...register("priceReference")}
             />
-            {errors.priceReference?.message !== undefined && (
-              <p className="text-destructive text-sm">{errors.priceReference.message}</p>
-            )}
-          </div>
+          </FormField>
           <FormField label="Currency" htmlFor="currency" error={errors.currency?.message}>
             <Input
               id="currency"
               type="text"
               placeholder="USD"
               maxLength={3}
+              disabled={fieldSources.price === "url"}
               {...register("currency")}
             />
           </FormField>

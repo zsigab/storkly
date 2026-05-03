@@ -72,6 +72,7 @@ export function EditItemPage(): React.ReactElement {
           title: item.title,
           description: item.description ?? "",
           urlOriginal: item.urlOriginal ?? "",
+          imageUrl: item.imageUrl ?? "",
           priceReference: item.priceReference !== null ? String(item.priceReference) : "",
           currency: item.currency ?? "",
           categoryId: item.categoryId ?? "",
