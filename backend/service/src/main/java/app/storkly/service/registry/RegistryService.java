@@ -14,6 +14,7 @@ import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistrySubscriber;
 import app.storkly.domain.registry.RegistrySubscriptionRepository;
 import app.storkly.domain.registry.RegistryVisibility;
+import app.storkly.domain.registry.SlugRedirectRepository;
 import app.storkly.util.SlugUtil;
 import app.storkly.util.TokenUtil;
 import java.time.OffsetDateTime;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class RegistryService {
 
     private final RegistryRepository registryRepository;
+    private final SlugRedirectRepository slugRedirectRepository;
     private final RegistryInviteRepository inviteRepository;
     private final RegistrySubscriptionRepository subscriptionRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
@@ -52,7 +54,7 @@ public class RegistryService {
     }
 
     public Registry findBySlug(String slug, @Nullable UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
 
         registryAccessService.assertReadAccess(registry, currentUserId);
         return registry;
@@ -67,7 +69,7 @@ public class RegistryService {
     }
 
     public List<RegistrySubscriber> findSubscribers(String slug, UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         assertOwner(registry, currentUserId);
         return subscriptionRepository.findByRegistryId(registry.id());
     }
@@ -79,13 +81,23 @@ public class RegistryService {
             @Nullable String description,
             @Nullable RegistryVisibility visibility,
             UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         assertOwner(registry, currentUserId);
+
+        String newSlug = registry.slug();
+        if (name != null && !name.equals(registry.name())) {
+            String candidateSlug = generateUniqueSlug(name);
+            if (!candidateSlug.equals(registry.slug())) {
+                slugRedirectRepository.save(registry.slug(), registry.id());
+                newSlug = candidateSlug;
+            }
+        }
+
         Registry updated = Registry.builder()
                 .id(registry.id())
                 .ownerId(registry.ownerId())
                 .name(name != null ? name : registry.name())
-                .slug(registry.slug())
+                .slug(newSlug)
                 .description(description != null ? description : registry.description())
                 .visibility(visibility != null ? visibility : registry.visibility())
                 .createdAt(registry.createdAt())
@@ -95,14 +107,14 @@ public class RegistryService {
 
     @Transactional
     public void delete(String slug, UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         assertOwner(registry, currentUserId);
         registryRepository.deleteById(registry.id());
     }
 
     @Transactional
     public String generateInvite(String slug, UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         assertOwner(registry, currentUserId);
         inviteRepository.deleteByRegistryId(registry.id());
         String token = TokenUtil.generate();
@@ -117,7 +129,7 @@ public class RegistryService {
 
     @Transactional
     public void join(String slug, String token, UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         RegistryInvite invite = inviteRepository
                 .findByToken(token)
                 .orElseThrow(() -> new InvalidTokenException("Invalid invite token"));
@@ -132,7 +144,7 @@ public class RegistryService {
 
     @Transactional
     public void unsubscribe(String slug, UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         if (claimRepository.existsActiveByUserAndRegistry(currentUserId, registry.id())) {
             throw new SubscriberHasClaimsException();
         }
@@ -141,14 +153,14 @@ public class RegistryService {
 
     @Transactional
     public void addCoOwner(String slug, UUID userId, UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         assertOwner(registry, currentUserId);
         coOwnerRepository.add(registry.id(), userId);
     }
 
     @Transactional
     public void removeCoOwner(String slug, UUID userId, UUID currentUserId) {
-        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        Registry registry = resolveBySlug(slug);
         assertOwner(registry, currentUserId);
         coOwnerRepository.remove(registry.id(), userId);
     }
@@ -167,5 +179,12 @@ public class RegistryService {
             slug = base + "-" + suffix++;
         }
         return slug;
+    }
+
+    private Registry resolveBySlug(String slug) {
+        return registryRepository
+                .findBySlug(slug)
+                .or(() -> slugRedirectRepository.findRegistryByOldSlug(slug))
+                .orElseThrow(() -> new RegistryNotFoundException(slug));
     }
 }

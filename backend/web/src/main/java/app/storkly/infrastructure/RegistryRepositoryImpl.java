@@ -45,6 +45,7 @@ public class RegistryRepositoryImpl implements RegistryRepository {
         } else {
             dsl.update(REGISTRY)
                     .set(REGISTRY.NAME, registry.name())
+                    .set(REGISTRY.SLUG, registry.slug())
                     .set(REGISTRY.DESCRIPTION, registry.description())
                     .set(REGISTRY.VISIBILITY, mapVisibility(registry.visibility()))
                     .where(REGISTRY.ID.eq(registry.id()))

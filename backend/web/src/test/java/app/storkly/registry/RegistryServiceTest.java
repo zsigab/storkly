@@ -21,6 +21,7 @@ import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistrySubscriber;
 import app.storkly.domain.registry.RegistrySubscriptionRepository;
 import app.storkly.domain.registry.RegistryVisibility;
+import app.storkly.domain.registry.SlugRedirectRepository;
 import app.storkly.service.registry.RegistryAccessService;
 import app.storkly.service.registry.RegistryService;
 import java.time.OffsetDateTime;
@@ -38,6 +39,9 @@ class RegistryServiceTest {
 
     @Mock
     private RegistryRepository registryRepository;
+
+    @Mock
+    private SlugRedirectRepository slugRedirectRepository;
 
     @Mock
     private RegistryInviteRepository inviteRepository;
@@ -60,6 +64,7 @@ class RegistryServiceTest {
     void setUp() {
         registryService = new RegistryService(
                 registryRepository,
+                slugRedirectRepository,
                 inviteRepository,
                 subscriptionRepository,
                 coOwnerRepository,
@@ -258,5 +263,89 @@ class RegistryServiceTest {
         when(inviteRepository.findByToken(token)).thenReturn(Optional.of(invite));
 
         assertThatThrownBy(() -> registryService.join(slug, token, userId)).isInstanceOf(InvalidTokenException.class);
+    }
+
+    @Test
+    void update_withNewName_generatesNewSlugAndSavesOldAsRedirect() {
+        UUID registryId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        String oldSlug = "baby-registry";
+        String newName = "Mikey's Registry";
+        String newSlug = "mikeys-registry";
+
+        Registry registry = Registry.builder()
+                .id(registryId)
+                .ownerId(ownerId)
+                .name("Baby Registry")
+                .slug(oldSlug)
+                .visibility(RegistryVisibility.PUBLIC)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(oldSlug)).thenReturn(Optional.of(registry));
+        when(registryRepository.existsBySlug(newSlug)).thenReturn(false);
+        when(registryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        registryService.update(oldSlug, newName, null, null, ownerId);
+
+        verify(slugRedirectRepository).save(oldSlug, registryId);
+    }
+
+    @Test
+    void update_withSameName_keepsSameSlugNoRedirect() {
+        UUID registryId = UUID.randomUUID();
+        UUID ownerId = UUID.randomUUID();
+        String slug = "baby-registry";
+
+        Registry registry = Registry.builder()
+                .id(registryId)
+                .ownerId(ownerId)
+                .name("Baby Registry")
+                .slug(slug)
+                .visibility(RegistryVisibility.PUBLIC)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
+        when(registryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        registryService.update(slug, "Baby Registry", null, null, ownerId);
+
+        verify(slugRedirectRepository, never()).save(any(), any());
+    }
+
+    @Test
+    void findBySlug_withOldSlugViaRedirect_resolvesRegistry() {
+        String oldSlug = "baby-registry";
+        String newSlug = "mikeys-registry";
+        UUID registryId = UUID.randomUUID();
+
+        Registry registry = Registry.builder()
+                .id(registryId)
+                .ownerId(UUID.randomUUID())
+                .name("Mikey's Registry")
+                .slug(newSlug)
+                .visibility(RegistryVisibility.PUBLIC)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(registryRepository.findBySlug(oldSlug)).thenReturn(Optional.empty());
+        when(slugRedirectRepository.findRegistryByOldSlug(oldSlug)).thenReturn(Optional.of(registry));
+
+        Registry result = registryService.findBySlug(oldSlug, UUID.randomUUID());
+
+        assertThat(result.slug()).isEqualTo(newSlug);
+        assertThat(result.id()).isEqualTo(registryId);
+    }
+
+    @Test
+    void findBySlug_notFoundInEitherTable_throws() {
+        String slug = "nonexistent";
+
+        when(registryRepository.findBySlug(slug)).thenReturn(Optional.empty());
+        when(slugRedirectRepository.findRegistryByOldSlug(slug)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> registryService.findBySlug(slug, UUID.randomUUID()))
+                .isInstanceOf(RegistryNotFoundException.class);
     }
 }
