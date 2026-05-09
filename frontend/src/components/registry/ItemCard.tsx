@@ -103,7 +103,7 @@ export function ItemCard({
   };
 
   return (
-    <div className="border-border space-y-2 rounded-lg border p-3">
+    <div className="bg-card border-border space-y-2 rounded-lg border p-3">
       <div className="flex items-center gap-3">
         {/* Image or placeholder */}
         <div className="shrink-0">{renderImagePlaceholder()}</div>

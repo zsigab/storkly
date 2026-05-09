@@ -33,9 +33,11 @@
 }
 
 @layer base {
+  /* =====================================================
+   * storkly-minimal-light (default)
+   * ===================================================== */
   :root {
     color-scheme: light;
-    /* Peachy warm theme */
     --background: 30 100% 98%;
     --foreground: 20 14% 20%;
     --card: 30 100% 98%;
@@ -56,11 +58,17 @@
     --input: 30 20% 88%;
     --ring: 15 85% 68%;
     --radius: 0.75rem;
+    /* Glass tokens */
+    --glass-card-alpha: 0.75;
+    --glass-border-color: rgba(255, 255, 255, 0.35);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   }
 
+  /* =====================================================
+   * storkly-minimal-dark
+   * ===================================================== */
   .dark {
     color-scheme: dark;
-    /* Muted navy-grey dark mode */
     --background: 220 15% 16%;
     --foreground: 220 10% 88%;
     --card: 220 15% 19%;
@@ -80,8 +88,66 @@
     --border: 220 12% 28%;
     --input: 220 12% 28%;
     --ring: 15 75% 65%;
+    --glass-card-alpha: 0.45;
+    --glass-border-color: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
 
+  /* =====================================================
+   * Color accent: blue — only primary & ring change
+   * ===================================================== */
+  [data-color="blue"] {
+    --primary: 217 91% 60%;
+    --ring: 217 91% 60%;
+  }
+
+  [data-color="blue"].dark {
+    --primary: 217 85% 70%;
+    --ring: 217 85% 70%;
+  }
+
+  /* =====================================================
+   * Color accent: pink
+   * ===================================================== */
+  [data-color="pink"] {
+    --primary: 340 75% 64%;
+    --ring: 340 75% 64%;
+  }
+
+  [data-color="pink"].dark {
+    --primary: 340 70% 68%;
+    --ring: 340 70% 68%;
+  }
+
+  /* =====================================================
+   * Color accent: green
+   * ===================================================== */
+  [data-color="green"] {
+    --primary: 160 84% 39%;
+    --ring: 160 84% 39%;
+  }
+
+  [data-color="green"].dark {
+    --primary: 160 70% 50%;
+    --ring: 160 70% 50%;
+  }
+
+  /* =====================================================
+   * Color accent: purple
+   * ===================================================== */
+  [data-color="purple"] {
+    --primary: 271 81% 56%;
+    --ring: 271 81% 56%;
+  }
+
+  [data-color="purple"].dark {
+    --primary: 271 75% 70%;
+    --ring: 271 75% 70%;
+  }
+
+  /* =====================================================
+   * Structural base rules
+   * ===================================================== */
   * {
     border-color: hsl(var(--border));
     box-sizing: border-box;
@@ -94,5 +160,74 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     margin: 0;
+  }
+}
+
+/* =========================================================
+ * Glass + Tiles — must live in @layer utilities.
+ * Rules in @layer base lose to Tailwind's @layer utilities
+ * regardless of specificity — that is why the glass effect
+ * was previously invisible.
+ * ========================================================= */
+
+/* Fractal-noise texture (4 % opacity) gives glass panels the
+   "frosted" surface texture used by Cleanuparr's glass mixin. */
+/* stylelint-disable-next-line value-no-vendor-prefix */
+@layer utilities {
+  [data-style="glass"] {
+    min-height: 100%;
+  }
+
+  [data-style="glass"] body {
+    background-color: transparent;
+  }
+
+  [data-style="glass"] .bg-background {
+    background-color: transparent;
+  }
+
+  /* Frosted-glass cards — Cleanuparr-inspired:
+     noise texture + blur + subtle white border + depth shadow */
+  [data-style="glass"] .bg-card,
+  [data-style="glass"] .bg-popover {
+    background-color: hsl(var(--card) / var(--glass-card-alpha));
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size:
+      auto,
+      256px 256px;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-color: var(--glass-border-color);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Cards: subtle accent hint at the very bottom (~10 % of card height).
+     :not(header) prevents the site header (also bg-card) from getting it. */
+  [data-background="tiles"] .bg-card:not(header) {
+    background-image: linear-gradient(to top, hsl(var(--primary) / 0.09) 0%, transparent 25%);
+    background-size: auto;
+  }
+
+  /* Glass + cards: background-size must be explicit — the glass rule's
+     "auto, 256px 256px" would otherwise cascade and tile the gradient at
+     256 px, making it invisible on most cards. */
+  [data-style="glass"][data-background="tiles"] .bg-card:not(header) {
+    background-image:
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+      linear-gradient(to top, hsl(var(--primary) / 0.09) 0%, transparent 25%);
+    background-size:
+      256px 256px,
+      auto;
+  }
+
+  /* Cards mode: glassy inline elements — outline buttons get a primary-tinted
+     background + primary border; secondary chips get a primary wash. */
+  [data-background="tiles"] .bg-card:not(header) .border:not(.border-transparent) {
+    background-color: hsl(var(--primary) / 0.07);
+    border-color: hsl(var(--primary) / 0.32);
+  }
+
+  [data-background="tiles"] .bg-card:not(header) .bg-secondary {
+    background-color: hsl(var(--primary) / 0.13);
   }
 }

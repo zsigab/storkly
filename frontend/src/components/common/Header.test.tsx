@@ -70,9 +70,9 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: /storkly/i })).toHaveAttribute("href", "/dashboard");
   });
 
-  it("renders the theme toggle button", () => {
+  it("renders the theme settings button", () => {
     renderHeader();
-    expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /theme settings/i })).toBeInTheDocument();
   });
 
   it("shows sign in and register links when logged out", () => {

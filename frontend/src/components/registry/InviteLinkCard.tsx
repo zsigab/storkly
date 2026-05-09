@@ -10,7 +10,10 @@ interface InviteLinkCardProps {
   isPublic?: boolean;
 }
 
-export function InviteLinkCard({ slug, isPublic = false }: InviteLinkCardProps): React.ReactElement {
+export function InviteLinkCard({
+  slug,
+  isPublic = false,
+}: InviteLinkCardProps): React.ReactElement {
   const generateInvite = useGenerateInvite(slug);
   const publicUrl = `${window.location.origin}/r/${slug}`;
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);

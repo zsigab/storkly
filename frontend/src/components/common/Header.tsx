@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeSelector } from "./ThemeSelector";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogout } from "@/hooks/useAuthMutations";
@@ -40,7 +40,7 @@ export function Header(): React.ReactElement {
               </Button>
             </>
           )}
-          <ThemeToggle />
+          <ThemeSelector />
         </nav>
       </div>
     </header>
