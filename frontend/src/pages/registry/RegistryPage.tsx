@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, Link } from "react-router";
+import { useParams, useSearchParams, useNavigate, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -20,6 +20,7 @@ import { useRegistryItems } from "@/hooks/useItems";
 
 export function RegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
   const { user } = useAuth();
@@ -47,6 +48,12 @@ export function RegistryPage(): React.ReactElement {
   useEffect(() => {
     if (joinRegistry.isSuccess) setHasUnsubscribed(false);
   }, [joinRegistry.isSuccess]);
+
+  useEffect(() => {
+    if (registry !== undefined && registry.slug !== safeSlug) {
+      void navigate(`/r/${registry.slug}`, { replace: true });
+    }
+  }, [registry, safeSlug, navigate]);
 
   if (isPending) {
     return (
