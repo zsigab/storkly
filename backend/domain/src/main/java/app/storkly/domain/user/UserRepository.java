@@ -19,4 +19,6 @@ public interface UserRepository {
     void deleteById(UUID id);
 
     void deleteUnverifiedBefore(java.time.OffsetDateTime cutoff);
+
+    void updateDisplayName(UUID userId, String displayName);
 }

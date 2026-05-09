@@ -110,6 +110,11 @@ public class UserRepositoryImpl implements UserRepository {
                 .execute();
     }
 
+    @Override
+    public void updateDisplayName(UUID userId, String displayName) {
+        dsl.update(USER).set(USER.DISPLAY_NAME, displayName).where(USER.ID.eq(userId)).execute();
+    }
+
     private User toUser(UserRecord r) {
         return User.builder()
                 .id(r.getId())
