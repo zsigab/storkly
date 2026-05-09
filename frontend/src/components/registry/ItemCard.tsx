@@ -123,7 +123,9 @@ export function ItemCard({
             <p className="font-medium">{item.title}</p>
           )}
           {item.description !== null && (
-            <p className="text-muted-foreground line-clamp-2 text-sm">{item.description}</p>
+            <p className="text-muted-foreground line-clamp-2 text-sm whitespace-pre-wrap">
+              {item.description}
+            </p>
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>

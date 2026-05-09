@@ -21,7 +21,9 @@ export function RegistryCard({ registry }: RegistryCardProps): React.ReactElemen
           </Badge>
         </div>
         {registry.description !== null && (
-          <p className="text-muted-foreground mt-1 line-clamp-2 text-sm">{registry.description}</p>
+          <p className="text-muted-foreground mt-1 line-clamp-2 text-sm whitespace-pre-wrap">
+            {registry.description}
+          </p>
         )}
       </div>
     </Link>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { InviteLinkCard } from "@/components/registry/InviteLinkCard";
+import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { ItemCard } from "@/components/registry/ItemCard";
 import { getApiErrorMessage, getApiErrorStatus } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
@@ -166,7 +167,7 @@ export function RegistryPage(): React.ReactElement {
             </Badge>
           </div>
           {registry.description !== null && (
-            <p className="text-muted-foreground">{registry.description}</p>
+            <MarkdownContent content={registry.description} className="text-muted-foreground" />
           )}
         </div>
         {isOwner && (
