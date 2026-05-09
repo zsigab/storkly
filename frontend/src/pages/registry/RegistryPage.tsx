@@ -216,7 +216,9 @@ export function RegistryPage(): React.ReactElement {
         </div>
       )}
 
-      {isOwner && registry.visibility === "PRIVATE" && <InviteLinkCard slug={registry.slug} />}
+      {isOwner && registry.visibility !== "HIDDEN" && (
+        <InviteLinkCard slug={registry.slug} isPublic={registry.visibility === "PUBLIC"} />
+      )}
 
       {isOwner && (
         <div className="space-y-3">

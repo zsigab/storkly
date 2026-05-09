@@ -7,17 +7,19 @@ import { useGenerateInvite } from "@/hooks/useRegistries";
 
 interface InviteLinkCardProps {
   slug: string;
+  isPublic?: boolean;
 }
 
-export function InviteLinkCard({ slug }: InviteLinkCardProps): React.ReactElement {
+export function InviteLinkCard({ slug, isPublic = false }: InviteLinkCardProps): React.ReactElement {
   const generateInvite = useGenerateInvite(slug);
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const publicUrl = `${window.location.origin}/r/${slug}`;
+  const [inviteUrl, setInviteUrl] = useState<string | null>(isPublic ? publicUrl : null);
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = (): void => {
     generateInvite.mutate(undefined, {
       onSuccess: (data) => {
-        setInviteUrl(`${window.location.origin}/r/${slug}?invite=${data.token}`);
+        setInviteUrl(`${publicUrl}?invite=${data.token}`);
       },
     });
   };

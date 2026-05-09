@@ -201,6 +201,15 @@ describe("RegistryPage", () => {
     );
   });
 
+  it("shows share link directly for public registry owner without generate button", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
+    renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
+    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    expect(screen.queryByRole("button", { name: /get invite link/i })).not.toBeInTheDocument();
+    expect(screen.getByDisplayValue(/\/r\/my-registry$/)).toBeInTheDocument();
+  });
+
   it("shows 404 error state for missing registry", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValueOnce({
