@@ -185,7 +185,7 @@ export function ItemCard({
               .map((c) => {
                 const name =
                   c.claimerUserId !== null
-                    ? (subscriberNames[c.claimerUserId] ?? "A member")
+                    ? (subscriberNames[c.claimerUserId] ?? c.claimerName) || "A member"
                     : (c.claimerName ?? "Anonymous");
                 const date = new Date(c.claimedAt).toLocaleDateString();
                 return `${name} (${date})`;

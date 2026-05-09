@@ -13,6 +13,7 @@ import app.storkly.domain.item.ItemRepository;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryRepository;
+import app.storkly.domain.user.UserRepository;
 import app.storkly.service.email.EmailService;
 import app.storkly.service.registry.RegistryAccessService;
 import app.storkly.util.TokenUtil;
@@ -35,6 +36,7 @@ public class ClaimService {
     private final ItemRepository itemRepository;
     private final RegistryRepository registryRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
+    private final UserRepository userRepository;
     private final RegistryAccessService registryAccessService;
     private final EmailService emailService;
 
@@ -59,7 +61,9 @@ public class ClaimService {
                         () -> new RegistryNotFoundException(item.registryId().toString()));
         assertReadAccess(registry, currentUserId);
 
-        String claimerName = name != null ? name : "";
+        String claimerName = currentUserId != null
+                ? userRepository.findById(currentUserId).map(u -> u.displayName()).orElse("")
+                : (name != null ? name : "");
         String claimerEmail = email != null ? email : "";
         String token = TokenUtil.generate();
         Claim claim = claimRepository.save(Claim.builder()

@@ -21,6 +21,10 @@ import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistryVisibility;
+import app.storkly.domain.user.User;
+import app.storkly.domain.user.UserRepository;
+import app.storkly.domain.user.UserRole;
+import org.mockito.ArgumentCaptor;
 import app.storkly.service.email.EmailService;
 import app.storkly.service.item.ClaimService;
 import app.storkly.service.registry.RegistryAccessService;
@@ -50,6 +54,9 @@ class ClaimServiceTest {
     private RegistryCoOwnerRepository coOwnerRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
     private RegistryAccessService registryAccessService;
 
     @Mock
@@ -67,24 +74,35 @@ class ClaimServiceTest {
                 itemRepository,
                 registryRepository,
                 coOwnerRepository,
+                userRepository,
                 registryAccessService,
                 emailService);
     }
 
     @Test
-    void claim_authenticatedUser_savesClaim() {
+    void claim_authenticatedUser_snapshotsDisplayName() {
         UUID itemId = UUID.randomUUID();
         UUID claimerId = UUID.randomUUID();
         Item item = item(itemId);
         Registry registry = publicRegistry();
+        User claimer = User.builder()
+                .id(claimerId)
+                .email("bob@example.com")
+                .displayName("Bob")
+                .role(UserRole.USER)
+                .createdAt(OffsetDateTime.now())
+                .build();
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(userRepository.findById(claimerId)).thenReturn(Optional.of(claimer));
         Claim saved = claim(UUID.randomUUID(), itemId, claimerId, null);
         when(claimRepository.save(any(Claim.class))).thenReturn(saved);
 
-        Claim result = claimService.claim(itemId, null, null, 1, null, null, claimerId);
+        claimService.claim(itemId, null, null, 1, null, null, claimerId);
 
-        assertThat(result.claimerUserId()).isEqualTo(claimerId);
+        ArgumentCaptor<Claim> captor = ArgumentCaptor.forClass(Claim.class);
+        verify(claimRepository).save(captor.capture());
+        assertThat(captor.getValue().claimerName()).isEqualTo("Bob");
         verify(emailService, never()).sendClaimConfirmation(any(), any(), any(), any());
     }
 
