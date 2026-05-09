@@ -139,6 +139,7 @@ export function ItemForm({
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const capturedHeight = useRef<number | null>(null);
 
+  const [previewUnavailable, setPreviewUnavailable] = useState(false);
   const [scrapedSnapshot, setScrapedSnapshot] = useState<ScrapedSnapshot | null>(null);
   const [customSnapshot, setCustomSnapshot] = useState<CustomSnapshot | null>(null);
   const [fieldSources, setFieldSources] = useState<Record<OverridableField, TextFieldSource>>({
@@ -265,6 +266,7 @@ export function ItemForm({
   function handleUrlChange(e: React.ChangeEvent<HTMLInputElement>): void {
     void urlRegistration.onChange(e);
     if (e.target.value === "") {
+      setPreviewUnavailable(false);
       setScrapedSnapshot(null);
       setCustomSnapshot(null);
       setFieldSources({ title: "custom", description: "custom", price: "custom" });
@@ -279,9 +281,13 @@ export function ItemForm({
     void urlRegistration.onBlur(e);
     const url = e.target.value.trim();
     if (!url || url === urlAtFocus.current.trim()) return;
+    setPreviewUnavailable(false);
     try {
       const result = await fetchPreview(url);
-      if (!result.supported) return;
+      if (!result.supported) {
+        setPreviewUnavailable(true);
+        return;
+      }
 
       const snap: CustomSnapshot = {
         title: getValues("title"),
@@ -348,7 +354,7 @@ export function ItemForm({
       setFieldSources(newSources);
       setAutoFilled(filled);
     } catch {
-      // preview failed — user fills manually
+      setPreviewUnavailable(true);
     }
   }
 
@@ -488,6 +494,11 @@ export function ItemForm({
         {autoFilled && (
           <p className="text-muted-foreground mt-1 text-xs">
             Fields auto-filled from URL — review before saving.
+          </p>
+        )}
+        {previewUnavailable && (
+          <p className="text-muted-foreground mt-1 text-xs">
+            Couldn&apos;t fetch details from this URL — please fill in the fields below manually.
           </p>
         )}
       </FormField>
