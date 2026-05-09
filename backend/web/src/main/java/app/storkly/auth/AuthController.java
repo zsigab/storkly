@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private static final int ACCESS_TOKEN_MAX_AGE = 900; // 15 minutes
+    private static final int ACCESS_TOKEN_MAX_AGE = 3600; // 1 hour
     private static final int REFRESH_TOKEN_MAX_AGE = 604800; // 7 days
 
     private final AuthService authService;

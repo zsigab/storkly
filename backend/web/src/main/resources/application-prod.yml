@@ -38,7 +38,7 @@ storkly:
     frontend-url: https://storkly.cc
   jwt:
     secret: ${JWT_SECRET}
-    access-token-expiry: PT15M
+    access-token-expiry: PT1H
     refresh-token-expiry: P7D
   cookie:
     secure: true
