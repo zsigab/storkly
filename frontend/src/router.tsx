@@ -8,6 +8,7 @@ import { VerifyEmailPage } from "@/pages/auth/VerifyEmailPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { ProfilePage } from "@/pages/ProfilePage";
 import { CreateRegistryPage } from "@/pages/registry/CreateRegistryPage";
 import { EditRegistryPage } from "@/pages/registry/EditRegistryPage";
 import { RegistryPage } from "@/pages/registry/RegistryPage";
@@ -29,6 +30,14 @@ export const router = createBrowserRouter([
       { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "forgot-password", element: <ForgotPasswordPage /> },
       { path: "reset-password", element: <ResetPasswordPage /> },
+      {
+        path: "profile",
+        element: (
+          <RequireAuth>
+            <ProfilePage />
+          </RequireAuth>
+        ),
+      },
       {
         path: "dashboard",
         element: (

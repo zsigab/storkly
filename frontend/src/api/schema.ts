@@ -340,6 +340,14 @@ export type paths = {
       responses: { 200: Ok<LinkPreviewResponse>; 401: Err; 422: Err };
     };
   };
+  "/api/users/me/display-name": {
+    patch: {
+      requestBody: {
+        content: { "application/json": { displayName: string } };
+      };
+      responses: { 200: Ok<TokenResponse>; 401: Err; 422: Err };
+    };
+  };
 };
 
 export type webhooks = Record<string, never>;

@@ -88,3 +88,21 @@ export function useLogout() {
     },
   });
 }
+
+export function useUpdateDisplayName() {
+  const { login } = useAuth();
+
+  return useMutation({
+    mutationFn: async (displayName: string) => {
+      const { data, error } = await api.PATCH("/api/users/me/display-name", {
+        body: { displayName },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    onSuccess: (user) => {
+      login(user);
+    },
+  });
+}

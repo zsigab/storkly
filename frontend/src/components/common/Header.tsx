@@ -20,7 +20,9 @@ export function Header(): React.ReactElement {
         <nav className="flex items-center gap-4">
           {user !== null ? (
             <>
-              <span className="text-muted-foreground text-sm">{user.displayName}</span>
+              <Link to="/profile" className="hover:text-foreground text-muted-foreground text-sm">
+                {user.displayName}
+              </Link>
               <Button
                 variant="ghost"
                 size="sm"
