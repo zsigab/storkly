@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormField } from "@/components/common/FormField";
+import { MarkdownContent } from "@/components/common/MarkdownContent";
+import { MarkdownToolbar } from "@/components/common/MarkdownToolbar";
+import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 import { useImageUpload } from "@/hooks/useImageUpload";
@@ -173,10 +176,16 @@ export function ItemForm({
     },
   });
 
+  const [previewMode, setPreviewMode] = useState(() => {
+    const initial = defaultValues?.description;
+    return typeof initial === "string" && initial.length > 0;
+  });
+
   const quantityValue = watch("quantityDesired");
   const isQuantityZero = quantityValue === "0";
   const alreadyOwnedValue = watch("alreadyOwned");
   const imageUrlValue = watch("imageUrl");
+  const descriptionValue = watch("description");
 
   // When editing an existing item, re-scrape the saved URL to restore toggle state.
   useEffect(() => {
@@ -254,6 +263,9 @@ export function ItemForm({
     if (source === "url") return "From URL";
     return "Upload";
   }
+
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const { ref: descriptionRegisterRef, ...descriptionRegistration } = register("description");
 
   const urlRegistration = register("urlOriginal");
   const imageUrlRegistration = register("imageUrl");
@@ -633,21 +645,73 @@ export function ItemForm({
         </div>
       </div>
 
-      <FormField label="Description" htmlFor="description" error={errors.description?.message}>
+      <div className="space-y-2">
+        <label htmlFor="description" className="text-sm leading-none font-medium">
+          Description
+        </label>
+
         {showDescriptionToggle && (
           <SourcePill
             source={fieldSources.description}
             onChange={(s) => handleFieldSourceChange("description", s)}
           />
         )}
+
+        {fieldSources.description !== "url" && (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="bg-muted flex w-fit gap-1 rounded-lg p-1">
+              {(["Preview", "Edit"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setPreviewMode(tab === "Preview")}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    (tab === "Preview") === previewMode
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            {!previewMode && (
+              <MarkdownToolbar
+                textareaRef={descriptionRef}
+                onChange={(v) => setValue("description", v)}
+              />
+            )}
+          </div>
+        )}
+
+        {(previewMode || fieldSources.description === "url") && (
+          <div className="border-input bg-background min-h-[200px] w-full rounded-md border px-3 py-2 text-sm">
+            {descriptionValue.length > 0 ? (
+              <MarkdownContent content={descriptionValue} />
+            ) : (
+              <span className="text-muted-foreground italic">Nothing to preview</span>
+            )}
+          </div>
+        )}
+
         <textarea
           id="description"
-          rows={3}
-          disabled={fieldSources.description === "url"}
-          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring disabled:bg-muted flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          {...register("description")}
+          rows={8}
+          className={cn(
+            "border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[200px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none",
+            (previewMode || fieldSources.description === "url") && "hidden",
+          )}
+          ref={(el) => {
+            descriptionRegisterRef(el);
+            descriptionRef.current = el;
+          }}
+          {...descriptionRegistration}
         />
-      </FormField>
+
+        {errors.description?.message !== undefined && (
+          <p className="text-destructive text-sm">{errors.description.message}</p>
+        )}
+      </div>
 
       <div className="space-y-2">
         <span className="text-sm leading-none font-medium">Price</span>

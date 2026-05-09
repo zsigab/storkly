@@ -1,10 +1,14 @@
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
+import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormField } from "@/components/common/FormField";
+import { MarkdownContent } from "@/components/common/MarkdownContent";
+import { MarkdownToolbar } from "@/components/common/MarkdownToolbar";
 import { getApiErrorMessage } from "@/api/helpers";
 
 const schema = z.object({
@@ -40,10 +44,19 @@ export function RegistryForm({
   onDelete,
   isDeletePending = false,
 }: RegistryFormProps): React.ReactElement {
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const [previewMode, setPreviewMode] = useState(() => {
+    const initial = defaultValues?.description;
+    return typeof initial === "string" && initial.length > 0;
+  });
+
   const {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -53,6 +66,9 @@ export function RegistryForm({
       ...defaultValues,
     },
   });
+
+  const descriptionValue = watch("description");
+  const { ref: descriptionRegisterRef, ...descriptionRegistration } = register("description");
 
   return (
     <form
@@ -70,15 +86,65 @@ export function RegistryForm({
         <Input id="name" type="text" autoComplete="off" {...register("name")} />
       </FormField>
 
-      <FormField label="Description" htmlFor="description" error={errors.description?.message}>
+      <div className="space-y-2">
+        <label htmlFor="description" className="text-sm leading-none font-medium">
+          Description
+        </label>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="bg-muted flex w-fit gap-1 rounded-lg p-1">
+            {(["Preview", "Edit"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setPreviewMode(tab === "Preview")}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  (tab === "Preview") === previewMode
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          {!previewMode && (
+            <MarkdownToolbar
+              textareaRef={descriptionRef}
+              onChange={(v) => setValue("description", v)}
+            />
+          )}
+        </div>
+
+        {previewMode && (
+          <div className="border-input bg-background min-h-[200px] w-full rounded-md border px-3 py-2 text-sm">
+            {descriptionValue.length > 0 ? (
+              <MarkdownContent content={descriptionValue} />
+            ) : (
+              <span className="text-muted-foreground italic">Nothing to preview</span>
+            )}
+          </div>
+        )}
+
         <textarea
           id="description"
-          rows={3}
+          rows={8}
           placeholder="Tell people what this registry is for…"
-          className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          {...register("description")}
+          className={cn(
+            "border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[200px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none",
+            previewMode && "hidden",
+          )}
+          ref={(el) => {
+            descriptionRegisterRef(el);
+            descriptionRef.current = el;
+          }}
+          {...descriptionRegistration}
         />
-      </FormField>
+
+        {errors.description?.message !== undefined && (
+          <p className="text-destructive text-sm">{errors.description.message}</p>
+        )}
+      </div>
 
       <FormField label="Visibility" htmlFor="visibility" error={errors.visibility?.message}>
         <select
