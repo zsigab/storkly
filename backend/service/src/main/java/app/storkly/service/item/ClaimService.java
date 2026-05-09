@@ -62,7 +62,10 @@ public class ClaimService {
         assertReadAccess(registry, currentUserId);
 
         String claimerName = currentUserId != null
-                ? userRepository.findById(currentUserId).map(u -> u.displayName()).orElse("")
+                ? userRepository
+                        .findById(currentUserId)
+                        .map(u -> u.displayName())
+                        .orElse("")
                 : (name != null ? name : "");
         String claimerEmail = email != null ? email : "";
         String token = TokenUtil.generate();

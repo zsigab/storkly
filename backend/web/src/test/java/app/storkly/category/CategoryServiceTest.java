@@ -135,8 +135,7 @@ class CategoryServiceTest {
         Category system = systemCategory(catId, "Nursery & Sleep", 0);
         when(categoryRepository.findById(catId)).thenReturn(Optional.of(system));
 
-        assertThatThrownBy(() -> categoryService.delete(catId, ownerId))
-                .isInstanceOf(AccessDeniedException.class);
+        assertThatThrownBy(() -> categoryService.delete(catId, ownerId)).isInstanceOf(AccessDeniedException.class);
 
         verify(categoryRepository, never()).deleteById(any());
     }

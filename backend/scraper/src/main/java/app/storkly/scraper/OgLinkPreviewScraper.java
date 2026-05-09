@@ -64,8 +64,8 @@ public class OgLinkPreviewScraper extends JsoupScraper {
 
         // Fallback: Facebook product OG tags used by Lazada PH, Shopee PH, and others
         if (price == null) {
-            String priceStr =
-                    emptyToNull(doc.select("meta[property=product:price:amount]").attr("content"));
+            String priceStr = emptyToNull(
+                    doc.select("meta[property=product:price:amount]").attr("content"));
             if (priceStr != null) {
                 try {
                     price = new BigDecimal(priceStr.replace(",", ""));

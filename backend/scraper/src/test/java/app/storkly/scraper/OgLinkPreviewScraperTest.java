@@ -142,8 +142,7 @@ class OgLinkPreviewScraperTest {
                 """;
 
         Document doc = Jsoup.parse(html);
-        ScrapeResult result =
-                scraper.extract(doc, "https://www.lazada.com.ph/products/baby-stroller");
+        ScrapeResult result = scraper.extract(doc, "https://www.lazada.com.ph/products/baby-stroller");
 
         assertThat(result.supported()).isTrue();
         assertThat(result.priceReference()).isEqualTo(new BigDecimal("5999.00"));

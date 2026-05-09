@@ -24,7 +24,6 @@ import app.storkly.domain.registry.RegistryVisibility;
 import app.storkly.domain.user.User;
 import app.storkly.domain.user.UserRepository;
 import app.storkly.domain.user.UserRole;
-import org.mockito.ArgumentCaptor;
 import app.storkly.service.email.EmailService;
 import app.storkly.service.item.ClaimService;
 import app.storkly.service.registry.RegistryAccessService;
@@ -35,6 +34,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
