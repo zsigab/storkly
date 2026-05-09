@@ -29,6 +29,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
                     .set(CATEGORY.NAME, category.name())
                     .set(CATEGORY.SORT_ORDER, category.sortOrder())
                     .set(CATEGORY.IS_DEFAULT, category.isDefault())
+                    .set(CATEGORY.IS_SYSTEM, false)
                     .execute();
             return Category.builder()
                     .id(id)
@@ -36,6 +37,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
                     .name(category.name())
                     .sortOrder(category.sortOrder())
                     .isDefault(category.isDefault())
+                    .isSystem(false)
                     .build();
         } else {
             dsl.update(CATEGORY)
@@ -59,6 +61,15 @@ public class CategoryRepositoryImpl implements CategoryRepository {
     public List<Category> findByRegistryId(UUID registryId) {
         return dsl.selectFrom(CATEGORY)
                 .where(CATEGORY.REGISTRY_ID.eq(registryId))
+                .orderBy(CATEGORY.SORT_ORDER.asc())
+                .fetch()
+                .map(this::toCategory);
+    }
+
+    @Override
+    public List<Category> findSystemCategories() {
+        return dsl.selectFrom(CATEGORY)
+                .where(CATEGORY.IS_SYSTEM.isTrue())
                 .orderBy(CATEGORY.SORT_ORDER.asc())
                 .fetch()
                 .map(this::toCategory);
@@ -89,6 +100,7 @@ public class CategoryRepositoryImpl implements CategoryRepository {
                 .name(r.getName())
                 .sortOrder(r.getSortOrder())
                 .isDefault(r.getIsDefault())
+                .isSystem(r.getIsSystem())
                 .build();
     }
 }

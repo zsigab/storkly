@@ -130,6 +130,30 @@ class CategoryServiceTest {
     }
 
     @Test
+    void delete_systemCategory_throwsAccessDenied() {
+        UUID catId = UUID.randomUUID();
+        Category system = systemCategory(catId, "Nursery & Sleep", 0);
+        when(categoryRepository.findById(catId)).thenReturn(Optional.of(system));
+
+        assertThatThrownBy(() -> categoryService.delete(catId, ownerId))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verify(categoryRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void update_systemCategory_throwsAccessDenied() {
+        UUID catId = UUID.randomUUID();
+        Category system = systemCategory(catId, "Nursery & Sleep", 0);
+        when(categoryRepository.findById(catId)).thenReturn(Optional.of(system));
+
+        assertThatThrownBy(() -> categoryService.update(catId, "Renamed", ownerId))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verify(categoryRepository, never()).save(any());
+    }
+
+    @Test
     void reorder_owner_callsUpdateSortOrders() {
         Registry registry = publicRegistry();
         when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
@@ -158,6 +182,18 @@ class CategoryServiceTest {
                 .name(name)
                 .sortOrder(sortOrder)
                 .isDefault(false)
+                .isSystem(false)
+                .build();
+    }
+
+    private Category systemCategory(UUID id, String name, int sortOrder) {
+        return Category.builder()
+                .id(id)
+                .registryId(null)
+                .name(name)
+                .sortOrder(sortOrder)
+                .isDefault(false)
+                .isSystem(true)
                 .build();
     }
 }

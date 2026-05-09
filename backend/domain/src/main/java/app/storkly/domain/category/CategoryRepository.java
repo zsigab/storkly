@@ -11,6 +11,8 @@ public interface CategoryRepository {
 
     List<Category> findByRegistryId(UUID registryId);
 
+    List<Category> findSystemCategories();
+
     void deleteById(UUID id);
 
     void updateSortOrders(List<UUID> orderedIds);

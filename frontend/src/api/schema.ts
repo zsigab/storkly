@@ -39,10 +39,11 @@ export interface SubscriberResponse {
 
 export interface CategoryResponse {
   id: string;
-  registryId: string;
+  registryId: string | null;
   name: string;
   sortOrder: number;
   isDefault: boolean;
+  isSystem: boolean;
 }
 
 export type ItemFlag = "EXACT_ONLY" | "SIMILAR_OK" | "SIMILAR_CHEAPER";

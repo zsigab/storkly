@@ -72,6 +72,6 @@ public class CategoryController {
 
     private CategoryResponse toResponse(Category category) {
         return new CategoryResponse(
-                category.id(), category.registryId(), category.name(), category.sortOrder(), category.isDefault());
+                category.id(), category.registryId(), category.name(), category.sortOrder(), category.isDefault(), category.isSystem());
     }
 }

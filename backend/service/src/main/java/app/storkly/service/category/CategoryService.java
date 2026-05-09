@@ -11,6 +11,7 @@ import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.service.registry.RegistryAccessService;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,10 @@ public class CategoryService {
     public List<Category> findByRegistry(String slug, @Nullable UUID currentUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
         registryAccessService.assertReadAccess(registry, currentUserId);
-        return categoryRepository.findByRegistryId(registry.id());
+        return Stream.concat(
+                        categoryRepository.findSystemCategories().stream(),
+                        categoryRepository.findByRegistryId(registry.id()).stream())
+                .toList();
     }
 
     @Transactional
@@ -50,6 +54,9 @@ public class CategoryService {
     public Category update(UUID categoryId, @Nullable String name, UUID currentUserId) {
         Category category =
                 categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException(categoryId));
+        if (category.isSystem()) {
+            throw new AccessDeniedException("System categories cannot be modified");
+        }
         Registry registry = registryRepository
                 .findById(category.registryId())
                 .orElseThrow(() ->
@@ -68,6 +75,9 @@ public class CategoryService {
     public void delete(UUID categoryId, UUID currentUserId) {
         Category category =
                 categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException(categoryId));
+        if (category.isSystem()) {
+            throw new AccessDeniedException("System categories cannot be deleted");
+        }
         Registry registry = registryRepository
                 .findById(category.registryId())
                 .orElseThrow(() ->
