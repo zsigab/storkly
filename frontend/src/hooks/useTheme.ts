@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { createElement } from "react";
 
-export type ThemeColor = "peach" | "blue" | "pink" | "green" | "purple";
+export type ThemeColor = "peach" | "blue" | "pink" | "green" | "purple" | "beige";
 export type ThemeStyle = "glass";
 export type ThemeMode = "light" | "dark";
 export type ThemeBackground = "none" | "default" | "tiles";
@@ -28,7 +28,7 @@ interface ThemeProviderProps {
 }
 
 const STORAGE_KEY = "storkly-theme";
-const COLORS: readonly ThemeColor[] = ["peach", "blue", "pink", "green", "purple"];
+const COLORS: readonly ThemeColor[] = ["peach", "blue", "pink", "green", "purple", "beige"];
 const STYLES: readonly ThemeStyle[] = ["glass"];
 const BACKGROUNDS: readonly ThemeBackground[] = ["none", "default", "tiles"];
 
@@ -42,6 +42,7 @@ const BLOB_HSL: Record<ThemeColor, { light: string; dark: string }> = {
   pink: { light: "340 75% 64%", dark: "340 70% 68%" },
   green: { light: "160 84% 39%", dark: "160 70% 50%" },
   purple: { light: "271 81% 56%", dark: "271 75% 70%" },
+  beige: { light: "35 50% 70%", dark: "35 40% 65%" },
 };
 
 // Corner-anchored radial blobs: centres pushed 10 % off-viewport so only the

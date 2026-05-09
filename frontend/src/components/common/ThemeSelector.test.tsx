@@ -65,10 +65,10 @@ describe("ThemeSelector", () => {
     expect(screen.getByRole("region", { name: /color accent/i })).toBeInTheDocument();
   });
 
-  it("renders all five color swatches", () => {
+  it("renders all six color swatches", () => {
     renderSelector();
     openPanel();
-    for (const label of ["Peach", "Blue", "Pink", "Green", "Purple"]) {
+    for (const label of ["Peach", "Blue", "Pink", "Green", "Purple", "Beige"]) {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
     }
   });

@@ -20,6 +20,7 @@ const COLOR_OPTIONS: ColorOption[] = [
   { value: "pink", label: "Pink", swatch: "hsl(340 75% 64%)" },
   { value: "green", label: "Green", swatch: "hsl(160 84% 39%)" },
   { value: "purple", label: "Purple", swatch: "hsl(271 81% 56%)" },
+  { value: "beige", label: "Beige", swatch: "hsl(35 50% 70%)" },
 ];
 
 const BG_OPTIONS: BgOption[] = [
