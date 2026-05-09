@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write src/",
+    "test": "vitest run",
     "generate:api": "openapi-typescript http://localhost:8080/api/docs -o src/api/schema.ts"
   },
   "dependencies": {
