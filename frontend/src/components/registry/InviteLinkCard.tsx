@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,10 +13,19 @@ interface InviteLinkCardProps {
 export function InviteLinkCard({ slug, isPublic = false }: InviteLinkCardProps): React.ReactElement {
   const generateInvite = useGenerateInvite(slug);
   const publicUrl = `${window.location.origin}/r/${slug}`;
-  const [inviteUrl, setInviteUrl] = useState<string | null>(isPublic ? publicUrl : null);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    setInviteUrl(null);
+    setCopied(false);
+  }, [slug]);
+
   const handleGenerate = (): void => {
+    if (isPublic) {
+      setInviteUrl(publicUrl);
+      return;
+    }
     generateInvite.mutate(undefined, {
       onSuccess: (data) => {
         setInviteUrl(`${publicUrl}?invite=${data.token}`);

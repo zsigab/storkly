@@ -201,12 +201,13 @@ describe("RegistryPage", () => {
     );
   });
 
-  it("shows share link directly for public registry owner without generate button", async () => {
+  it("reveals share link for public registry owner only after button click", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
     await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
-    expect(screen.queryByRole("button", { name: /get invite link/i })).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue(/\/r\/my-registry/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /get invite link/i }));
     expect(screen.getByDisplayValue(/\/r\/my-registry$/)).toBeInTheDocument();
   });
 
