@@ -283,7 +283,11 @@ export function ItemForm({
     if (!url || url === urlAtFocus.current.trim()) return;
     setPreviewUnavailable(false);
     try {
-      const result = await fetchPreview(url);
+      let result = await fetchPreview(url);
+      const strippedUrl = stripUrlParams(url);
+      if (!result.supported && strippedUrl !== url) {
+        result = await fetchPreview(strippedUrl);
+      }
       if (!result.supported) {
         setPreviewUnavailable(true);
         return;
