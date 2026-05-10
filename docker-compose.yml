@@ -1,22 +1,19 @@
 services:
   caddy:
-    image: caddy:2-alpine
+    image: ghcr.io/zsigab/storkly-web:latest
     ports:
       - "80:80"
       - "443:443"
       - "443:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
-      - ./frontend/dist:/srv/frontend:ro
+      - /opt/storkly/certs:/etc/caddy:ro
     depends_on:
       - api
     restart: unless-stopped
 
   api:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/zsigab/storkly:latest
     env_file: .env
     volumes:
       - uploads_data:/app/uploads
