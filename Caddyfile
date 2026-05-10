@@ -1,12 +1,12 @@
 # Redirect www → apex
 www.storkly.cc {
-    tls /etc/caddy/origin.pem /etc/caddy/origin-key.pem
+    tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin-key.pem
     redir https://storkly.cc{uri} permanent
 }
 
 # Production — storkly.cc
 storkly.cc {
-    tls /etc/caddy/origin.pem /etc/caddy/origin-key.pem
+    tls /etc/caddy/certs/origin.pem /etc/caddy/certs/origin-key.pem
     handle /api/* {
         reverse_proxy api:8080
     }

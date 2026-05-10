@@ -7,7 +7,7 @@ services:
       - "443:443/udp"
     volumes:
       - caddy_data:/data
-      - /opt/storkly/certs:/etc/caddy:ro
+      - /opt/storkly/certs:/etc/caddy/certs:ro
     depends_on:
       - api
     restart: unless-stopped
