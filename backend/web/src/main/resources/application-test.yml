@@ -6,6 +6,21 @@ spring:
     port: 1025
     username: ""
     password: ""
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-google-client-id
+            client-secret: test-google-client-secret
+            scope: openid,email,profile
+          facebook:
+            client-id: test-facebook-client-id
+            client-secret: test-facebook-client-secret
+            scope: email,public_profile
+        provider:
+          facebook:
+            user-info-uri: https://graph.facebook.com/me?fields=id,name,email
 
 storkly:
   captcha:
