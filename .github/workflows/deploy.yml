@@ -2,6 +2,11 @@ name: Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Image tag to deploy (e.g. sha-f993ad8 or 2026-05-10)
+        default: latest
+        required: false
 
 jobs:
   deploy:
@@ -13,7 +18,10 @@ jobs:
           host: ${{ secrets.HETZNER_HOST }}
           username: ${{ secrets.HETZNER_USER }}
           key: ${{ secrets.HETZNER_SSH_KEY }}
+          envs: IMAGE_TAG
           script: |
             cd /opt/storkly
             docker compose pull
             docker compose up -d
+        env:
+          IMAGE_TAG: ${{ inputs.tag }}

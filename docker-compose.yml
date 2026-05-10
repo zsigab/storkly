@@ -1,6 +1,6 @@
 services:
   caddy:
-    image: ghcr.io/zsigab/storkly-web:latest
+    image: ghcr.io/zsigab/storkly-fe:${IMAGE_TAG:-latest}
     ports:
       - "80:80"
       - "443:443"
@@ -13,7 +13,7 @@ services:
     restart: unless-stopped
 
   api:
-    image: ghcr.io/zsigab/storkly:latest
+    image: ghcr.io/zsigab/storkly-be:${IMAGE_TAG:-latest}
     env_file: .env
     volumes:
       - uploads_data:/app/uploads

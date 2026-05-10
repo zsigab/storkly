@@ -63,8 +63,8 @@ jobs:
         working-directory: frontend
         run: npm test
 
-  docker:
-    name: Docker (${{ matrix.platform }})
+  docker-be:
+    name: Docker BE (${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}
     needs: [backend, frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -95,7 +95,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/zsigab/storkly
+          images: ghcr.io/zsigab/storkly-be
 
       - uses: docker/build-push-action@v6
         id: build
@@ -103,7 +103,7 @@ jobs:
           context: backend
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=ghcr.io/zsigab/storkly,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=ghcr.io/zsigab/storkly-be,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -114,21 +114,21 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-${{ env.PLATFORM_PAIR }}
+          name: digests-be-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
 
-  merge:
-    name: Merge manifests
+  merge-be:
+    name: Merge BE manifests
     runs-on: ubuntu-latest
-    needs: docker
+    needs: docker-be
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
-          pattern: digests-linux-*
+          pattern: digests-be-*
           merge-multiple: true
 
       - uses: docker/setup-buildx-action@v3
@@ -142,19 +142,20 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/zsigab/storkly
+          images: ghcr.io/zsigab/storkly-be
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-,format=short
+            type=raw,value={{date 'YYYY-MM-DD'}}
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/zsigab/storkly@sha256:%s ' *)
+            $(printf 'ghcr.io/zsigab/storkly-be@sha256:%s ' *)
 
-  docker-web:
-    name: Docker web (${{ matrix.platform }})
+  docker-fe:
+    name: Docker FE (${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}
     needs: [backend, frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -185,7 +186,7 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/zsigab/storkly-web
+          images: ghcr.io/zsigab/storkly-fe
 
       - uses: docker/build-push-action@v6
         id: build
@@ -194,7 +195,7 @@ jobs:
           file: caddy/Dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=ghcr.io/zsigab/storkly-web,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=ghcr.io/zsigab/storkly-fe,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -205,21 +206,21 @@ jobs:
       - name: Upload digest
         uses: actions/upload-artifact@v4
         with:
-          name: digests-web-${{ env.PLATFORM_PAIR }}
+          name: digests-fe-${{ env.PLATFORM_PAIR }}
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
 
-  merge-web:
-    name: Merge web manifests
+  merge-fe:
+    name: Merge FE manifests
     runs-on: ubuntu-latest
-    needs: docker-web
+    needs: docker-fe
     steps:
       - name: Download digests
         uses: actions/download-artifact@v4
         with:
           path: /tmp/digests
-          pattern: digests-web-*
+          pattern: digests-fe-*
           merge-multiple: true
 
       - uses: docker/setup-buildx-action@v3
@@ -233,13 +234,14 @@ jobs:
       - uses: docker/metadata-action@v5
         id: meta
         with:
-          images: ghcr.io/zsigab/storkly-web
+          images: ghcr.io/zsigab/storkly-fe
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-,format=short
+            type=raw,value={{date 'YYYY-MM-DD'}}
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create $(jq -cr '.tags | map("-t " + .) | join(" ")' <<< "$DOCKER_METADATA_OUTPUT_JSON") \
-            $(printf 'ghcr.io/zsigab/storkly-web@sha256:%s ' *)
+            $(printf 'ghcr.io/zsigab/storkly-fe@sha256:%s ' *)
