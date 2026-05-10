@@ -83,7 +83,7 @@ class LinkPreviewControllerIntegrationTest {
                 .body(new LinkPreviewRequest(""))
                 .exchange()
                 .expectStatus()
-                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     private String loginAndGetCookie(String email, String password) {

@@ -63,7 +63,7 @@ class UserControllerIntegrationTest {
                 .body(new app.storkly.user.dto.DisplayNameUpdateRequest(""))
                 .exchange()
                 .expectStatus()
-                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     private String loginAndGetCookie(String email, String password) {

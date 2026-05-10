@@ -72,7 +72,7 @@ class AuthControllerIntegrationTest {
                 .body(new RegisterRequest("", "", "", ""))
                 .exchange()
                 .expectStatus()
-                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     @Test

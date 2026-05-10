@@ -91,7 +91,7 @@ class ImageControllerIntegrationTest {
                 .body(buildMultipart("not an image".getBytes(), "text/plain", "file.txt"))
                 .exchange()
                 .expectStatus()
-                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+                .isEqualTo(HttpStatus.UNPROCESSABLE_CONTENT);
     }
 
     private MultiValueMap<String, HttpEntity<?>> buildMultipart(byte[] bytes, String contentType, String filename) {
