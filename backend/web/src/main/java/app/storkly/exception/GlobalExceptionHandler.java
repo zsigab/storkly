@@ -15,15 +15,19 @@ import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.exception.UserNotFoundException;
 import app.storkly.scraper.ScrapingException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 @Slf4j
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalExceptionHandler {
 
     @ExceptionHandler({
@@ -87,6 +91,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ScrapingException.class)
     public ProblemDetail handleScrapingException(ScrapingException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ProblemDetail handleResponseStatus(ResponseStatusException ex) {
+        String detail = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        return ProblemDetail.forStatusAndDetail(
+                HttpStatus.valueOf(ex.getStatusCode().value()), detail);
     }
 
     @ExceptionHandler(Exception.class)

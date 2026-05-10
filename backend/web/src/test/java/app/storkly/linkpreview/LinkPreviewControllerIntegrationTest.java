@@ -1,6 +1,7 @@
 package app.storkly.linkpreview;
 
 import app.storkly.auth.dto.LoginRequest;
+import app.storkly.linkpreview.dto.LinkPreviewRequest;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,7 +59,7 @@ class LinkPreviewControllerIntegrationTest {
                 .post()
                 .uri("/api/link-preview")
                 .cookie("access_token", authCookie)
-                .body("{\"url\":\"https://unsupported-site.example.com/product/123\"}")
+                .body(new LinkPreviewRequest("https://unsupported-site.example.com/product/123"))
                 .exchange()
                 .expectStatus()
                 .isOk()
@@ -79,7 +80,7 @@ class LinkPreviewControllerIntegrationTest {
                 .post()
                 .uri("/api/link-preview")
                 .cookie("access_token", authCookie)
-                .body("{\"url\":\"\"}")
+                .body(new LinkPreviewRequest(""))
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
