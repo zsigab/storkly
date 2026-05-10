@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router";
 import { ItemForm } from "@/components/registry/ItemForm";
 import { useUpdateItem, useDeleteItem } from "@/hooks/useItems";
@@ -34,6 +35,16 @@ export function EditItemPage(): React.ReactElement {
   const deleteItem = useDeleteItem(safeSlug);
 
   const isClaimed = (claims ?? []).reduce((sum, c) => sum + c.quantityClaimed, 0) > 0;
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === "Escape") {
+        navigate(`/r/${safeSlug}`);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [navigate, safeSlug]);
 
   if (isPending || categoriesPending) {
     return (

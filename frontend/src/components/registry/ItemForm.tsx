@@ -86,17 +86,25 @@ function SourcePill({
   onChange: (s: TextFieldSource) => void;
 }): React.ReactElement {
   return (
-    <div className="bg-muted flex w-fit gap-1 rounded-lg p-1">
+    <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
+      <div
+        className={cn(
+          "bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out",
+          source === "url" && "translate-x-full",
+        )}
+        style={{ width: "calc(50% - 4px)" }}
+      />
       {(["custom", "url"] as const).map((s) => (
         <button
           key={s}
           type="button"
           onClick={() => onChange(s)}
-          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+          className={cn(
+            "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
             source === s
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
+              ? "text-primary-foreground"
+              : "text-muted-foreground hover:text-foreground",
+          )}
         >
           {s === "custom" ? "Custom" : "From Product URL"}
         </button>
@@ -141,6 +149,8 @@ export function ItemForm({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const capturedHeight = useRef<number | null>(null);
+  const descContentRef = useRef<HTMLDivElement>(null);
+  const capturedDescHeight = useRef<number | null>(null);
 
   const [previewUnavailable, setPreviewUnavailable] = useState(false);
   const [scrapedSnapshot, setScrapedSnapshot] = useState<ScrapedSnapshot | null>(null);
@@ -176,10 +186,7 @@ export function ItemForm({
     },
   });
 
-  const [previewMode, setPreviewMode] = useState(() => {
-    const initial = defaultValues?.description;
-    return typeof initial === "string" && initial.length > 0;
-  });
+  const [previewMode, setPreviewMode] = useState(false);
 
   const quantityValue = watch("quantityDesired");
   const isQuantityZero = quantityValue === "0";
@@ -243,10 +250,23 @@ export function ItemForm({
     const to = el.scrollHeight;
     if (Math.abs(from - to) < 1) return;
     el.animate([{ height: `${from}px` }, { height: `${to}px` }], {
-      duration: 200,
+      duration: 150,
       easing: "ease-in-out",
     });
   }, [imageSource]);
+
+  useLayoutEffect(() => {
+    const el = descContentRef.current;
+    const from = capturedDescHeight.current;
+    if (!el || from === null) return;
+    capturedDescHeight.current = null;
+    const to = el.scrollHeight;
+    if (Math.abs(from - to) < 1) return;
+    el.animate([{ height: `${from}px` }, { height: `${to}px` }], {
+      duration: 150,
+      easing: "ease-in-out",
+    });
+  }, [previewMode]);
 
   const hasScrapedData = scrapedSnapshot !== null;
   const showTitleToggle = hasScrapedData && scrapedSnapshot.title !== null;
@@ -490,6 +510,30 @@ export function ItemForm({
         />
       </FormField>
 
+      <FormField label="Notes for gifters" htmlFor="notes" error={errors.notes?.message}>
+        <Input
+          id="notes"
+          type="text"
+          placeholder="Any size, colour, or variant preferences…"
+          {...register("notes")}
+        />
+      </FormField>
+
+      <FormField label="Category" htmlFor="categoryId" error={errors.categoryId?.message}>
+        <select
+          id="categoryId"
+          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+          {...register("categoryId")}
+        >
+          <option value="">— No category —</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </FormField>
+
       <FormField label="Product URL" htmlFor="urlOriginal" error={errors.urlOriginal?.message}>
         <div className="relative">
           <Input
@@ -522,17 +566,31 @@ export function ItemForm({
       {/* Image source selector */}
       <div className="space-y-2">
         <span className="text-sm leading-none font-medium">Image</span>
-        <div className="bg-muted flex w-fit gap-1 rounded-lg p-1">
+        <div
+          className="bg-muted relative rounded-lg p-1"
+          style={{
+            display: "grid",
+            gridTemplateColumns: `repeat(${imageSourceOptions.length}, 1fr)`,
+          }}
+        >
+          <div
+            className="bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out"
+            style={{
+              width: `calc((100% - 8px) / ${imageSourceOptions.length})`,
+              transform: `translateX(${imageSourceOptions.indexOf(imageSource) * 100}%)`,
+            }}
+          />
           {imageSourceOptions.map((source) => (
             <button
               key={source}
               type="button"
               onClick={() => handleImageSourceChange(source)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              className={cn(
+                "relative z-10 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                 imageSource === source
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
               {imageSourceLabel(source)}
             </button>
@@ -657,56 +715,76 @@ export function ItemForm({
           />
         )}
 
-        {fieldSources.description !== "url" && (
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="bg-muted flex w-fit gap-1 rounded-lg p-1">
-              {(["Preview", "Edit"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setPreviewMode(tab === "Preview")}
-                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                    (tab === "Preview") === previewMode
-                      ? "bg-background text-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-            {!previewMode && (
+        <div
+          className={`grid transition-all duration-150 ease-in-out ${fieldSources.description !== "url" ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+        >
+          <div className="overflow-hidden">
+            <div className="flex flex-wrap items-center gap-2 pb-0.5">
+              <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
+                <div
+                  className={cn(
+                    "bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out",
+                    previewMode && "translate-x-full",
+                  )}
+                  style={{ width: "calc(50% - 4px)" }}
+                />
+                {(["Edit", "Preview"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => {
+                      if (descContentRef.current) {
+                        capturedDescHeight.current =
+                          descContentRef.current.getBoundingClientRect().height;
+                        descContentRef.current.getAnimations().forEach((a) => a.cancel());
+                      }
+                      setPreviewMode(tab === "Preview");
+                    }}
+                    className={cn(
+                      "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                      (tab === "Preview") === previewMode
+                        ? "text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
               <MarkdownToolbar
                 textareaRef={descriptionRef}
                 onChange={(v) => setValue("description", v)}
+                disabled={previewMode}
               />
-            )}
+            </div>
           </div>
-        )}
+        </div>
 
-        {(previewMode || fieldSources.description === "url") && (
-          <div className="border-input bg-background min-h-[200px] w-full rounded-md border px-3 py-2 text-sm">
-            {descriptionValue.length > 0 ? (
-              <MarkdownContent content={descriptionValue} />
-            ) : (
-              <span className="text-muted-foreground italic">Nothing to preview</span>
-            )}
-          </div>
-        )}
-
-        <textarea
-          id="description"
-          rows={8}
-          className={cn(
-            "border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[200px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none",
-            (previewMode || fieldSources.description === "url") && "hidden",
+        <div ref={descContentRef} className="overflow-hidden">
+          {(previewMode || fieldSources.description === "url") && (
+            <div className="border-input bg-background min-h-[200px] w-full rounded-md border px-3 py-2 text-sm">
+              {descriptionValue.length > 0 ? (
+                <MarkdownContent content={descriptionValue} />
+              ) : (
+                <span className="text-muted-foreground italic">Nothing to preview</span>
+              )}
+            </div>
           )}
-          ref={(el) => {
-            descriptionRegisterRef(el);
-            descriptionRef.current = el;
-          }}
-          {...descriptionRegistration}
-        />
+
+          <textarea
+            id="description"
+            rows={8}
+            className={cn(
+              "border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[200px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none",
+              (previewMode || fieldSources.description === "url") && "hidden",
+            )}
+            ref={(el) => {
+              descriptionRegisterRef(el);
+              descriptionRef.current = el;
+            }}
+            {...descriptionRegistration}
+          />
+        </div>
 
         {errors.description?.message !== undefined && (
           <p className="text-destructive text-sm">{errors.description.message}</p>
@@ -746,22 +824,7 @@ export function ItemForm({
         </div>
       </div>
 
-      <FormField label="Category" htmlFor="categoryId" error={errors.categoryId?.message}>
-        <select
-          id="categoryId"
-          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          {...register("categoryId")}
-        >
-          <option value="">— No category —</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      </FormField>
-
-      <FormField label="Flag" htmlFor="flag" error={errors.flag?.message}>
+      <FormField label="How we want it" htmlFor="flag" error={errors.flag?.message}>
         <select
           id="flag"
           className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
@@ -781,15 +844,6 @@ export function ItemForm({
         <Input id="quantityDesired" type="number" min="1" {...register("quantityDesired")} />
       </FormField>
 
-      <FormField label="Notes for gifters" htmlFor="notes" error={errors.notes?.message}>
-        <Input
-          id="notes"
-          type="text"
-          placeholder="Any size, colour, or variant preferences…"
-          {...register("notes")}
-        />
-      </FormField>
-
       <label className="flex cursor-pointer items-center gap-3">
         <input
           id="alreadyOwned"
@@ -798,7 +852,10 @@ export function ItemForm({
           checked={alreadyOwnedValue}
           onChange={(e) => setValue("alreadyOwned", e.target.checked)}
         />
-        <span className="text-sm font-medium">We already have this</span>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium">We already have this</span>
+          <span className="text-muted-foreground text-xs">(will be marked as claimed)</span>
+        </div>
       </label>
 
       {isError && (
