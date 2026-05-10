@@ -87,7 +87,7 @@ class RegistryControllerIntegrationTest {
         restTestClient
                 .post()
                 .uri("/api/registries")
-                .cookie("jwt", authCookie)
+                .cookie("access_token", authCookie)
                 .body(request)
                 .exchange()
                 .expectStatus()
@@ -109,7 +109,7 @@ class RegistryControllerIntegrationTest {
         restTestClient
                 .post()
                 .uri("/api/registries")
-                .cookie("jwt", authCookie)
+                .cookie("access_token", authCookie)
                 .body(request)
                 .exchange()
                 .expectStatus()
@@ -139,8 +139,8 @@ class RegistryControllerIntegrationTest {
                 .expectHeader()
                 .value(HttpHeaders.SET_COOKIE, setCookie -> {
                     for (String part : setCookie.split(";")) {
-                        if (part.trim().startsWith("jwt=")) {
-                            cookieRef.set(part.trim().substring("jwt=".length()));
+                        if (part.trim().startsWith("access_token=")) {
+                            cookieRef.set(part.trim().substring("access_token=".length()));
                             break;
                         }
                     }

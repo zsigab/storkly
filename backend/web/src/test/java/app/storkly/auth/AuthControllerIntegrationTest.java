@@ -10,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
@@ -21,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @ActiveProfiles("test")
-@TestPropertySource(properties = "storkly.captcha.enabled=false")
+@TestPropertySource(properties = {"storkly.captcha.enabled=false", "storkly.seed-data=true"})
 class AuthControllerIntegrationTest {
 
     @Container
@@ -55,21 +54,11 @@ class AuthControllerIntegrationTest {
 
     @Test
     void register_duplicateEmail_returnsConflict() {
-        RegisterRequest request =
-                new RegisterRequest("duplicate@example.com", "password123", "Dup", "test-captcha-token");
-
+        // owner@example.com is seeded with a verified email — re-registering must return 409
         restTestClient
                 .post()
                 .uri("/api/auth/register")
-                .body(request)
-                .exchange()
-                .expectStatus()
-                .isCreated();
-
-        restTestClient
-                .post()
-                .uri("/api/auth/register")
-                .body(request)
+                .body(new RegisterRequest("owner@example.com", "password123", "Owner", "test-captcha-token"))
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.CONFLICT);
@@ -80,8 +69,7 @@ class AuthControllerIntegrationTest {
         restTestClient
                 .post()
                 .uri("/api/auth/register")
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("{}")
+                .body(new RegisterRequest("", "", "", ""))
                 .exchange()
                 .expectStatus()
                 .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);

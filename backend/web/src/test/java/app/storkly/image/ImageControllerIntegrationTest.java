@@ -30,6 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @TestPropertySource(
         properties = {
             "storkly.captcha.enabled=false",
+            "storkly.seed-data=true",
             "storkly.images.upload-dir=${java.io.tmpdir}/storkly-test-uploads"
         })
 class ImageControllerIntegrationTest {
@@ -64,7 +65,7 @@ class ImageControllerIntegrationTest {
         String responseBody = restTestClient
                 .post()
                 .uri("/api/images")
-                .cookie("jwt", authCookie)
+                .cookie("access_token", authCookie)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(buildMultipart(pngBytes, "image/png", "test.png"))
                 .exchange()
@@ -85,7 +86,7 @@ class ImageControllerIntegrationTest {
         restTestClient
                 .post()
                 .uri("/api/images")
-                .cookie("jwt", authCookie)
+                .cookie("access_token", authCookie)
                 .contentType(MediaType.MULTIPART_FORM_DATA)
                 .body(buildMultipart("not an image".getBytes(), "text/plain", "file.txt"))
                 .exchange()
@@ -192,8 +193,8 @@ class ImageControllerIntegrationTest {
                 .expectHeader()
                 .value(HttpHeaders.SET_COOKIE, setCookie -> {
                     for (String part : setCookie.split(";")) {
-                        if (part.trim().startsWith("jwt=")) {
-                            cookieRef.set(part.trim().substring("jwt=".length()));
+                        if (part.trim().startsWith("access_token=")) {
+                            cookieRef.set(part.trim().substring("access_token=".length()));
                             break;
                         }
                     }

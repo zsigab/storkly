@@ -20,7 +20,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @ActiveProfiles("test")
-@TestPropertySource(properties = "storkly.captcha.enabled=false")
+@TestPropertySource(properties = {"storkly.captcha.enabled=false", "storkly.seed-data=true"})
 class LinkPreviewControllerIntegrationTest {
 
     @Container
@@ -57,7 +57,7 @@ class LinkPreviewControllerIntegrationTest {
         restTestClient
                 .post()
                 .uri("/api/link-preview")
-                .cookie("jwt", authCookie)
+                .cookie("access_token", authCookie)
                 .body("{\"url\":\"https://unsupported-site.example.com/product/123\"}")
                 .exchange()
                 .expectStatus()
@@ -78,7 +78,7 @@ class LinkPreviewControllerIntegrationTest {
         restTestClient
                 .post()
                 .uri("/api/link-preview")
-                .cookie("jwt", authCookie)
+                .cookie("access_token", authCookie)
                 .body("{\"url\":\"\"}")
                 .exchange()
                 .expectStatus()
@@ -98,8 +98,8 @@ class LinkPreviewControllerIntegrationTest {
                 .expectHeader()
                 .value(HttpHeaders.SET_COOKIE, setCookie -> {
                     for (String part : setCookie.split(";")) {
-                        if (part.trim().startsWith("jwt=")) {
-                            cookieRef.set(part.trim().substring("jwt=".length()));
+                        if (part.trim().startsWith("access_token=")) {
+                            cookieRef.set(part.trim().substring("access_token=".length()));
                             break;
                         }
                     }
