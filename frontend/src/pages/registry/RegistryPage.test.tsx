@@ -183,7 +183,7 @@ describe("RegistryPage", () => {
     expect(screen.queryByRole("button", { name: /get invite link/i })).not.toBeInTheDocument();
   });
 
-  it("shows invite link card for private registry owner", async () => {
+  it("shows Show Link button for private registry owner", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation((path: string) => {
       if (path === "/api/registries/{slug}") {
@@ -197,7 +197,7 @@ describe("RegistryPage", () => {
     });
     renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /get invite link/i })).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: /show link/i })).toBeInTheDocument(),
     );
   });
 
@@ -212,7 +212,7 @@ describe("RegistryPage", () => {
     renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
     await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
     expect(screen.queryByDisplayValue(/\/r\/my-registry/)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /get invite link/i }));
+    fireEvent.click(screen.getByRole("button", { name: /show link/i }));
     await waitFor(() =>
       expect(screen.getByDisplayValue(/\/r\/my-registry\?invite=/)).toBeInTheDocument(),
     );

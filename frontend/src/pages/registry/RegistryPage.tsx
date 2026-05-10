@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { InviteLinkCard } from "@/components/registry/InviteLinkCard";
+import { Input } from "@/components/ui/input";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { ItemCard } from "@/components/registry/ItemCard";
 import { getApiErrorMessage, getApiErrorStatus } from "@/api/helpers";
@@ -15,6 +15,7 @@ import {
   useRegistryCategories,
   useRegistrySubscribers,
   useUnsubscribeRegistry,
+  useGenerateInvite,
 } from "@/hooks/useRegistries";
 import { useAllItemClaims } from "@/hooks/useClaims";
 import { useRegistryItems } from "@/hooks/useItems";
@@ -42,8 +43,13 @@ export function RegistryPage(): React.ReactElement {
   const subscriberNames: Record<string, string> = Object.fromEntries(
     subscribers.map((s) => [s.userId, s.displayName]),
   );
+  const generateInvite = useGenerateInvite(safeSlug);
   const [hasUnsubscribed, setHasUnsubscribed] = useState(false);
   const [subscribersOpen, setSubscribersOpen] = useState(false);
+  const [showGetLink, setShowGetLink] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [descriptionOpen, setDescriptionOpen] = useState(false);
   const userHasClaims = user !== null && allClaims.some((c) => c.claimerUserId === user.id);
 
   useEffect(() => {
@@ -148,14 +154,19 @@ export function RegistryPage(): React.ReactElement {
   const uncategorizedItems = items.filter((i) => i.categoryId === null).sort(sortByClaimed);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 py-10">
+    <div className="mx-auto max-w-2xl py-10">
       {user !== null && (
-        <Link to="/dashboard" className="text-muted-foreground hover:text-foreground text-sm">
+        <Link
+          to="/dashboard"
+          className="text-muted-foreground hover:text-foreground mb-6 block text-sm"
+        >
           ← Back to dashboard
         </Link>
       )}
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
+
+      {/* Header */}
+      <div className="space-y-4 border-b pb-6">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-semibold tracking-tight">{registry.name}</h1>
             <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
@@ -166,168 +177,250 @@ export function RegistryPage(): React.ReactElement {
                   : "Private"}
             </Badge>
           </div>
-          {registry.description !== null && (
-            <MarkdownContent content={registry.description} className="text-muted-foreground" />
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {isOwner && (
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
+                </Button>
+                {registry.visibility !== "HIDDEN" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="min-w-24"
+                    disabled={generateInvite.isPending}
+                    onClick={() => {
+                      if (showGetLink) {
+                        setShowGetLink(false);
+                      } else {
+                        setShowGetLink(true);
+                        if (inviteUrl === null) {
+                          const origin = window.location.origin;
+                          generateInvite.mutate(undefined, {
+                            onSuccess: (data) => {
+                              setInviteUrl(`${origin}/r/${registry.slug}?invite=${data.token}`);
+                            },
+                          });
+                        }
+                      }
+                    }}
+                  >
+                    {showGetLink ? "Hide Link" : "Show Link"}
+                  </Button>
+                )}
+                <Button asChild size="sm">
+                  <Link to={`/r/${registry.slug}/items/new`}>Add Item</Link>
+                </Button>
+              </>
+            )}
+            {(isSubscriber || hasUnsubscribed) &&
+              (hasUnsubscribed ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => joinRegistry.mutate(inviteToken ?? "")}
+                  disabled={joinRegistry.isPending}
+                >
+                  {joinRegistry.isPending ? "Subscribing…" : "Re-subscribe"}
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    unsubscribeRegistry.mutate(registry.slug);
+                    setHasUnsubscribed(true);
+                  }}
+                  disabled={unsubscribeRegistry.isPending || userHasClaims}
+                  title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
+                >
+                  {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
+                </Button>
+              ))}
+          </div>
         </div>
-        {isOwner && (
-          <Button asChild variant="outline" size="sm" className="shrink-0">
-            <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
-          </Button>
-        )}
-        {(isSubscriber || hasUnsubscribed) &&
-          (hasUnsubscribed ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => joinRegistry.mutate(inviteToken ?? "")}
-              disabled={joinRegistry.isPending}
-            >
-              {joinRegistry.isPending ? "Subscribing…" : "Re-subscribe"}
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => {
-                unsubscribeRegistry.mutate(registry.slug);
-                setHasUnsubscribed(true);
-              }}
-              disabled={unsubscribeRegistry.isPending || userHasClaims}
-              title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
-            >
-              {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
-            </Button>
-          ))}
-      </div>
 
-      {inviteToken !== null && !isOwner && !isSubscriber && (
-        <div className="border-border space-y-3 rounded-lg border p-4">
-          <p className="text-sm font-medium">You've been invited to join this registry.</p>
-          {joinRegistry.isSuccess ? (
-            <p className="text-muted-foreground text-sm">You've joined this registry.</p>
-          ) : (
-            <Button
-              onClick={() => joinRegistry.mutate(inviteToken)}
-              disabled={joinRegistry.isPending}
-            >
-              {joinRegistry.isPending ? "Joining…" : "Join registry"}
-            </Button>
-          )}
-          {joinRegistry.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>{getApiErrorMessage(joinRegistry.error)}</AlertDescription>
-            </Alert>
-          )}
-        </div>
-      )}
-
-      {isOwner && registry.visibility !== "HIDDEN" && <InviteLinkCard slug={registry.slug} />}
-
-      {isOwner && (
-        <div className="space-y-3">
-          <button
-            type="button"
-            className="flex items-center gap-1 text-left"
-            onClick={() => setSubscribersOpen((o) => !o)}
-          >
-            <h2 className="text-lg font-semibold">
-              Subscribers{" "}
-              <span className="text-muted-foreground text-base font-normal">
-                ({subscribers.length})
-              </span>
-            </h2>
-            <span className="text-muted-foreground text-sm">{subscribersOpen ? "▲" : "▼"}</span>
-          </button>
+        {isOwner && registry.visibility !== "HIDDEN" && (
           <div
-            className={`grid transition-all duration-200 ease-in-out ${subscribersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+            className={`grid transition-all duration-200 ease-in-out ${showGetLink ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           >
             <div className="overflow-hidden">
-              <div className="pt-1">
-                {subscribers.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">No subscribers yet.</p>
+              <div className="space-y-2 pt-1">
+                {inviteUrl === null ? (
+                  <div className="bg-muted h-9 animate-pulse rounded-md" />
                 ) : (
-                  <ul className="space-y-2">
-                    {subscribers.map((subscriber) => {
-                      const claimedItems = allClaims
-                        .filter((c) => c.claimerUserId === subscriber.userId)
-                        .map((c) => items.find((i) => i.id === c.itemId))
-                        .filter((i) => i !== undefined);
-                      return (
-                        <li
-                          key={subscriber.userId}
-                          className="space-y-1 rounded-lg border px-3 py-2"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{subscriber.displayName}</span>
-                            <span className="text-muted-foreground text-xs">
-                              {new Date(subscriber.joinedAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                          {claimedItems.length > 0 && (
-                            <p className="text-muted-foreground text-xs">
-                              {"Claimed: "}
-                              {claimedItems.map((i) => i.title).join(", ")}
-                            </p>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <div className="flex gap-2">
+                    <Input value={inviteUrl} readOnly className="h-9 text-xs" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(inviteUrl);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                    >
+                      {copiedLink ? "Copied!" : "Copy"}
+                    </Button>
+                  </div>
+                )}
+                {generateInvite.isError && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{getApiErrorMessage(generateInvite.error)}</AlertDescription>
+                  </Alert>
                 )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {items.length === 0 && (
-        <p className="text-muted-foreground py-8 text-center text-sm">
-          {isOwner ? "No items yet. Add your first item below." : "No items yet."}
-        </p>
-      )}
-
-      {categoriesWithItems.map(({ cat, catItems }) => (
-        <div key={cat.id} className="space-y-2">
-          <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
-            {cat.name}
-          </h2>
-          {catItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              slug={registry.slug}
-              isOwner={isOwner}
-              categoryName={cat.name}
-              subscriberNames={subscriberNames}
-            />
+        {registry.description !== null &&
+          (isOwner ? (
+            <>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+                onClick={() => setDescriptionOpen((o) => !o)}
+              >
+                Description
+                <span>{descriptionOpen ? "▲" : "▼"}</span>
+              </button>
+              <div
+                className={`grid transition-all duration-200 ease-in-out ${descriptionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="pt-1">
+                    <MarkdownContent
+                      content={registry.description}
+                      className="text-muted-foreground"
+                    />
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <MarkdownContent content={registry.description} className="text-muted-foreground" />
           ))}
-        </div>
-      ))}
 
-      {uncategorizedItems.length > 0 && (
-        <div className="space-y-2">
-          {uncategorizedItems.map((item) => (
-            <ItemCard
-              key={item.id}
-              item={item}
-              slug={registry.slug}
-              isOwner={isOwner}
-              subscriberNames={subscriberNames}
-            />
-          ))}
-        </div>
-      )}
+        {inviteToken !== null && !isOwner && !isSubscriber && (
+          <div className="border-border space-y-3 rounded-lg border p-4">
+            <p className="text-sm font-medium">You've been invited to join this registry.</p>
+            {joinRegistry.isSuccess ? (
+              <p className="text-muted-foreground text-sm">You've joined this registry.</p>
+            ) : (
+              <Button
+                onClick={() => joinRegistry.mutate(inviteToken)}
+                disabled={joinRegistry.isPending}
+              >
+                {joinRegistry.isPending ? "Joining…" : "Join registry"}
+              </Button>
+            )}
+            {joinRegistry.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>{getApiErrorMessage(joinRegistry.error)}</AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
+      </div>
 
-      {isOwner && (
-        <div className="flex justify-end">
-          <Button asChild size="sm">
-            <Link to={`/r/${registry.slug}/items/new`}>Add item</Link>
-          </Button>
-        </div>
-      )}
+      {/* Content */}
+      <div className="space-y-6 pt-6">
+        {items.length === 0 && (
+          <p className="text-muted-foreground py-8 text-center text-sm">
+            {isOwner ? "No items yet. Use Add Item to get started." : "No items yet."}
+          </p>
+        )}
+
+        {categoriesWithItems.map(({ cat, catItems }) => (
+          <div key={cat.id} className="space-y-2">
+            <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
+              {cat.name}
+            </h2>
+            {catItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                slug={registry.slug}
+                isOwner={isOwner}
+                categoryName={cat.name}
+                subscriberNames={subscriberNames}
+              />
+            ))}
+          </div>
+        ))}
+
+        {uncategorizedItems.length > 0 && (
+          <div className="space-y-2">
+            {uncategorizedItems.map((item) => (
+              <ItemCard
+                key={item.id}
+                item={item}
+                slug={registry.slug}
+                isOwner={isOwner}
+                subscriberNames={subscriberNames}
+              />
+            ))}
+          </div>
+        )}
+
+        {isOwner && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              className="flex items-center gap-1 text-left"
+              onClick={() => setSubscribersOpen((o) => !o)}
+            >
+              <h2 className="text-lg font-semibold">
+                Subscribers{" "}
+                <span className="text-muted-foreground text-base font-normal">
+                  ({subscribers.length})
+                </span>
+              </h2>
+              <span className="text-muted-foreground text-sm">{subscribersOpen ? "▲" : "▼"}</span>
+            </button>
+            <div
+              className={`grid transition-all duration-200 ease-in-out ${subscribersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+            >
+              <div className="overflow-hidden">
+                <div className="pt-1">
+                  {subscribers.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">No subscribers yet.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {subscribers.map((subscriber) => {
+                        const claimedItems = allClaims
+                          .filter((c) => c.claimerUserId === subscriber.userId)
+                          .map((c) => items.find((i) => i.id === c.itemId))
+                          .filter((i) => i !== undefined);
+                        return (
+                          <li
+                            key={subscriber.userId}
+                            className="space-y-1 rounded-lg border px-3 py-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{subscriber.displayName}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {new Date(subscriber.joinedAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            {claimedItems.length > 0 && (
+                              <p className="text-muted-foreground text-xs">
+                                {"Claimed: "}
+                                {claimedItems.map((i) => i.title).join(", ")}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
