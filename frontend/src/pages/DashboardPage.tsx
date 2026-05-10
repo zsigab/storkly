@@ -22,6 +22,10 @@ export function DashboardPage(): React.ReactElement {
             <Link to="/registry/new">New registry</Link>
           </Button>
         </div>
+        <p className="text-muted-foreground text-sm">
+          Registries are shareable wishlists. Add items with links, share the registry URL, and
+          guests can claim gifts so nothing gets doubled up.
+        </p>
 
         {isPending && <p className="text-muted-foreground">Loading…</p>}
 
@@ -32,8 +36,7 @@ export function DashboardPage(): React.ReactElement {
         )}
 
         {!isPending && !isError && ownedRegistries.length === 0 && (
-          <div className="space-y-3 py-12 text-center">
-            <p className="text-muted-foreground">You don't have any registries yet.</p>
+          <div className="py-12 text-center">
             <Button asChild variant="outline">
               <Link to="/registry/new">Create your first registry</Link>
             </Button>

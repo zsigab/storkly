@@ -33,9 +33,14 @@ describe("HomePage", () => {
     expect(screen.getByRole("heading", { name: /welcome to storkly/i })).toBeInTheDocument();
   });
 
-  it("renders the subtitle", () => {
+  it("renders the intro description", () => {
     renderPage();
-    expect(screen.getByText(/your gift registry, simplified/i)).toBeInTheDocument();
+    expect(screen.getByText(/self-hosted gift registry/i)).toBeInTheDocument();
+  });
+
+  it("renders a login button linking to /login", () => {
+    renderPage();
+    expect(screen.getByRole("link", { name: /log in/i })).toHaveAttribute("href", "/login");
   });
 
   it("redirects to /dashboard when logged in", () => {
