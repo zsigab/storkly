@@ -35,14 +35,6 @@ export function DashboardPage(): React.ReactElement {
           </Alert>
         )}
 
-        {!isPending && !isError && ownedRegistries.length === 0 && (
-          <div className="py-12 text-center">
-            <Button asChild variant="outline">
-              <Link to="/registry/new">Create your first registry</Link>
-            </Button>
-          </div>
-        )}
-
         {ownedRegistries.length > 0 && (
           <div className="space-y-3">
             {ownedRegistries.map((registry) => (

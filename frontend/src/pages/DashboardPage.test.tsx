@@ -62,7 +62,7 @@ describe("DashboardPage", () => {
     await waitFor(() => expect(screen.getByText(/shareable wishlists/i)).toBeInTheDocument());
   });
 
-  it("shows a single create CTA in empty state", async () => {
+  it("shows no empty state CTA when no registries exist", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValueOnce({
       data: [],
@@ -70,10 +70,10 @@ describe("DashboardPage", () => {
       response: new Response(),
     });
     renderPage();
-    await waitFor(() =>
-      expect(screen.getByRole("link", { name: /create your first registry/i })).toBeInTheDocument(),
-    );
-    expect(screen.queryByText(/don't have any registries/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/shareable wishlists/i)).toBeInTheDocument());
+    expect(
+      screen.queryByRole("link", { name: /create your first registry/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows owned registry cards", async () => {
