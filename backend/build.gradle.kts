@@ -50,4 +50,8 @@ subprojects {
     tasks.withType<JavaExec>().configureEach {
         jvmArgs("--enable-preview")
     }
+
+    dependencies {
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher:6.0.3")
+    }
 }

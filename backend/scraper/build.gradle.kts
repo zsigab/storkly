@@ -17,5 +17,4 @@ dependencies {
     implementation(libs.jacksonDatabind)
     implementation(libs.jsoup)
     testImplementation(libs.springBootStarterTest)
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
