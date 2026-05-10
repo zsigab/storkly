@@ -66,4 +66,9 @@ class SlugUtilTest {
     void generate_spacesBecomeSingleHyphen() {
         assertThat(SlugUtil.generate("baby   registry")).isEqualTo("baby-registry");
     }
+
+    @Test
+    void generate_apostropheStripped() {
+        assertThat(SlugUtil.generate("Mikey's Registry")).isEqualTo("mikeys-registry");
+    }
 }

@@ -11,6 +11,7 @@ public final class SlugUtil {
         String ascii = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}", "");
         return ascii.toLowerCase()
                 .trim()
+                .replaceAll("['‘’]", "")
                 .replaceAll("[^a-z0-9\\s-]", " ")
                 .replaceAll("[\\s-]+", "-")
                 .replaceAll("^-|-$", "");

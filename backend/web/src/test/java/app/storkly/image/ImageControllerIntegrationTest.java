@@ -10,12 +10,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.util.MultiValueMap;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -89,16 +93,16 @@ class ImageControllerIntegrationTest {
                 .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
     }
 
-    private org.springframework.web.reactive.function.BodyInserters.MultipartInserter buildMultipart(
-            byte[] bytes, String contentType, String filename) {
-        return org.springframework.web.reactive.function.BodyInserters.fromMultipartData(
-                org.springframework.util.LinkedMultiValueMap.fromSingleValue(
-                        "file", new org.springframework.core.io.ByteArrayResource(bytes) {
-                            @Override
-                            public String getFilename() {
-                                return filename;
-                            }
-                        }));
+    private MultiValueMap<String, HttpEntity<?>> buildMultipart(byte[] bytes, String contentType, String filename) {
+        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+        builder.part("file", new ByteArrayResource(bytes) {
+                    @Override
+                    public String getFilename() {
+                        return filename;
+                    }
+                })
+                .contentType(MediaType.parseMediaType(contentType));
+        return builder.build();
     }
 
     private byte[] minimalPngBytes() {
