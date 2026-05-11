@@ -244,6 +244,45 @@ class OgLinkPreviewScraperTest {
     }
 
     @Test
+    void extract_amazonWithLandingImage_picksHighestResolution() {
+        String html = """
+                <html><head>
+                  <meta property="og:title" content="Wireless Keyboard | Amazon" />
+                  <meta property="og:image" content="https://m.media-amazon.com/images/I/ABC._AC_UL320_.jpg" />
+                </head><body>
+                  <img id="landingImage"
+                       data-a-dynamic-image='{"https://m.media-amazon.com/images/I/ABC._AC_SL1500_.jpg":[1500,1500],"https://m.media-amazon.com/images/I/ABC._AC_SL300_.jpg":[300,300]}' />
+                </body></html>
+                """;
+
+        Document doc = Jsoup.parse(html);
+        ScrapeResult result = scraper.extract(doc, "https://www.amazon.com/dp/B123");
+        assertThat(result.imageUrl()).isEqualTo("https://m.media-amazon.com/images/I/ABC._AC_SL1500_.jpg");
+
+        // also works for non-.com Amazon stores
+        ScrapeResult ukResult = scraper.extract(doc, "https://www.amazon.co.uk/dp/B123");
+        assertThat(ukResult.imageUrl()).isEqualTo("https://m.media-amazon.com/images/I/ABC._AC_SL1500_.jpg");
+
+        ScrapeResult deResult = scraper.extract(doc, "https://www.amazon.de/dp/B123");
+        assertThat(deResult.imageUrl()).isEqualTo("https://m.media-amazon.com/images/I/ABC._AC_SL1500_.jpg");
+    }
+
+    @Test
+    void extract_amazonWithNoLandingImage_fallsBackToOgImage() {
+        String html = """
+                <html><head>
+                  <meta property="og:title" content="Some Item | Amazon" />
+                  <meta property="og:image" content="https://m.media-amazon.com/images/I/ABC._AC_UL320_.jpg" />
+                </head></html>
+                """;
+
+        Document doc = Jsoup.parse(html);
+        ScrapeResult result = scraper.extract(doc, "https://www.amazon.com/dp/B123");
+
+        assertThat(result.imageUrl()).isEqualTo("https://m.media-amazon.com/images/I/ABC._AC_UL320_.jpg");
+    }
+
+    @Test
     void extract_usesOgUrlAsCanonical() {
         String html = """
                 <html><head>

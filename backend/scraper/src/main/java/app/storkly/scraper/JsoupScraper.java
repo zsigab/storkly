@@ -8,8 +8,11 @@ import org.jsoup.nodes.Document;
 @Slf4j
 public abstract class JsoupScraper implements Scraper {
 
-    private static final String USER_AGENT = "facebookexternalhit/1.1";
     private static final int TIMEOUT_MS = 5_000;
+
+    protected String userAgent() {
+        return "facebookexternalhit/1.1";
+    }
 
     @Override
     public final ScrapeResult scrape(String url) {
@@ -17,7 +20,7 @@ public abstract class JsoupScraper implements Scraper {
         Document doc;
         try {
             doc = Jsoup.connect(url)
-                    .userAgent(USER_AGENT)
+                    .userAgent(userAgent())
                     .header("Accept-Language", "en-US,en;q=0.9")
                     .timeout(TIMEOUT_MS)
                     .get();

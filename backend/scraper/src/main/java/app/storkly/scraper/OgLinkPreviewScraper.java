@@ -2,20 +2,29 @@ package app.storkly.scraper;
 
 import app.storkly.domain.item.SourceSite;
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.jspecify.annotations.Nullable;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 @Component
+@Order(100)
 @Slf4j
 public class OgLinkPreviewScraper extends JsoupScraper {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    // matches amazon.com, amazon.co.uk, amazon.de, amazon.com.au, etc.
+    private static final Pattern AMAZON_HOST =
+            Pattern.compile("https?://(?:[a-z0-9-]+\\.)?amazon\\.[a-z]{2,3}(?:\\.[a-z]{2})?(?:/|$)");
 
     @Override
     public boolean supports(@Nullable String url) {
@@ -25,6 +34,13 @@ public class OgLinkPreviewScraper extends JsoupScraper {
     @Override
     protected ScrapeResult extract(Document doc, String url) {
         String imageUrl = emptyToNull(doc.select("meta[property=og:image]").attr("content"));
+
+        if (isAmazonUrl(url)) {
+            String amazonImage = extractAmazonImage(doc);
+            if (amazonImage != null) {
+                imageUrl = amazonImage;
+            }
+        }
 
         String rawTitle = doc.select("meta[property=og:title]").attr("content");
         String title = rawTitle.isEmpty()
@@ -146,13 +162,49 @@ public class OgLinkPreviewScraper extends JsoupScraper {
         if (url.contains("shopee.ph")) {
             return SourceSite.SHOPEE_PH;
         }
-        if (url.contains("amazon.com")) {
+        if (isAmazonUrl(url)) {
             return SourceSite.AMAZON;
         }
         if (url.contains("galaxus.")) {
             return SourceSite.GALAXUS;
         }
         return SourceSite.MANUAL;
+    }
+
+    private static boolean isAmazonUrl(String url) {
+        return AMAZON_HOST.matcher(url).find();
+    }
+
+    @Nullable
+    private String extractAmazonImage(Document doc) {
+        Element landingImage = doc.getElementById("landingImage");
+        if (landingImage == null) {
+            return null;
+        }
+        String dynamicData = landingImage.attr("data-a-dynamic-image");
+        if (dynamicData.isEmpty()) {
+            return null;
+        }
+        try {
+            Map<String, List<Integer>> imageMap =
+                    MAPPER.readValue(dynamicData, new TypeReference<Map<String, List<Integer>>>() {});
+            String bestUrl = null;
+            int bestPixels = 0;
+            for (Map.Entry<String, List<Integer>> entry : imageMap.entrySet()) {
+                List<Integer> dims = entry.getValue();
+                if (dims.size() >= 2) {
+                    int pixels = dims.get(0) * dims.get(1);
+                    if (pixels > bestPixels) {
+                        bestPixels = pixels;
+                        bestUrl = entry.getKey();
+                    }
+                }
+            }
+            return bestUrl;
+        } catch (Exception e) {
+            log.debug("Failed to parse Amazon dynamic image data: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Nullable
