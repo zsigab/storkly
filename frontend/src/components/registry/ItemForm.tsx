@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -193,51 +193,6 @@ export function ItemForm({
   const alreadyOwnedValue = watch("alreadyOwned");
   const imageUrlValue = watch("imageUrl");
   const descriptionValue = watch("description");
-
-  // When editing an existing item, re-scrape the saved URL to restore toggle state.
-  useEffect(() => {
-    const initialUrl = defaultValues?.urlOriginal;
-    if (!initialUrl) return;
-    let cancelled = false;
-    fetchPreview(initialUrl)
-      .then((result) => {
-        if (cancelled || !result.supported) return;
-        const snap: CustomSnapshot = {
-          title: getValues("title"),
-          description: getValues("description"),
-          priceReference: getValues("priceReference"),
-          currency: getValues("currency"),
-        };
-        setCustomSnapshot(snap);
-        const scraped: ScrapedSnapshot = {
-          title: result.title,
-          description: result.description,
-          priceReference: result.priceReference !== null ? String(result.priceReference) : null,
-          currency: result.currency,
-          imageUrl: result.imageUrl,
-        };
-        setScrapedSnapshot(scraped);
-        setFieldSources({
-          title: scraped.title !== null && snap.title === scraped.title ? "url" : "custom",
-          description:
-            scraped.description !== null && snap.description === scraped.description
-              ? "url"
-              : "custom",
-          price:
-            scraped.priceReference !== null && snap.priceReference === scraped.priceReference
-              ? "url"
-              : "custom",
-        });
-        // Any saved imageUrl is treated as a custom URL in edit mode.
-        // "From Product URL" tab is still available for manual selection.
-      })
-      .catch(() => {
-        /* silent — edit still works, just without source toggles */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // FLIP: animate wrapper height after imageSource causes a content change.
   // capturedHeight is set synchronously in the event handler (before re-render),
@@ -495,12 +450,16 @@ export function ItemForm({
       )}
     >
       <FormField label="Title" htmlFor="title" error={errors.title?.message}>
-        {showTitleToggle && (
-          <SourcePill
-            source={fieldSources.title}
-            onChange={(s) => handleFieldSourceChange("title", s)}
-          />
-        )}
+        <div
+          className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showTitleToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+        >
+          <div className="overflow-hidden pb-1.5">
+            <SourcePill
+              source={fieldSources.title}
+              onChange={(s) => handleFieldSourceChange("title", s)}
+            />
+          </div>
+        </div>
         <Input
           id="title"
           type="text"
@@ -612,7 +571,7 @@ export function ItemForm({
                 }}
               />
               {imageUrlValue.length > 0 && (
-                <div className="relative w-fit">
+                <div className="relative h-24 w-24">
                   <img
                     src={imageUrlValue}
                     alt="Preview"
@@ -665,7 +624,7 @@ export function ItemForm({
                 </Button>
               ) : (
                 <div className="flex items-center gap-3">
-                  <div className="relative w-fit">
+                  <div className="relative h-24 w-24">
                     <img
                       src={uploadedImageUrl}
                       alt="Uploaded"
@@ -708,12 +667,16 @@ export function ItemForm({
           Description
         </label>
 
-        {showDescriptionToggle && (
-          <SourcePill
-            source={fieldSources.description}
-            onChange={(s) => handleFieldSourceChange("description", s)}
-          />
-        )}
+        <div
+          className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showDescriptionToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+        >
+          <div className="overflow-hidden pb-1.5">
+            <SourcePill
+              source={fieldSources.description}
+              onChange={(s) => handleFieldSourceChange("description", s)}
+            />
+          </div>
+        </div>
 
         <div
           className={`grid transition-all duration-150 ease-in-out ${fieldSources.description !== "url" ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
@@ -793,12 +756,16 @@ export function ItemForm({
 
       <div className="space-y-2">
         <span className="text-sm leading-none font-medium">Price</span>
-        {showPriceToggle && (
-          <SourcePill
-            source={fieldSources.price}
-            onChange={(s) => handleFieldSourceChange("price", s)}
-          />
-        )}
+        <div
+          className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showPriceToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+        >
+          <div className="overflow-hidden pb-1.5">
+            <SourcePill
+              source={fieldSources.price}
+              onChange={(s) => handleFieldSourceChange("price", s)}
+            />
+          </div>
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField label="Amount" htmlFor="priceReference" error={errors.priceReference?.message}>
             <Input

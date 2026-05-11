@@ -257,4 +257,12 @@
   [data-background="tiles"] .bg-card:not(header) .bg-secondary {
     background-color: hsl(var(--primary) / 0.13);
   }
+
+  /* Item card → edit page grow transition */
+  @media (prefers-reduced-motion: no-preference) {
+    ::view-transition-group(*) {
+      animation-duration: 380ms;
+      animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  }
 }

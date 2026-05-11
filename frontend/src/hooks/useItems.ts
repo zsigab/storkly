@@ -3,6 +3,26 @@ import { useNavigate } from "react-router";
 import { api } from "@/api";
 import type { ItemFlag, ItemResponse } from "@/api/schema";
 
+export function useItem(id: string, slug: string) {
+  const queryClient = useQueryClient();
+  return useQuery({
+    queryKey: ["item", id],
+    queryFn: async (): Promise<ItemResponse> => {
+      const { data, error } = await api.GET("/api/items/{id}", {
+        params: { path: { id } },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    enabled: id.length > 0,
+    initialData: (): ItemResponse | undefined => {
+      const list = queryClient.getQueryData<ItemResponse[]>(["items", slug]);
+      return list?.find((i) => i.id === id);
+    },
+  });
+}
+
 export function useRegistryItems(slug: string) {
   return useQuery({
     queryKey: ["items", slug],

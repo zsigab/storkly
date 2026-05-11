@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useViewTransitionState } from "react-router";
 import { Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,7 @@ export function ItemCard({
   subscriberNames = {},
 }: ItemCardProps): React.ReactElement {
   const { user } = useAuth();
+  const isTransitioning = useViewTransitionState(`/r/${slug}/items/${item.id}/edit`);
   const { data: claims = [] } = useItemClaims(item.id);
   const unclaimItem = useUnclaimItem(slug);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
@@ -104,7 +105,10 @@ export function ItemCard({
   };
 
   return (
-    <div className="bg-card border-border space-y-2 rounded-lg border p-3">
+    <div
+      className="bg-card border-border space-y-2 rounded-lg border p-3"
+      style={isTransitioning ? { viewTransitionName: `item-${item.id}` } : undefined}
+    >
       <div className="flex items-center gap-3">
         {/* Image or placeholder */}
         <div className="shrink-0">{renderImagePlaceholder()}</div>
@@ -152,14 +156,18 @@ export function ItemCard({
             <>
               {isOwner && (
                 <Button asChild variant="outline" size="sm">
-                  <Link to={`/r/${slug}/items/${item.id}/edit`}>Edit</Link>
+                  <Link to={`/r/${slug}/items/${item.id}/edit`} viewTransition>
+                    Edit
+                  </Link>
                 </Button>
               )}
               <Badge variant="secondary">Already owned</Badge>
             </>
           ) : isOwner ? (
             <Button asChild variant="outline" size="sm">
-              <Link to={`/r/${slug}/items/${item.id}/edit`}>Edit</Link>
+              <Link to={`/r/${slug}/items/${item.id}/edit`} viewTransition>
+                Edit
+              </Link>
             </Button>
           ) : myAuthenticatedClaim !== undefined ? (
             <Button
