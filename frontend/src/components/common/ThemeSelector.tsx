@@ -65,9 +65,9 @@ export function ThemeSelector(): React.ReactElement {
             </div>
           </section>
 
-          <section aria-label="Background">
+          <section aria-label="Style">
             <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
-              Background
+              Style
             </p>
             <div className="flex flex-col gap-1.5">
               {BG_OPTIONS.map((opt) => (

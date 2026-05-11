@@ -892,7 +892,11 @@ export function ItemForm({
         </div>
       ) : (
         <>
-          <Button type="submit" className="w-full" disabled={isPending}>
+          <Button
+            type="submit"
+            className="bg-success text-success-foreground hover:bg-success/90 w-full"
+            disabled={isPending}
+          >
             {isPending ? "Saving…" : submitLabel}
           </Button>
           {onDelete !== undefined && (
