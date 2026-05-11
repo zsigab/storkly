@@ -106,7 +106,7 @@ export function ItemCard({
 
   return (
     <div
-      className="bg-card border-border space-y-2 rounded-lg border p-3"
+      className="bg-card border-border space-y-2 rounded-lg border p-3 shadow-md"
       style={isTransitioning ? { viewTransitionName: `item-${item.id}` } : undefined}
     >
       <div className="flex items-center gap-3">

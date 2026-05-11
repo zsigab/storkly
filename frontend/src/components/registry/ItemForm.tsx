@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -76,6 +76,7 @@ interface ItemFormProps {
   onDelete?: () => void;
   isDeletePending?: boolean;
   isClaimed?: boolean;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 function SourcePill({
@@ -133,6 +134,7 @@ export function ItemForm({
   onDelete,
   isDeletePending = false,
   isClaimed = false,
+  onDirtyChange,
 }: ItemFormProps): React.ReactElement {
   const { mutateAsync: fetchPreview, isPending: isFetching } = useLinkPreview();
   const { mutateAsync: uploadImage, isPending: isUploading } = useImageUpload();
@@ -164,10 +166,11 @@ export function ItemForm({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
     watch,
     setValue,
     getValues,
+    reset,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -187,6 +190,18 @@ export function ItemForm({
   });
 
   const [previewMode, setPreviewMode] = useState(false);
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty);
+  }, [isDirty, onDirtyChange]);
+
+  const prevIsPendingRef = useRef(false);
+  useEffect(() => {
+    if (prevIsPendingRef.current && !isPending && !isError) {
+      reset(getValues());
+    }
+    prevIsPendingRef.current = isPending;
+  }, [isPending, isError, reset, getValues]);
 
   const quantityValue = watch("quantityDesired");
   const isQuantityZero = quantityValue === "0";

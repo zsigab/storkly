@@ -1,9 +1,17 @@
-import { useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router";
 import { ItemForm } from "@/components/registry/ItemForm";
 import { useItem, useUpdateItem, useDeleteItem } from "@/hooks/useItems";
 import { useItemClaims } from "@/hooks/useClaims";
 import { useRegistryCategories } from "@/hooks/useRegistries";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function EditItemPage(): React.ReactElement {
   const { slug, id } = useParams<{ slug: string; id: string }>();
@@ -17,16 +25,30 @@ export function EditItemPage(): React.ReactElement {
   const deleteItem = useDeleteItem(safeSlug);
 
   const isClaimed = (claims ?? []).reduce((sum, c) => sum + c.quantityClaimed, 0) > 0;
+  const [isDirty, setIsDirty] = useState(false);
+  const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
+
+  const navigateBack = (): void => {
+    navigate(`/r/${safeSlug}`, { viewTransition: true });
+  };
+
+  const handleBack = (): void => {
+    if (isDirty) {
+      setDiscardDialogOpen(true);
+    } else {
+      navigateBack();
+    }
+  };
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent): void {
-      if (e.key === "Escape") {
-        navigate(`/r/${safeSlug}`);
+      if (e.key === "Escape" && !discardDialogOpen) {
+        handleBack();
       }
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [navigate, safeSlug]);
+  }, [navigate, safeSlug, isDirty, discardDialogOpen]);
 
   if (isPending || categoriesPending) {
     return (
@@ -47,7 +69,7 @@ export function EditItemPage(): React.ReactElement {
   const handleDelete = (): void => {
     deleteItem.mutate(safeId, {
       onSuccess: () => {
-        navigate(`/r/${safeSlug}`);
+        navigate(`/r/${safeSlug}`, { viewTransition: true });
       },
     });
   };
@@ -65,12 +87,13 @@ export function EditItemPage(): React.ReactElement {
           style={{ viewTransitionName: `item-${safeId}` }}
         >
           <div className="space-y-1">
-            <Link
-              to={`/r/${safeSlug}`}
+            <button
+              type="button"
+              onClick={handleBack}
               className="text-muted-foreground hover:text-foreground text-sm"
             >
               ← Back to registry
-            </Link>
+            </button>
             <h1 className="text-3xl font-semibold tracking-tight">Edit item</h1>
           </div>
           <ItemForm
@@ -96,9 +119,35 @@ export function EditItemPage(): React.ReactElement {
             onDelete={handleDelete}
             isDeletePending={deleteItem.isPending}
             isClaimed={isClaimed}
+            onDirtyChange={setIsDirty}
           />
         </div>
       </div>
+
+      <Dialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
+        <DialogContent className="bg-card text-card-foreground">
+          <DialogHeader>
+            <DialogTitle>Discard changes?</DialogTitle>
+            <DialogDescription>
+              Your changes haven&apos;t been saved and will be lost.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDiscardDialogOpen(false)}>
+              Keep editing
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setDiscardDialogOpen(false);
+                navigateBack();
+              }}
+            >
+              Discard
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

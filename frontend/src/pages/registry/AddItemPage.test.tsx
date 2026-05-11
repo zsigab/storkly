@@ -107,7 +107,7 @@ describe("AddItemPage", () => {
         }),
       ),
     );
-    expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
+    expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower", { viewTransition: true });
   });
 
   it("strips query params from product URL before saving", async () => {

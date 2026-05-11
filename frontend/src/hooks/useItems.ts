@@ -64,7 +64,7 @@ export function useCreateItem(slug: string) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["items", slug] });
-      void navigate(`/r/${slug}`);
+      void navigate(`/r/${slug}`, { viewTransition: true });
     },
   });
 }
@@ -100,7 +100,7 @@ export function useUpdateItem(slug: string) {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["items", slug] });
-      void navigate(`/r/${slug}`);
+      void navigate(`/r/${slug}`, { viewTransition: true });
     },
   });
 }

@@ -113,7 +113,7 @@ describe("EditItemPage", () => {
         }),
       ),
     );
-    expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
+    expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower", { viewTransition: true });
   });
 
   it("calls DELETE and navigates when delete button is clicked", async () => {
@@ -136,7 +136,7 @@ describe("EditItemPage", () => {
         }),
       ),
     );
-    expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower");
+    expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower", { viewTransition: true });
   });
 
   it("shows delete/discard buttons when quantity is set to 0", async () => {
