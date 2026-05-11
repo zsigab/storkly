@@ -123,7 +123,7 @@ export function ClaimDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="bg-card text-card-foreground">
         <DialogHeader>
           <DialogTitle>Claim item</DialogTitle>
           <DialogDescription className="line-clamp-1">{itemTitle}</DialogDescription>
