@@ -11,6 +11,7 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useNavigate: () => vi.fn(),
+    useViewTransitionState: () => false,
     Link: ({
       to,
       children,

@@ -452,6 +452,7 @@ export function ItemForm({
       <FormField label="Title" htmlFor="title" error={errors.title?.message}>
         <div
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showTitleToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          aria-hidden={!showTitleToggle}
         >
           <div className="overflow-hidden pb-1.5">
             <SourcePill
@@ -669,6 +670,7 @@ export function ItemForm({
 
         <div
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showDescriptionToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          aria-hidden={!showDescriptionToggle}
         >
           <div className="overflow-hidden pb-1.5">
             <SourcePill
@@ -758,6 +760,7 @@ export function ItemForm({
         <span className="text-sm leading-none font-medium">Price</span>
         <div
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showPriceToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          aria-hidden={!showPriceToggle}
         >
           <div className="overflow-hidden pb-1.5">
             <SourcePill

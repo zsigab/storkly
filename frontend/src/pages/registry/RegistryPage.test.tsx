@@ -15,6 +15,7 @@ vi.mock("react-router", async () => {
     useNavigate: () => mockNavigate,
     useParams: () => mockParams,
     useSearchParams: () => [mockSearchParams],
+    useViewTransitionState: () => false,
     Link: ({
       to,
       children,
@@ -108,7 +109,7 @@ describe("RegistryPage", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     mockSearchParams.set("invite", "tok123");
-    renderPage();
+    renderPage({ id: "visitor-uuid", email: "visitor@example.com", displayName: "Visitor" });
     await waitFor(() =>
       expect(screen.getByText(/you've been invited to join/i)).toBeInTheDocument(),
     );
@@ -124,7 +125,7 @@ describe("RegistryPage", () => {
       response: new Response(),
     });
     mockSearchParams.set("invite", "tok123");
-    renderPage();
+    renderPage({ id: "visitor-uuid", email: "visitor@example.com", displayName: "Visitor" });
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /join registry/i })).toBeInTheDocument(),
     );
