@@ -61,14 +61,15 @@ export function ItemCard({
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
 
   const quantityClaimed = claims.reduce((sum, c) => sum + c.quantityClaimed, 0);
-  const isClaimed = quantityClaimed >= item.quantityDesired;
-
   const totalContributed = claims.reduce((sum, c) => sum + (c.amountContributed ?? 0), 0);
   const hasPartialContributions =
     item.priceReference != null && claims.some((c) => c.amountContributed != null);
   const fundingPercent = hasPartialContributions
     ? Math.min(100, Math.round((totalContributed / item.priceReference!) * 100))
     : 0;
+  const isClaimed = hasPartialContributions
+    ? fundingPercent >= 100
+    : quantityClaimed >= item.quantityDesired;
 
   const myAuthenticatedClaim =
     user !== null ? claims.find((c) => c.claimerUserId === user.id) : undefined;

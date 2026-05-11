@@ -305,7 +305,31 @@ export function RegistryPage(): React.ReactElement {
         {inviteToken !== null && !isOwner && !isSubscriber && (
           <div className="border-border space-y-3 rounded-lg border p-4">
             <p className="text-sm font-medium">You've been invited to join this registry.</p>
-            {joinRegistry.isSuccess ? (
+            {user === null ? (
+              <>
+                <p className="text-muted-foreground text-sm">
+                  You need an account to join this registry with your invite link.
+                </p>
+                <div className="flex gap-3">
+                  <Button asChild>
+                    <Link
+                      to="/register"
+                      state={{ from: { pathname: `/r/${safeSlug}?invite=${inviteToken}` } }}
+                    >
+                      Create account
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline">
+                    <Link
+                      to="/login"
+                      state={{ from: { pathname: `/r/${safeSlug}?invite=${inviteToken}` } }}
+                    >
+                      Sign in
+                    </Link>
+                  </Button>
+                </div>
+              </>
+            ) : joinRegistry.isSuccess ? (
               <p className="text-muted-foreground text-sm">You've joined this registry.</p>
             ) : (
               <Button
