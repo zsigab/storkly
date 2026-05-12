@@ -5,14 +5,15 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogClose,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import { FormField } from "@/components/common/FormField";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useClaimItem } from "@/hooks/useClaims";
@@ -125,122 +126,126 @@ export function ClaimDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="bg-card text-card-foreground"
-        style={viewTransitionName !== undefined ? { viewTransitionName } : undefined}
-      >
-        <DialogHeader>
-          <DialogTitle>Claim item</DialogTitle>
-          <DialogDescription className="line-clamp-1">{itemTitle}</DialogDescription>
-        </DialogHeader>
-        <form className="space-y-4 pt-2" noValidate onSubmit={handleSubmit(onSubmit)}>
-          {!isAuthenticated && (
-            <>
-              <FormField
-                label="Your name"
-                htmlFor="claimerName"
-                error={errors.claimerName?.message}
-              >
-                <Input
-                  id="claimerName"
-                  type="text"
-                  autoComplete="name"
-                  {...register("claimerName")}
-                />
-              </FormField>
-              <FormField
-                label="Your email"
-                htmlFor="claimerEmail"
-                error={errors.claimerEmail?.message}
-              >
-                <Input
-                  id="claimerEmail"
-                  type="email"
-                  autoComplete="email"
-                  {...register("claimerEmail")}
-                />
-              </FormField>
-            </>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Content
+          className={cn(
+            "bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg",
           )}
-
-          <label className="flex cursor-pointer items-center gap-3">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-gray-300"
-              checked={partialEnabled}
-              onChange={(e) => setPartialEnabled(e.target.checked)}
-            />
-            <span className="text-sm font-medium">Contribute a partial amount</span>
-          </label>
-
-          {partialEnabled && (
-            <div className="space-y-3 rounded-md border p-3">
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="partialPercentage" className="text-sm font-medium">
-                    Percentage
-                  </label>
-                  <span className="text-muted-foreground text-sm">{percentage}%</span>
-                </div>
-                <Controller
-                  control={control}
-                  name="percentage"
-                  render={({ field }) => (
-                    <input
-                      id="partialPercentage"
-                      type="range"
-                      min={1}
-                      max={100}
-                      className="accent-primary w-full"
-                      value={field.value}
-                      onChange={(e) => handlePercentageChange(Number(e.target.value))}
-                    />
-                  )}
-                />
-              </div>
-
-              {priceReference != null && (
+          style={viewTransitionName !== undefined ? { viewTransitionName } : undefined}
+        >
+          <DialogHeader>
+            <DialogTitle>Claim item</DialogTitle>
+            <DialogDescription className="line-clamp-1">{itemTitle}</DialogDescription>
+          </DialogHeader>
+          <form className="space-y-4 pt-2" noValidate onSubmit={handleSubmit(onSubmit)}>
+            {!isAuthenticated && (
+              <>
                 <FormField
-                  label={`Amount${currency ? ` (${currency})` : ""}`}
-                  htmlFor="partialAmount"
+                  label="Your name"
+                  htmlFor="claimerName"
+                  error={errors.claimerName?.message}
                 >
                   <Input
-                    id="partialAmount"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    max={priceReference}
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(e) => handleAmountChange(e.target.value)}
+                    id="claimerName"
+                    type="text"
+                    autoComplete="name"
+                    {...register("claimerName")}
                   />
                 </FormField>
-              )}
-            </div>
-          )}
+                <FormField
+                  label="Your email"
+                  htmlFor="claimerEmail"
+                  error={errors.claimerEmail?.message}
+                >
+                  <Input
+                    id="claimerEmail"
+                    type="email"
+                    autoComplete="email"
+                    {...register("claimerEmail")}
+                  />
+                </FormField>
+              </>
+            )}
 
-          {!isAuthenticated && (
-            <p className="text-muted-foreground text-xs">
-              We'll send you a link to un-claim this item if your plans change.
-            </p>
-          )}
-          {claimItem.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>{getApiErrorMessage(claimItem.error)}</AlertDescription>
-            </Alert>
-          )}
-          <div className="flex justify-end gap-2 pt-1">
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                Cancel
+            <label className="flex cursor-pointer items-center gap-3">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300"
+                checked={partialEnabled}
+                onChange={(e) => setPartialEnabled(e.target.checked)}
+              />
+              <span className="text-sm font-medium">Contribute a partial amount</span>
+            </label>
+
+            {partialEnabled && (
+              <div className="space-y-3 rounded-md border p-3">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="partialPercentage" className="text-sm font-medium">
+                      Percentage
+                    </label>
+                    <span className="text-muted-foreground text-sm">{percentage}%</span>
+                  </div>
+                  <Controller
+                    control={control}
+                    name="percentage"
+                    render={({ field }) => (
+                      <input
+                        id="partialPercentage"
+                        type="range"
+                        min={1}
+                        max={100}
+                        className="accent-primary w-full"
+                        value={field.value}
+                        onChange={(e) => handlePercentageChange(Number(e.target.value))}
+                      />
+                    )}
+                  />
+                </div>
+
+                {priceReference != null && (
+                  <FormField
+                    label={`Amount${currency ? ` (${currency})` : ""}`}
+                    htmlFor="partialAmount"
+                  >
+                    <Input
+                      id="partialAmount"
+                      type="number"
+                      step="0.01"
+                      min="0.01"
+                      max={priceReference}
+                      placeholder="0.00"
+                      value={amount}
+                      onChange={(e) => handleAmountChange(e.target.value)}
+                    />
+                  </FormField>
+                )}
+              </div>
+            )}
+
+            {!isAuthenticated && (
+              <p className="text-muted-foreground text-xs">
+                We'll send you a link to un-claim this item if your plans change.
+              </p>
+            )}
+            {claimItem.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>{getApiErrorMessage(claimItem.error)}</AlertDescription>
+              </Alert>
+            )}
+            <div className="flex justify-end gap-2 pt-1">
+              <DialogClose asChild>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" disabled={claimItem.isPending}>
+                {claimItem.isPending ? "Claiming…" : "Claim item"}
               </Button>
-            </DialogClose>
-            <Button type="submit" disabled={claimItem.isPending}>
-              {claimItem.isPending ? "Claiming…" : "Claim item"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
+            </div>
+          </form>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
     </Dialog>
   );
 }
