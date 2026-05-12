@@ -40,6 +40,7 @@ interface ClaimDialogProps {
   priceReference?: number | null;
   currency?: string | null;
   isAuthenticated?: boolean;
+  viewTransitionName?: string;
 }
 
 export function ClaimDialog({
@@ -51,6 +52,7 @@ export function ClaimDialog({
   priceReference,
   currency,
   isAuthenticated = false,
+  viewTransitionName,
 }: ClaimDialogProps): React.ReactElement {
   const claimItem = useClaimItem(slug);
   const [partialEnabled, setPartialEnabled] = useState(false);
@@ -123,7 +125,10 @@ export function ClaimDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card text-card-foreground">
+      <DialogContent
+        className="bg-card text-card-foreground"
+        style={viewTransitionName !== undefined ? { viewTransitionName } : undefined}
+      >
         <DialogHeader>
           <DialogTitle>Claim item</DialogTitle>
           <DialogDescription className="line-clamp-1">{itemTitle}</DialogDescription>

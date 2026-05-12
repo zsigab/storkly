@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import { Link, useViewTransitionState } from "react-router";
 import { Gift } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -60,6 +61,8 @@ export function ItemCard({
   const { data: claims = [] } = useItemClaims(item.id);
   const unclaimItem = useUnclaimItem(slug);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
+  const [claimTransitioning, setClaimTransitioning] = useState(false);
+  const claimTransitionName = `claim-item-${item.id}`;
 
   const quantityClaimed = claims.reduce((sum, c) => sum + c.quantityClaimed, 0);
   const totalContributed = claims.reduce((sum, c) => sum + (c.amountContributed ?? 0), 0);
@@ -78,6 +81,31 @@ export function ItemCard({
   const handleUnclaim = (): void => {
     if (myAuthenticatedClaim === undefined) return;
     unclaimItem.mutate({ value: myAuthenticatedClaim.id, itemId: item.id });
+  };
+
+  const handleClaimOpen = (): void => {
+    if (!document.startViewTransition) {
+      setClaimDialogOpen(true);
+      return;
+    }
+    flushSync(() => setClaimTransitioning(true));
+    const vt = document.startViewTransition(() => {
+      flushSync(() => setClaimDialogOpen(true));
+    });
+    void vt.finished.then(() => setClaimTransitioning(false));
+  };
+
+  const handleClaimOpenChange = (open: boolean): void => {
+    if (open) return;
+    if (!document.startViewTransition) {
+      setClaimDialogOpen(false);
+      return;
+    }
+    flushSync(() => setClaimTransitioning(true));
+    const vt = document.startViewTransition(() => {
+      flushSync(() => setClaimDialogOpen(false));
+    });
+    void vt.finished.then(() => setClaimTransitioning(false));
   };
 
   const renderImagePlaceholder = (): React.ReactElement => {
@@ -107,7 +135,13 @@ export function ItemCard({
   return (
     <div
       className="bg-card border-border space-y-2 rounded-lg border p-3 shadow-md"
-      style={isTransitioning ? { viewTransitionName: `item-${item.id}` } : undefined}
+      style={{
+        viewTransitionName: isTransitioning
+          ? `item-${item.id}`
+          : claimTransitioning && !claimDialogOpen
+            ? claimTransitionName
+            : undefined,
+      }}
     >
       <div className="flex items-center gap-3">
         {/* Image or placeholder */}
@@ -181,7 +215,7 @@ export function ItemCard({
           ) : isClaimed ? (
             <span className="text-muted-foreground text-sm">Claimed</span>
           ) : (
-            <Button size="sm" onClick={() => setClaimDialogOpen(true)}>
+            <Button size="sm" onClick={handleClaimOpen}>
               Claim
             </Button>
           )}
@@ -233,13 +267,14 @@ export function ItemCard({
 
       <ClaimDialog
         open={claimDialogOpen}
-        onOpenChange={setClaimDialogOpen}
+        onOpenChange={handleClaimOpenChange}
         itemId={item.id}
         itemTitle={item.title}
         slug={slug}
         priceReference={item.priceReference}
         currency={item.currency}
         isAuthenticated={user !== null}
+        viewTransitionName={claimTransitioning && claimDialogOpen ? claimTransitionName : undefined}
       />
     </div>
   );
