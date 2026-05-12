@@ -41,7 +41,7 @@ interface ClaimDialogProps {
   priceReference?: number | null;
   currency?: string | null;
   isAuthenticated?: boolean;
-  viewTransitionName?: string;
+  viewTransitionName?: string | undefined;
 }
 
 export function ClaimDialog({
