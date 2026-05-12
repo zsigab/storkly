@@ -33,60 +33,64 @@ export function ResetPasswordPage(): React.ReactElement {
 
   if (token === null || token.length === 0) {
     return (
-      <div className="mx-auto max-w-md space-y-4 py-16 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Invalid link</h1>
-        <p className="text-muted-foreground">This password reset link is missing a token.</p>
-        <Link to="/forgot-password" className="text-primary text-sm hover:underline">
-          Request a new link
-        </Link>
+      <div className="mx-auto max-w-md py-16">
+        <div className="bg-card text-card-foreground space-y-4 rounded-xl p-8 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">Invalid link</h1>
+          <p className="text-muted-foreground">This password reset link is missing a token.</p>
+          <Link to="/forgot-password" className="text-primary text-sm hover:underline">
+            Request a new link
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 py-16">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Set new password</h1>
-        <p className="text-muted-foreground">Choose a password with at least 8 characters.</p>
-      </div>
+    <div className="mx-auto max-w-md py-16">
+      <div className="bg-card text-card-foreground space-y-6 rounded-xl p-8">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">Set new password</h1>
+          <p className="text-muted-foreground">Choose a password with at least 8 characters.</p>
+        </div>
 
-      <form
-        className="space-y-4"
-        noValidate
-        onSubmit={handleSubmit(({ newPassword }) => resetPassword.mutate({ token, newPassword }))}
-      >
-        <FormField label="New password" htmlFor="newPassword" error={errors.newPassword?.message}>
-          <Input
-            id="newPassword"
-            type="password"
-            autoComplete="new-password"
-            {...register("newPassword")}
-          />
-        </FormField>
-
-        <FormField
-          label="Confirm password"
-          htmlFor="confirmPassword"
-          error={errors.confirmPassword?.message}
+        <form
+          className="space-y-4"
+          noValidate
+          onSubmit={handleSubmit(({ newPassword }) => resetPassword.mutate({ token, newPassword }))}
         >
-          <Input
-            id="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            {...register("confirmPassword")}
-          />
-        </FormField>
+          <FormField label="New password" htmlFor="newPassword" error={errors.newPassword?.message}>
+            <Input
+              id="newPassword"
+              type="password"
+              autoComplete="new-password"
+              {...register("newPassword")}
+            />
+          </FormField>
 
-        {resetPassword.isError && (
-          <Alert variant="destructive">
-            <AlertDescription>{getApiErrorMessage(resetPassword.error)}</AlertDescription>
-          </Alert>
-        )}
+          <FormField
+            label="Confirm password"
+            htmlFor="confirmPassword"
+            error={errors.confirmPassword?.message}
+          >
+            <Input
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              {...register("confirmPassword")}
+            />
+          </FormField>
 
-        <Button type="submit" className="w-full" disabled={resetPassword.isPending}>
-          {resetPassword.isPending ? "Saving…" : "Set new password"}
-        </Button>
-      </form>
+          {resetPassword.isError && (
+            <Alert variant="destructive">
+              <AlertDescription>{getApiErrorMessage(resetPassword.error)}</AlertDescription>
+            </Alert>
+          )}
+
+          <Button type="submit" className="w-full" disabled={resetPassword.isPending}>
+            {resetPassword.isPending ? "Saving…" : "Set new password"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

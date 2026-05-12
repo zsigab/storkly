@@ -33,74 +33,76 @@ export function LoginPage(): React.ReactElement {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 py-16">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
-        <p className="text-muted-foreground">Welcome back to Storkly</p>
-      </div>
+    <div className="mx-auto max-w-md py-16">
+      <div className="bg-card text-card-foreground space-y-6 rounded-xl p-8">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
+          <p className="text-muted-foreground">Welcome back to Storkly</p>
+        </div>
 
-      <form
-        noValidate
-        className="space-y-4"
-        onSubmit={handleSubmit((values) =>
-          login.mutate({ ...values, ...(from !== undefined && { from }) }),
-        )}
-      >
-        <FormField label="Email" htmlFor="email" error={errors.email?.message}>
-          <Input id="email" type="email" autoComplete="email" {...register("email")} />
-        </FormField>
+        <form
+          noValidate
+          className="space-y-4"
+          onSubmit={handleSubmit((values) =>
+            login.mutate({ ...values, ...(from !== undefined && { from }) }),
+          )}
+        >
+          <FormField label="Email" htmlFor="email" error={errors.email?.message}>
+            <Input id="email" type="email" autoComplete="email" {...register("email")} />
+          </FormField>
 
-        <FormField label="Password" htmlFor="password" error={errors.password?.message}>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            {...register("password")}
-          />
-        </FormField>
+          <FormField label="Password" htmlFor="password" error={errors.password?.message}>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              {...register("password")}
+            />
+          </FormField>
 
-        {login.isError && (
-          <Alert variant="destructive">
-            <AlertDescription>{getApiErrorMessage(login.error)}</AlertDescription>
-          </Alert>
-        )}
+          {login.isError && (
+            <Alert variant="destructive">
+              <AlertDescription>{getApiErrorMessage(login.error)}</AlertDescription>
+            </Alert>
+          )}
 
-        <Button type="submit" className="w-full" disabled={login.isPending}>
-          {login.isPending ? "Signing in…" : "Sign in"}
-        </Button>
-      </form>
-
-      <div className="relative flex items-center">
-        <div className="border-border flex-grow border-t" />
-        <span className="text-muted-foreground mx-3 text-xs">or</span>
-        <div className="border-border flex-grow border-t" />
-      </div>
-
-      <div className="space-y-2">
-        <a href="/api/auth/oauth/google/authorize" className="block">
-          <Button variant="outline" className="w-full" type="button">
-            Continue with Google
+          <Button type="submit" className="w-full" disabled={login.isPending}>
+            {login.isPending ? "Signing in…" : "Sign in"}
           </Button>
-        </a>
-        <a href="/api/auth/oauth/facebook/authorize" className="block">
-          <Button variant="outline" className="w-full" type="button">
-            Continue with Facebook
-          </Button>
-        </a>
-      </div>
+        </form>
 
-      <div className="space-y-1 text-center text-sm">
-        <p>
-          <Link to="/forgot-password" className="text-primary hover:underline">
-            Forgot your password?
-          </Link>
-        </p>
-        <p className="text-muted-foreground">
-          {"Don't have an account? "}
-          <Link to="/register" className="text-primary hover:underline">
-            Register
-          </Link>
-        </p>
+        <div className="relative flex items-center">
+          <div className="border-border flex-grow border-t" />
+          <span className="text-muted-foreground mx-3 text-xs">or</span>
+          <div className="border-border flex-grow border-t" />
+        </div>
+
+        <div className="space-y-2">
+          <a href="/api/auth/oauth/google/authorize" className="block">
+            <Button variant="outline" className="w-full" type="button">
+              Continue with Google
+            </Button>
+          </a>
+          <a href="/api/auth/oauth/facebook/authorize" className="block">
+            <Button variant="outline" className="w-full" type="button">
+              Continue with Facebook
+            </Button>
+          </a>
+        </div>
+
+        <div className="space-y-1 text-center text-sm">
+          <p>
+            <Link to="/forgot-password" className="text-primary hover:underline">
+              Forgot your password?
+            </Link>
+          </p>
+          <p className="text-muted-foreground">
+            {"Don't have an account? "}
+            <Link to="/register" className="text-primary hover:underline">
+              Register
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

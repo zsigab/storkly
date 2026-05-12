@@ -26,7 +26,7 @@ const COLOR_OPTIONS: ColorOption[] = [
 const BG_OPTIONS: BgOption[] = [
   { value: "none", label: "Off" },
   { value: "default", label: "Blobs" },
-  { value: "tiles", label: "Cards" },
+  { value: "stars", label: "Stars" },
 ];
 
 export function ThemeSelector(): React.ReactElement {

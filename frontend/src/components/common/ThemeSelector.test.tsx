@@ -111,12 +111,12 @@ describe("ThemeSelector", () => {
   });
 
   describe("Background section", () => {
-    it("renders Off, Blobs, and Blobs Cards background buttons", () => {
+    it("renders Off, Blobs, and Stars background buttons", () => {
       renderSelector();
       openPanel();
       expect(screen.getByRole("button", { name: /^off$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^blobs$/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /^cards$/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^stars$/i })).toBeInTheDocument();
     });
 
     it("sets data-background to default when Blobs is clicked", () => {
@@ -142,11 +142,18 @@ describe("ThemeSelector", () => {
       expect(document.documentElement.style.backgroundImage).toBe("");
     });
 
-    it("sets data-background to tiles when Cards is clicked", () => {
+    it("sets data-background to stars when Stars is clicked", () => {
       renderSelector();
       openPanel();
-      fireEvent.click(screen.getByRole("button", { name: /^cards$/i }));
-      expect(document.documentElement.dataset["background"]).toBe("tiles");
+      fireEvent.click(screen.getByRole("button", { name: /^stars$/i }));
+      expect(document.documentElement.dataset["background"]).toBe("stars");
+    });
+
+    it("applies background-image to html element when Stars is clicked", () => {
+      renderSelector();
+      openPanel();
+      fireEvent.click(screen.getByRole("button", { name: /^stars$/i }));
+      expect(document.documentElement.style.backgroundImage).toContain("svg+xml");
     });
   });
 });

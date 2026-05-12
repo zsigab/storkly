@@ -4,7 +4,7 @@ import { createElement } from "react";
 export type ThemeColor = "peach" | "blue" | "pink" | "green" | "purple" | "beige";
 export type ThemeStyle = "glass";
 export type ThemeMode = "light" | "dark";
-export type ThemeBackground = "none" | "default" | "tiles";
+export type ThemeBackground = "none" | "default" | "stars";
 
 export interface ThemeState {
   color: ThemeColor;
@@ -30,7 +30,7 @@ interface ThemeProviderProps {
 const STORAGE_KEY = "storkly-theme";
 const COLORS: readonly ThemeColor[] = ["peach", "blue", "pink", "green", "purple", "beige"];
 const STYLES: readonly ThemeStyle[] = ["glass"];
-const BACKGROUNDS: readonly ThemeBackground[] = ["none", "default", "tiles"];
+const BACKGROUNDS: readonly ThemeBackground[] = ["none", "default", "stars"];
 
 // Concrete HSL values per colour/mode — mirrors globals.css accent overrides.
 // Using literal values (not var(--primary)) means the backgroundImage string
@@ -44,6 +44,88 @@ const BLOB_HSL: Record<ThemeColor, { light: string; dark: string }> = {
   purple: { light: "271 81% 56%", dark: "271 75% 70%" },
   beige: { light: "35 50% 70%", dark: "35 40% 65%" },
 };
+
+// HSL base per colour/mode used for star colour generation.
+const STAR_BASE_HSL: Record<
+  ThemeColor,
+  { light: readonly [number, number, number]; dark: readonly [number, number, number] }
+> = {
+  peach: { light: [15, 85, 68], dark: [15, 75, 65] },
+  blue: { light: [217, 91, 60], dark: [217, 85, 70] },
+  pink: { light: [340, 75, 64], dark: [340, 70, 68] },
+  green: { light: [160, 84, 39], dark: [160, 70, 50] },
+  purple: { light: [271, 81, 56], dark: [271, 75, 70] },
+  beige: { light: [35, 50, 70], dark: [35, 40, 65] },
+};
+
+// LCG PRNG — same seed always produces the same sequence.
+function seededRng(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function starPath(cx: number, cy: number, r: number): string {
+  const d = r * 0.35 * 0.7071;
+  const t = (n: number): string => n.toFixed(1);
+  return (
+    `M${t(cx)} ${t(cy - r)}` +
+    `L${t(cx + d)} ${t(cy - d)}` +
+    `L${t(cx + r)} ${t(cy)}` +
+    `L${t(cx + d)} ${t(cy + d)}` +
+    `L${t(cx)} ${t(cy + r)}` +
+    `L${t(cx - d)} ${t(cy + d)}` +
+    `L${t(cx - r)} ${t(cy)}` +
+    `L${t(cx - d)} ${t(cy - d)}Z`
+  );
+}
+
+// Positions use a fixed seed so they stay stable across colour/mode changes.
+// Colours use a different seed so the hue/lightness offsets are independent.
+const STAR_POS_SEED = 0x5a1ad1ce;
+const STAR_COL_SEED = 0xdeadbeef;
+
+function makeStarBg(color: ThemeColor, mode: ThemeMode): string {
+  const hsl = STAR_BASE_HSL[color][mode];
+  const bh = hsl[0];
+  const bs = hsl[1];
+  const bl = hsl[2];
+
+  const posRng = seededRng(STAR_POS_SEED);
+  const colRng = seededRng(STAR_COL_SEED);
+  const paths: string[] = [];
+
+  for (let i = 0; i < 200; i++) {
+    const cx = posRng() * 1920;
+    const cy = posRng() * 1080;
+    const r = 4 + posRng() * 8; // radius 4–12
+    const rot = Math.floor(posRng() * 90); // 0–89°
+
+    const dh = (colRng() - 0.5) * 8; // ±4 hue
+    // Light mode: wider saturation swing for punchier colours against pale bg
+    const ds = mode === "light" ? (colRng() - 0.5) * 50 : (colRng() - 0.5) * 30;
+    // Light mode: bias toward darker so stars read against near-white page;
+    // roughly −42 to +8 range keeps most stars well below the background lightness
+    const dl = mode === "light" ? (colRng() - 0.85) * 50 : (colRng() - 0.5) * 50;
+    // Light mode: higher floor opacity so even small stars stay visible
+    const opacity = mode === "light" ? 0.4 + colRng() * 0.5 : 0.2 + colRng() * 0.45;
+
+    const h = (((bh + dh) % 360) + 360) % 360;
+    const s = Math.max(0, Math.min(100, bs + ds));
+    const l = Math.max(10, Math.min(mode === "light" ? 68 : 90, bl + dl));
+    const cxs = cx.toFixed(1);
+    const cys = cy.toFixed(1);
+
+    paths.push(
+      `<path d="${starPath(cx, cy, r)}" fill="hsl(${h | 0} ${s | 0}% ${l | 0}%)" opacity="${opacity.toFixed(2)}" transform="rotate(${rot},${cxs},${cys})"/>`,
+    );
+  }
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">${paths.join("")}</svg>`;
+  return `url("data:image/svg+xml;base64,${btoa(svg)}")`;
+}
 
 // Corner-anchored radial blobs: centres pushed 10 % off-viewport so only the
 // soft spread shows — no hard circular edges visible.
@@ -111,12 +193,18 @@ function applyTheme(theme: ThemeState): void {
   el.dataset["background"] = theme.background;
   el.classList.toggle("dark", theme.mode === "dark");
 
-  // "default" puts blobs on the html element background (visible through glass).
-  // "tiles" puts blobs on cards via CSS — no inline style needed here.
+  // "default" → blob gradients on <html>; "stars" → star SVG on <html>.
+  // Both are visible because the body + layout background become transparent
+  // (via CSS rules keyed on data-background).
   if (theme.background === "default") {
     el.style.backgroundImage = makeBlobBg(theme.color, theme.mode);
     el.style.backgroundSize = "auto";
     el.style.backgroundPosition = "0 0";
+    el.style.backgroundAttachment = "fixed";
+  } else if (theme.background === "stars") {
+    el.style.backgroundImage = makeStarBg(theme.color, theme.mode);
+    el.style.backgroundSize = "cover";
+    el.style.backgroundPosition = "center";
     el.style.backgroundAttachment = "fixed";
   } else {
     el.style.backgroundImage = "";

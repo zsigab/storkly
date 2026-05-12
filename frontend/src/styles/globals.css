@@ -63,9 +63,9 @@
     --ring: 15 85% 68%;
     --radius: 0.75rem;
     /* Glass tokens */
-    --glass-card-alpha: 0.75;
+    --glass-card-alpha: 0.15;
     --glass-border-color: rgba(255, 255, 255, 0.5);
-    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   }
 
   /* =====================================================
@@ -94,7 +94,7 @@
     --border: 220 12% 28%;
     --input: 220 12% 28%;
     --ring: 15 75% 65%;
-    --glass-card-alpha: 0.45;
+    --glass-card-alpha: 0.25;
     --glass-border-color: rgba(255, 255, 255, 0.18);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
@@ -228,34 +228,13 @@
     box-shadow: var(--glass-shadow);
   }
 
-  /* Cards: subtle accent hint at the very bottom (~10 % of card height).
-     :not(header) prevents the site header (also bg-card) from getting it. */
-  [data-background="tiles"] .bg-card:not(header) {
-    background-image: linear-gradient(to top, hsl(var(--primary) / 0.09) 0%, transparent 25%);
-    background-size: auto;
+  /* Stars: make body + layout div transparent so the <html> SVG background shows through. */
+  [data-background="stars"] body {
+    background-color: transparent;
   }
 
-  /* Glass + cards: background-size must be explicit — the glass rule's
-     "auto, 256px 256px" would otherwise cascade and tile the gradient at
-     256 px, making it invisible on most cards. */
-  [data-style="glass"][data-background="tiles"] .bg-card:not(header) {
-    background-image:
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
-      linear-gradient(to top, hsl(var(--primary) / 0.09) 0%, transparent 25%);
-    background-size:
-      256px 256px,
-      auto;
-  }
-
-  /* Cards mode: glassy inline elements — outline buttons get a primary-tinted
-     background + primary border; secondary chips get a primary wash. */
-  [data-background="tiles"] .bg-card:not(header) .border:not(.border-transparent) {
-    background-color: hsl(var(--primary) / 0.07);
-    border-color: hsl(var(--primary) / 0.32);
-  }
-
-  [data-background="tiles"] .bg-card:not(header) .bg-secondary {
-    background-color: hsl(var(--primary) / 0.13);
+  [data-background="stars"] .bg-background {
+    background-color: transparent;
   }
 
   /* Item card → edit page grow transition */

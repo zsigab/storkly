@@ -83,7 +83,7 @@ export function EditItemPage(): React.ReactElement {
           aria-hidden="true"
         />
         <div
-          className="border-border/50 bg-card/80 relative space-y-6 rounded-2xl border px-8 py-8 shadow-xl backdrop-blur-xl"
+          className="border-border/50 bg-card relative space-y-6 rounded-2xl border px-8 py-8 shadow-xl backdrop-blur-xl"
           style={{ viewTransitionName: `item-${safeId}` }}
         >
           <div className="space-y-1">
