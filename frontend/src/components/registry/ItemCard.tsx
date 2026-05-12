@@ -141,6 +141,7 @@ export function ItemCard({
           : claimTransitioning && !claimDialogOpen
             ? claimTransitionName
             : undefined,
+        visibility: claimDialogOpen ? "hidden" : undefined,
       }}
     >
       <div className="flex items-center gap-3">
