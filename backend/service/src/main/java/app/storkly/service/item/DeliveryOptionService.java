@@ -1,7 +1,9 @@
 package app.storkly.service.item;
 
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
 import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.item.DeliveryOption;
 import app.storkly.domain.item.DeliveryOptionRepository;
 import app.storkly.domain.registry.Registry;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class DeliveryOptionService {
 
     private final DeliveryOptionRepository deliveryOptionRepository;
+    private final ClaimRepository claimRepository;
     private final RegistryRepository registryRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
 
@@ -27,19 +30,33 @@ public class DeliveryOptionService {
         return deliveryOptionRepository.findByRegistryId(registryId);
     }
 
+    public List<DeliveryOption> findBySlug(String slug) {
+        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        return deliveryOptionRepository.findByRegistryId(registry.id());
+    }
+
+    public UUID resolveRegistryId(String slug) {
+        return registryRepository
+                .findBySlug(slug)
+                .orElseThrow(() -> new RegistryNotFoundException(slug))
+                .id();
+    }
+
     @Transactional
     public DeliveryOption save(DeliveryOption option, UUID currentUserId) {
         Registry registry = registryRepository
                 .findById(option.registryId())
-                .orElseThrow(() -> new RegistryNotFoundException(option.registryId().toString()));
+                .orElseThrow(
+                        () -> new RegistryNotFoundException(option.registryId().toString()));
 
-        boolean isOwnerOrCoOwner = registry.ownerId().equals(currentUserId)
-                || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
+        boolean isOwnerOrCoOwner =
+                registry.ownerId().equals(currentUserId) || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
         if (!isOwnerOrCoOwner) {
             throw new AccessDeniedException("Only the registry owner can manage delivery options");
         }
 
-        if ("CUSTOM".equals(option.type()) && (option.label() == null || option.label().isBlank())) {
+        if ("CUSTOM".equals(option.type())
+                && (option.label() == null || option.label().isBlank())) {
             throw new IllegalArgumentException("Custom delivery options must have a label");
         }
 
@@ -53,12 +70,17 @@ public class DeliveryOptionService {
                 .orElseThrow(() -> new IllegalArgumentException("Delivery option not found"));
         Registry registry = registryRepository
                 .findById(option.registryId())
-                .orElseThrow(() -> new RegistryNotFoundException(option.registryId().toString()));
+                .orElseThrow(
+                        () -> new RegistryNotFoundException(option.registryId().toString()));
 
-        boolean isOwnerOrCoOwner = registry.ownerId().equals(currentUserId)
-                || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
+        boolean isOwnerOrCoOwner =
+                registry.ownerId().equals(currentUserId) || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
         if (!isOwnerOrCoOwner) {
             throw new AccessDeniedException("Only the registry owner can delete delivery options");
+        }
+
+        if (claimRepository.existsByDeliveryOptionId(id)) {
+            throw new DeliveryOptionHasClaimsException(id);
         }
 
         deliveryOptionRepository.deleteById(id);

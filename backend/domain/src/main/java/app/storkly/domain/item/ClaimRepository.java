@@ -20,6 +20,8 @@ public interface ClaimRepository {
 
     boolean existsActiveByUserAndRegistry(UUID userId, UUID registryId);
 
+    boolean existsByDeliveryOptionId(UUID deliveryOptionId);
+
     List<Claim> findActiveByRegistryId(UUID registryId);
 
     List<MyClaimView> findActiveByUserId(UUID userId);

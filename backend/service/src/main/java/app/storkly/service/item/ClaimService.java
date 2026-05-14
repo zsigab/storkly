@@ -9,11 +9,11 @@ import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.item.Claim;
 import app.storkly.domain.item.ClaimRepository;
-import app.storkly.domain.item.MyClaimView;
 import app.storkly.domain.item.DeliveryOption;
 import app.storkly.domain.item.DeliveryOptionRepository;
 import app.storkly.domain.item.Item;
 import app.storkly.domain.item.ItemRepository;
+import app.storkly.domain.item.MyClaimView;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryRepository;
@@ -88,8 +88,7 @@ public class ClaimService {
         String claimerName;
         String claimerEmail;
         if (currentUserId != null) {
-            User claimerUser =
-                    userRepository.findById(currentUserId).orElse(null);
+            User claimerUser = userRepository.findById(currentUserId).orElse(null);
             claimerName = claimerUser != null ? claimerUser.displayName() : "";
             claimerEmail = claimerUser != null ? claimerUser.email() : "";
         } else {
@@ -121,11 +120,9 @@ public class ClaimService {
     }
 
     public List<Claim> findActiveByRegistry(String slug, UUID currentUserId) {
-        Registry registry = registryRepository
-                .findBySlug(slug)
-                .orElseThrow(() -> new RegistryNotFoundException(slug));
-        boolean isOwnerOrCoOwner = registry.ownerId().equals(currentUserId)
-                || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
+        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        boolean isOwnerOrCoOwner =
+                registry.ownerId().equals(currentUserId) || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
         if (!isOwnerOrCoOwner) {
             throw new AccessDeniedException("Only the registry owner can view the claims dashboard");
         }
@@ -176,12 +173,16 @@ public class ClaimService {
         if (claim.releasedAt() != null) {
             throw new InvalidTokenException("This claim has already been released");
         }
-        boolean isClaimer = claim.claimerUserId() != null && claim.claimerUserId().equals(currentUserId);
+        boolean isClaimer =
+                claim.claimerUserId() != null && claim.claimerUserId().equals(currentUserId);
         if (!isClaimer) {
-            Item item = itemRepository.findById(claim.itemId())
+            Item item = itemRepository
+                    .findById(claim.itemId())
                     .orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
-            Registry registry = registryRepository.findById(item.registryId())
-                    .orElseThrow(() -> new RegistryNotFoundException(item.registryId().toString()));
+            Registry registry = registryRepository
+                    .findById(item.registryId())
+                    .orElseThrow(() ->
+                            new RegistryNotFoundException(item.registryId().toString()));
             boolean isOwnerOrCoOwner = registry.ownerId().equals(currentUserId)
                     || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
             if (!isOwnerOrCoOwner) {
@@ -200,12 +201,14 @@ public class ClaimService {
         if (claim.releasedAt() != null) {
             throw new InvalidTokenException("This claim has already been released");
         }
-        Item item = itemRepository.findById(claim.itemId())
-                .orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
-        Registry registry = registryRepository.findById(item.registryId())
-                .orElseThrow(() -> new RegistryNotFoundException(item.registryId().toString()));
-        boolean isOwnerOrCoOwner = registry.ownerId().equals(currentUserId)
-                || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
+        Item item =
+                itemRepository.findById(claim.itemId()).orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
+        Registry registry = registryRepository
+                .findById(item.registryId())
+                .orElseThrow(
+                        () -> new RegistryNotFoundException(item.registryId().toString()));
+        boolean isOwnerOrCoOwner =
+                registry.ownerId().equals(currentUserId) || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
         if (!isOwnerOrCoOwner) {
             throw new AccessDeniedException("Only the registry owner can reset claims");
         }
@@ -214,10 +217,12 @@ public class ClaimService {
 
     public List<Claim> findHistoryByItem(UUID itemId, UUID currentUserId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
-        Registry registry = registryRepository.findById(item.registryId())
-                .orElseThrow(() -> new RegistryNotFoundException(item.registryId().toString()));
-        boolean isOwnerOrCoOwner = registry.ownerId().equals(currentUserId)
-                || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
+        Registry registry = registryRepository
+                .findById(item.registryId())
+                .orElseThrow(
+                        () -> new RegistryNotFoundException(item.registryId().toString()));
+        boolean isOwnerOrCoOwner =
+                registry.ownerId().equals(currentUserId) || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
         if (!isOwnerOrCoOwner) {
             throw new AccessDeniedException("Only the registry owner can view claim history");
         }
@@ -227,13 +232,15 @@ public class ClaimService {
     @Transactional
     public void receive(UUID claimId, UUID currentUserId) {
         Claim claim = claimRepository.findById(claimId).orElseThrow(ClaimNotFoundException::new);
-        Item item = itemRepository.findById(claim.itemId()).orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
+        Item item =
+                itemRepository.findById(claim.itemId()).orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
         Registry registry = registryRepository
                 .findById(item.registryId())
-                .orElseThrow(() -> new RegistryNotFoundException(item.registryId().toString()));
+                .orElseThrow(
+                        () -> new RegistryNotFoundException(item.registryId().toString()));
 
-        boolean isOwnerOrCoOwner = registry.ownerId().equals(currentUserId)
-                || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
+        boolean isOwnerOrCoOwner =
+                registry.ownerId().equals(currentUserId) || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
         if (!isOwnerOrCoOwner) {
             throw new AccessDeniedException("Only the registry owner can receive claims");
         }

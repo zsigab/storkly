@@ -5,6 +5,7 @@ import app.storkly.domain.exception.AlreadySubscribedException;
 import app.storkly.domain.exception.CategoryNotFoundException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
+import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
@@ -47,7 +48,8 @@ public class GlobalExceptionHandler {
         ItemAlreadyOwnedException.class,
         ItemHasClaimsException.class,
         SubscriberHasClaimsException.class,
-        ClaimNotReceivedException.class
+        ClaimNotReceivedException.class,
+        DeliveryOptionHasClaimsException.class
     })
     public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());

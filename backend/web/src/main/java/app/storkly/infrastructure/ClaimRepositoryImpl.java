@@ -73,9 +73,7 @@ public class ClaimRepositoryImpl implements ClaimRepository {
     @Override
     public List<Claim> findActiveByItemId(UUID itemId) {
         return dsl.selectFrom(CLAIM)
-                .where(CLAIM.ITEM_ID.eq(itemId)
-                        .and(CLAIM.RELEASED_AT.isNull())
-                        .and(CLAIM.CONFIRMED_AT.isNotNull()))
+                .where(CLAIM.ITEM_ID.eq(itemId).and(CLAIM.RELEASED_AT.isNull()).and(CLAIM.CONFIRMED_AT.isNotNull()))
                 .orderBy(CLAIM.CLAIMED_AT.asc())
                 .fetch()
                 .map(this::toClaim);
@@ -92,9 +90,15 @@ public class ClaimRepositoryImpl implements ClaimRepository {
 
     @Override
     public boolean existsActiveByItemId(UUID itemId) {
-        return dsl.fetchCount(CLAIM, CLAIM.ITEM_ID.eq(itemId)
-                .and(CLAIM.RELEASED_AT.isNull())
-                .and(CLAIM.CONFIRMED_AT.isNotNull())) > 0;
+        return dsl.fetchCount(
+                        CLAIM,
+                        CLAIM.ITEM_ID.eq(itemId).and(CLAIM.RELEASED_AT.isNull()).and(CLAIM.CONFIRMED_AT.isNotNull()))
+                > 0;
+    }
+
+    @Override
+    public boolean existsByDeliveryOptionId(UUID deliveryOptionId) {
+        return dsl.fetchCount(CLAIM, CLAIM.DELIVERY_OPTION_ID.eq(deliveryOptionId)) > 0;
     }
 
     @Override
@@ -117,7 +121,8 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                 .from(CLAIM)
                 .join(ITEM)
                 .on(CLAIM.ITEM_ID.eq(ITEM.ID))
-                .where(ITEM.REGISTRY_ID.eq(registryId)
+                .where(ITEM.REGISTRY_ID
+                        .eq(registryId)
                         .and(CLAIM.RELEASED_AT.isNull())
                         .and(CLAIM.CONFIRMED_AT.isNotNull()))
                 .orderBy(CLAIM.CLAIMED_AT.desc())
@@ -140,9 +145,12 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                         CLAIM.DELIVERY_TYPE,
                         CLAIM.CLAIMED_AT)
                 .from(CLAIM)
-                .join(ITEM).on(CLAIM.ITEM_ID.eq(ITEM.ID))
-                .join(REGISTRY).on(ITEM.REGISTRY_ID.eq(REGISTRY.ID))
-                .where(CLAIM.CLAIMER_USER_ID.eq(userId)
+                .join(ITEM)
+                .on(CLAIM.ITEM_ID.eq(ITEM.ID))
+                .join(REGISTRY)
+                .on(ITEM.REGISTRY_ID.eq(REGISTRY.ID))
+                .where(CLAIM.CLAIMER_USER_ID
+                        .eq(userId)
                         .and(CLAIM.RELEASED_AT.isNull())
                         .and(CLAIM.CONFIRMED_AT.isNotNull()))
                 .orderBy(CLAIM.CLAIMED_AT.desc())

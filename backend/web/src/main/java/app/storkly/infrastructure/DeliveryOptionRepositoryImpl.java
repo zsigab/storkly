@@ -37,10 +37,15 @@ public class DeliveryOptionRepositoryImpl implements DeliveryOptionRepository {
                 .execute();
         return option.id() != null
                 ? option
-                : DeliveryOption.builder().id(id).registryId(option.registryId())
-                        .type(option.type()).label(option.label())
-                        .description(option.description()).enabled(option.enabled())
-                        .sortOrder(option.sortOrder()).build();
+                : DeliveryOption.builder()
+                        .id(id)
+                        .registryId(option.registryId())
+                        .type(option.type())
+                        .label(option.label())
+                        .description(option.description())
+                        .enabled(option.enabled())
+                        .sortOrder(option.sortOrder())
+                        .build();
     }
 
     @Override
@@ -67,7 +72,9 @@ public class DeliveryOptionRepositoryImpl implements DeliveryOptionRepository {
 
     @Override
     public void deleteByRegistryId(UUID registryId) {
-        dsl.deleteFrom(DELIVERY_OPTION).where(DELIVERY_OPTION.REGISTRY_ID.eq(registryId)).execute();
+        dsl.deleteFrom(DELIVERY_OPTION)
+                .where(DELIVERY_OPTION.REGISTRY_ID.eq(registryId))
+                .execute();
     }
 
     private DeliveryOption toDeliveryOption(DeliveryOptionRecord r) {

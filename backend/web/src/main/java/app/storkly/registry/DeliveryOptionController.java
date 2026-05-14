@@ -29,11 +29,8 @@ public class DeliveryOptionController {
     private final DeliveryOptionService deliveryOptionService;
 
     @GetMapping
-    public List<DeliveryOptionResponse> listByRegistry(
-            @PathVariable String slug,
-            @AuthenticationPrincipal User currentUser) {
-        UUID registryId = parseRegistryId(slug);
-        return deliveryOptionService.findByRegistry(registryId).stream()
+    public List<DeliveryOptionResponse> listByRegistry(@PathVariable String slug) {
+        return deliveryOptionService.findBySlug(slug).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -44,7 +41,7 @@ public class DeliveryOptionController {
             @PathVariable String slug,
             @RequestBody @Valid DeliveryOptionRequest request,
             @AuthenticationPrincipal User currentUser) {
-        UUID registryId = parseRegistryId(slug);
+        UUID registryId = deliveryOptionService.resolveRegistryId(slug);
         DeliveryOption option = DeliveryOption.builder()
                 .registryId(registryId)
                 .type(request.type())
@@ -63,7 +60,7 @@ public class DeliveryOptionController {
             @PathVariable UUID id,
             @RequestBody @Valid DeliveryOptionRequest request,
             @AuthenticationPrincipal User currentUser) {
-        UUID registryId = parseRegistryId(slug);
+        UUID registryId = deliveryOptionService.resolveRegistryId(slug);
         DeliveryOption option = DeliveryOption.builder()
                 .id(id)
                 .registryId(registryId)
@@ -79,10 +76,7 @@ public class DeliveryOptionController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(
-            @PathVariable String slug,
-            @PathVariable UUID id,
-            @AuthenticationPrincipal User currentUser) {
+    public void delete(@PathVariable String slug, @PathVariable UUID id, @AuthenticationPrincipal User currentUser) {
         deliveryOptionService.delete(id, currentUser.id());
     }
 
@@ -95,13 +89,5 @@ public class DeliveryOptionController {
                 option.description(),
                 option.enabled(),
                 option.sortOrder());
-    }
-
-    private UUID parseRegistryId(String slug) {
-        try {
-            return UUID.fromString(slug);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid registry slug or ID");
-        }
     }
 }
