@@ -16,7 +16,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
 
 - Backend: run `./gradlew spotlessApply` before every commit
-- Frontend: run `npx prettier --write src/` before every commit
+- Frontend: run `npx prettier --write src/` and `npm test` before every commit
 
 ## Architecture Decision Records
 
