@@ -97,6 +97,7 @@ export interface ClaimResponse {
   percentageContributed: number | null;
   claimedAt: string;
   confirmedAt: string | null;
+  deliveryOptionId: string | null;
   deliveryType: string | null;
   receivedAt: string | null;
   amountReceived: number | null;

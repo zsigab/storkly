@@ -238,32 +238,36 @@ export function ClaimDialog({
               </div>
             )}
 
-            {(deliveryOptions.data ?? []).length > 0 && (
+            {(deliveryOptions.data ?? []).filter((o) => o.enabled).length > 0 && (
               <div className="space-y-2">
                 <p className="text-sm font-medium">How will you give this gift?</p>
                 <div className="space-y-2">
-                  {(deliveryOptions.data ?? []).map((option) => (
-                    <label
-                      key={option.id}
-                      className="hover:bg-muted flex cursor-pointer items-center gap-3 rounded p-2"
-                    >
-                      <input
-                        type="radio"
-                        value={option.id}
-                        className="h-4 w-4"
-                        {...register("deliveryOptionId")}
-                      />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{option.label}</div>
-                        {option.description && (
-                          <div className="text-muted-foreground text-xs">{option.description}</div>
-                        )}
-                      </div>
-                    </label>
-                  ))}
+                  {(deliveryOptions.data ?? [])
+                    .filter((o) => o.enabled)
+                    .map((option) => (
+                      <label
+                        key={option.id}
+                        className="hover:bg-muted flex cursor-pointer items-center gap-3 rounded p-2"
+                      >
+                        <input
+                          type="radio"
+                          value={option.id}
+                          className="h-4 w-4"
+                          {...register("deliveryOptionId")}
+                        />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">{option.label}</div>
+                          {option.description && (
+                            <div className="text-muted-foreground text-xs">
+                              {option.description}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    ))}
                 </div>
-                {deliveryOptions.data?.some((o) =>
-                  ["SHIP_TO_ADDRESS", "MONEY_TRANSFER"].includes(o.type),
+                {deliveryOptions.data?.some(
+                  (o) => o.enabled && ["SHIP_TO_ADDRESS", "MONEY_TRANSFER"].includes(o.type),
                 ) && (
                   <p className="text-muted-foreground text-xs">
                     Delivery and payment details will be sent via email.
