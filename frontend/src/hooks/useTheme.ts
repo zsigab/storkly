@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { createElement } from "react";
 
 export type ThemeColor = "peach" | "blue" | "pink" | "green" | "purple" | "beige";
@@ -15,6 +23,7 @@ export interface ThemeState {
 
 interface ThemeContextValue {
   theme: ThemeState;
+  bgStyle: CSSProperties;
   setColor: (color: ThemeColor) => void;
   setStyle: (style: ThemeStyle) => void;
   toggleMode: () => void;
@@ -192,26 +201,29 @@ function applyTheme(theme: ThemeState): void {
   el.dataset["style"] = theme.style;
   el.dataset["background"] = theme.background;
   el.classList.toggle("dark", theme.mode === "dark");
+}
 
-  // "default" → blob gradients on <html>; "stars" → star SVG on <html>.
-  // Both are visible because the body + layout background become transparent
-  // (via CSS rules keyed on data-background).
+// Chrome puts <html> inline backgrounds into a root compositor layer that
+// backdrop-filter cannot access, so the frosted-glass blur has nothing to
+// blur. Returning a CSSProperties object instead lets the caller render a
+// position:fixed div in the normal compositing flow, which backdrop-filter
+// can blur in both Chrome and Firefox.
+function computeBgStyle(theme: ThemeState): CSSProperties {
   if (theme.background === "default") {
-    el.style.backgroundImage = makeBlobBg(theme.color, theme.mode);
-    el.style.backgroundSize = "auto";
-    el.style.backgroundPosition = "0 0";
-    el.style.backgroundAttachment = "fixed";
-  } else if (theme.background === "stars") {
-    el.style.backgroundImage = makeStarBg(theme.color, theme.mode);
-    el.style.backgroundSize = "cover";
-    el.style.backgroundPosition = "center";
-    el.style.backgroundAttachment = "fixed";
-  } else {
-    el.style.backgroundImage = "";
-    el.style.backgroundSize = "";
-    el.style.backgroundPosition = "";
-    el.style.backgroundAttachment = "";
+    return {
+      backgroundImage: makeBlobBg(theme.color, theme.mode),
+      backgroundSize: "auto",
+      backgroundPosition: "0 0",
+    };
   }
+  if (theme.background === "stars") {
+    return {
+      backgroundImage: makeStarBg(theme.color, theme.mode),
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    };
+  }
+  return {};
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElement {
@@ -221,6 +233,8 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     applyTheme(theme);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(theme));
   }, [theme]);
+
+  const bgStyle = useMemo(() => computeBgStyle(theme), [theme]);
 
   const setColor = (color: ThemeColor): void => {
     setTheme((t) => ({ ...t, color }));
@@ -240,7 +254,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
 
   return createElement(
     ThemeContext.Provider,
-    { value: { theme, setColor, setStyle, toggleMode, setBackground } },
+    { value: { theme, bgStyle, setColor, setStyle, toggleMode, setBackground } },
     children,
   );
 }
