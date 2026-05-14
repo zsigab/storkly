@@ -1,7 +1,12 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ThemeProvider } from "@/hooks/useTheme";
+import { ThemeProvider, useTheme } from "@/hooks/useTheme";
 import { ThemeSelector } from "./ThemeSelector";
+
+function BgConsumer(): React.ReactElement {
+  const { bgStyle } = useTheme();
+  return <div data-testid="bg-layer" style={bgStyle} />;
+}
 
 function makeStorage(initial: Record<string, string> = {}): Storage {
   const store: Record<string, string> = { ...initial };
@@ -45,6 +50,7 @@ function renderSelector(): void {
   render(
     <ThemeProvider>
       <ThemeSelector />
+      <BgConsumer />
     </ThemeProvider>,
   );
 }
@@ -130,7 +136,7 @@ describe("ThemeSelector", () => {
       renderSelector();
       openPanel();
       fireEvent.click(screen.getByRole("button", { name: /^blobs$/i }));
-      expect(document.documentElement.style.backgroundImage).toContain("radial-gradient");
+      expect(screen.getByTestId("bg-layer").style.backgroundImage).toContain("radial-gradient");
     });
 
     it("clears background-image when Off is clicked after Blobs", () => {
@@ -153,7 +159,7 @@ describe("ThemeSelector", () => {
       renderSelector();
       openPanel();
       fireEvent.click(screen.getByRole("button", { name: /^stars$/i }));
-      expect(document.documentElement.style.backgroundImage).toContain("svg+xml");
+      expect(screen.getByTestId("bg-layer").style.backgroundImage).toContain("svg+xml");
     });
   });
 });
