@@ -64,7 +64,7 @@ function OptionRow({
       id: option.id,
       type: option.type,
       label: option.label,
-      description: option.description,
+      ...(option.description !== undefined ? { description: option.description } : {}),
       enabled: !option.enabled,
       sortOrder,
     });

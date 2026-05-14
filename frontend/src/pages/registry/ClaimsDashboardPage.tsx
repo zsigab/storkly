@@ -229,7 +229,7 @@ function ClaimRow({
       <ConfirmDialog
         open={confirmReset}
         onOpenChange={handleResetOpenChange}
-        viewTransitionName={resetTransitioning && confirmReset ? resetTransitionName : undefined}
+        {...(resetTransitioning && confirmReset ? { viewTransitionName: resetTransitionName } : {})}
         title="Reset this claim?"
         description="This will mark the item as unclaimed and make it available again. The claim history will be preserved."
         confirmLabel="Yes, reset"
