@@ -1,11 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, Upload, X } from "lucide-react";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FormField } from "@/components/common/FormField";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { MarkdownToolbar } from "@/components/common/MarkdownToolbar";
@@ -121,6 +124,102 @@ function stripUrlParams(url: string): string {
   } catch {
     return url;
   }
+}
+
+function DeleteConfirmButton({
+  itemTitle,
+  onDelete,
+  isDeletePending,
+  isClaimed,
+}: {
+  itemTitle: string;
+  onDelete: () => void;
+  isDeletePending: boolean;
+  isClaimed: boolean;
+}): React.ReactElement {
+  const [open, setOpen] = useState(false);
+  const [transitioning, setTransitioning] = useState(false);
+  const vtName = "delete-confirm";
+
+  const handleOpen = (): void => {
+    if (!document.startViewTransition) {
+      setOpen(true);
+      return;
+    }
+    flushSync(() => setTransitioning(true));
+    const vt = document.startViewTransition(() => {
+      flushSync(() => setOpen(true));
+    });
+    void vt.finished.then(() => setTransitioning(false));
+  };
+
+  const handleClose = (): void => {
+    if (!document.startViewTransition) {
+      setOpen(false);
+      setTransitioning(false);
+      return;
+    }
+    flushSync(() => setTransitioning(true));
+    const vt = document.startViewTransition(() => {
+      flushSync(() => setOpen(false));
+    });
+    void vt.finished.then(() => setTransitioning(false));
+  };
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="destructive"
+        className="w-full"
+        disabled={isDeletePending || isClaimed}
+        onClick={handleOpen}
+        style={{
+          viewTransitionName: transitioning && !open ? vtName : undefined,
+          visibility: open ? "hidden" : undefined,
+        }}
+      >
+        {isDeletePending ? "Deleting…" : "Delete item"}
+      </Button>
+      <Dialog
+        open={open}
+        onOpenChange={(o) => {
+          if (!o) handleClose();
+        }}
+      >
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Content
+            className="bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg"
+            onEscapeKeyDown={(e) => e.stopPropagation()}
+            style={transitioning && open ? { viewTransitionName: vtName } : undefined}
+          >
+            <DialogHeader>
+              <DialogTitle>Delete item?</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete &ldquo;{itemTitle}&rdquo;? This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  setOpen(false);
+                  setTransitioning(false);
+                  onDelete();
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </Dialog>
+    </>
+  );
 }
 
 export function ItemForm({
@@ -851,15 +950,12 @@ export function ItemForm({
 
       {isQuantityZero && onDelete !== undefined ? (
         <div className="space-y-2">
-          <Button
-            type="button"
-            variant="destructive"
-            className="w-full"
-            onClick={onDelete}
-            disabled={isDeletePending || isClaimed}
-          >
-            {isDeletePending ? "Deleting…" : "Delete item"}
-          </Button>
+          <DeleteConfirmButton
+            itemTitle={watch("title")}
+            onDelete={onDelete}
+            isDeletePending={isDeletePending}
+            isClaimed={isClaimed}
+          />
           {isClaimed && (
             <p className="text-muted-foreground text-center text-sm">
               This item has been claimed and cannot be deleted.
@@ -886,15 +982,12 @@ export function ItemForm({
           </Button>
           {onDelete !== undefined && (
             <>
-              <Button
-                type="button"
-                variant="destructive"
-                className="w-full"
-                onClick={onDelete}
-                disabled={isDeletePending || isClaimed}
-              >
-                {isDeletePending ? "Deleting…" : "Delete item"}
-              </Button>
+              <DeleteConfirmButton
+                itemTitle={watch("title")}
+                onDelete={onDelete}
+                isDeletePending={isDeletePending}
+                isClaimed={isClaimed}
+              />
               {isClaimed && (
                 <p className="text-muted-foreground text-center text-sm">
                   This item has been claimed and cannot be deleted.
