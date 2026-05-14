@@ -18,4 +18,9 @@ public record Claim(
         @Nullable Integer percentageContributed,
         String claimToken,
         OffsetDateTime claimedAt,
-        @Nullable OffsetDateTime releasedAt) {}
+        @Nullable OffsetDateTime releasedAt,
+        @Nullable UUID deliveryOptionId,
+        @Nullable String deliveryType,
+        @Nullable OffsetDateTime receivedAt,
+        @Nullable BigDecimal amountReceived,
+        @Nullable OffsetDateTime confirmedAt) {}

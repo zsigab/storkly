@@ -80,6 +80,7 @@ describe("ClaimDialog", () => {
           quantityClaimed: 1,
           amountContributed: null,
           percentageContributed: null,
+          deliveryOptionId: null,
         },
       }),
     );

@@ -13,6 +13,7 @@ import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.item.Claim;
 import app.storkly.domain.item.ClaimRepository;
+import app.storkly.domain.item.DeliveryOptionRepository;
 import app.storkly.domain.item.Item;
 import app.storkly.domain.item.ItemFlag;
 import app.storkly.domain.item.ItemRepository;
@@ -57,6 +58,9 @@ class ClaimServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private DeliveryOptionRepository deliveryOptionRepository;
+
+    @Mock
     private RegistryAccessService registryAccessService;
 
     @Mock
@@ -75,6 +79,7 @@ class ClaimServiceTest {
                 registryRepository,
                 coOwnerRepository,
                 userRepository,
+                deliveryOptionRepository,
                 registryAccessService,
                 emailService);
     }
@@ -98,7 +103,7 @@ class ClaimServiceTest {
         Claim saved = claim(UUID.randomUUID(), itemId, claimerId, null);
         when(claimRepository.save(any(Claim.class))).thenReturn(saved);
 
-        claimService.claim(itemId, null, null, 1, null, null, claimerId);
+        claimService.claim(itemId, null, null, 1, null, null, null, claimerId);
 
         ArgumentCaptor<Claim> captor = ArgumentCaptor.forClass(Claim.class);
         verify(claimRepository).save(captor.capture());
@@ -116,7 +121,7 @@ class ClaimServiceTest {
         Claim saved = claim(UUID.randomUUID(), itemId, null, null);
         when(claimRepository.save(any(Claim.class))).thenReturn(saved);
 
-        claimService.claim(itemId, "Alice", "alice@example.com", 1, null, null, null);
+        claimService.claim(itemId, "Alice", "alice@example.com", 1, null, null, null, null);
 
         verify(emailService).sendClaimConfirmation(any(), any(), any(), any());
     }
@@ -159,14 +164,37 @@ class ClaimServiceTest {
     @Test
     void unclaimById_othersClaim_throwsAccessDenied() {
         UUID claimId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
         UUID claimerId = UUID.randomUUID();
         UUID stranger = UUID.randomUUID();
-        Claim activeClaim = claim(claimId, UUID.randomUUID(), claimerId, null);
+        Claim activeClaim = claim(claimId, itemId, claimerId, null);
+        Item item = item(itemId);
+        Registry registry = publicRegistry();
         when(claimRepository.findById(claimId)).thenReturn(Optional.of(activeClaim));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(coOwnerRepository.isCoOwner(registryId, stranger)).thenReturn(false);
 
         assertThatThrownBy(() -> claimService.unclaimById(claimId, stranger)).isInstanceOf(AccessDeniedException.class);
 
         verify(claimRepository, never()).release(any(), any());
+    }
+
+    @Test
+    void unclaimById_registryOwner_rejectsOthersClaim() {
+        UUID claimId = UUID.randomUUID();
+        UUID itemId = UUID.randomUUID();
+        UUID claimerId = UUID.randomUUID();
+        Claim activeClaim = claim(claimId, itemId, claimerId, null);
+        Item item = item(itemId);
+        Registry registry = publicRegistry();
+        when(claimRepository.findById(claimId)).thenReturn(Optional.of(activeClaim));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+
+        claimService.unclaimById(claimId, ownerId);
+
+        verify(claimRepository).release(eq(claimId), any(OffsetDateTime.class));
     }
 
     @Test

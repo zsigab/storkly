@@ -2,6 +2,7 @@ package app.storkly.item.dto;
 
 import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
+import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
 public record ClaimRequest(
@@ -9,4 +10,5 @@ public record ClaimRequest(
         @Nullable String claimerEmail,
         @Min(1) int quantityClaimed,
         @Nullable BigDecimal amountContributed,
-        @Nullable Integer percentageContributed) {}
+        @Nullable Integer percentageContributed,
+        @Nullable UUID deliveryOptionId) {}

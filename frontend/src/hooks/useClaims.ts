@@ -1,6 +1,6 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
-import type { ClaimResponse } from "@/api/schema";
+import type { ClaimResponse, MyClaimResponse } from "@/api/schema";
 
 export function useItemClaims(itemId: string) {
   return useQuery({
@@ -43,12 +43,14 @@ export function useClaimItem(slug: string) {
       claimerEmail,
       amountContributed,
       percentageContributed,
+      deliveryOptionId,
     }: {
       itemId: string;
       claimerName?: string;
       claimerEmail?: string;
       amountContributed?: number | null;
       percentageContributed?: number | null;
+      deliveryOptionId?: string | null;
     }): Promise<ClaimResponse> => {
       const { data, error } = await api.POST("/api/items/{id}/claims", {
         params: { path: { id: itemId } },
@@ -58,6 +60,7 @@ export function useClaimItem(slug: string) {
           quantityClaimed: 1,
           amountContributed: amountContributed ?? null,
           percentageContributed: percentageContributed ?? null,
+          deliveryOptionId: deliveryOptionId ?? null,
         },
       });
       if (error !== undefined) throw error;
@@ -85,6 +88,101 @@ export function useUnclaimItem(slug: string) {
     onSuccess: (itemId) => {
       void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
       void queryClient.invalidateQueries({ queryKey: ["items", slug] });
+    },
+  });
+}
+
+export function useRegistryClaims(slug: string) {
+  return useQuery({
+    queryKey: ["registryClaims", slug],
+    queryFn: async (): Promise<ClaimResponse[]> => {
+      const { data, error } = await api.GET("/api/registries/{slug}/claims", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+    enabled: slug.length > 0,
+  });
+}
+
+export function useItemClaimHistory(itemId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["claimHistory", itemId],
+    queryFn: async (): Promise<ClaimResponse[]> => {
+      const { data, error } = await api.GET("/api/items/{id}/claim-history", {
+        params: { path: { id: itemId } },
+      });
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+    enabled: enabled && itemId.length > 0,
+  });
+}
+
+export function useResetClaim(slug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ claimId, itemId }: { claimId: string; itemId: string }) => {
+      const { error } = await api.PATCH("/api/claims/{id}/reset", {
+        params: { path: { id: claimId } },
+      });
+      if (error !== undefined) throw error;
+      return itemId;
+    },
+    onSuccess: (itemId) => {
+      void queryClient.invalidateQueries({ queryKey: ["registryClaims", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
+      void queryClient.invalidateQueries({ queryKey: ["claimHistory", itemId] });
+    },
+  });
+}
+
+export function useRejectClaim(slug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ claimId, itemId }: { claimId: string; itemId: string }) => {
+      const { error } = await api.DELETE("/api/claims/{value}", {
+        params: { path: { value: claimId } },
+      });
+      if (error !== undefined) throw error;
+      return itemId;
+    },
+    onSuccess: (itemId) => {
+      void queryClient.invalidateQueries({ queryKey: ["registryClaims", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
+      void queryClient.invalidateQueries({ queryKey: ["claimHistory", itemId] });
+    },
+  });
+}
+
+export function useMyActiveClaims() {
+  return useQuery({
+    queryKey: ["myClaims"],
+    queryFn: async (): Promise<MyClaimResponse[]> => {
+      const { data, error } = await api.GET("/api/claims/mine");
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useReceiveClaim(slug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ claimId, itemId }: { claimId: string; itemId: string }) => {
+      const { error } = await api.PATCH("/api/claims/{id}/receive", {
+        params: { path: { id: claimId } },
+      });
+      if (error !== undefined) throw error;
+      return itemId;
+    },
+    onSuccess: (itemId) => {
+      void queryClient.invalidateQueries({ queryKey: ["registryClaims", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
     },
   });
 }

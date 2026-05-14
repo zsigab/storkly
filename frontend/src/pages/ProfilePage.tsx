@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -49,7 +50,12 @@ export function ProfilePage(): React.ReactElement {
   return (
     <div className="mx-auto max-w-2xl space-y-8 py-8">
       <div>
-        <h1 className="mb-6 text-3xl font-semibold tracking-tight">Profile</h1>
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
+          <Link to="/my-claims" className="text-primary text-sm hover:underline">
+            My claims
+          </Link>
+        </div>
 
         <div className="mb-8 space-y-4">
           <div>

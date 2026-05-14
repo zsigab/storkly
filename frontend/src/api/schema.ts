@@ -96,6 +96,34 @@ export interface ClaimResponse {
   amountContributed: number | null;
   percentageContributed: number | null;
   claimedAt: string;
+  confirmedAt: string | null;
+  deliveryType: string | null;
+  receivedAt: string | null;
+  amountReceived: number | null;
+  releasedAt: string | null;
+}
+
+export interface MyClaimResponse {
+  claimId: string;
+  itemId: string;
+  itemTitle: string;
+  registryName: string;
+  registrySlug: string;
+  quantityClaimed: number;
+  amountContributed: number | null;
+  percentageContributed: number | null;
+  deliveryType: string | null;
+  claimedAt: string;
+}
+
+export interface DeliveryOptionResponse {
+  id: string;
+  registryId: string;
+  type: string;
+  label: string;
+  description: string | null;
+  enabled: boolean;
+  sortOrder: number;
 }
 
 /** Used for endpoints that return 200/201 with no body. */
@@ -307,15 +335,93 @@ export type paths = {
             quantityClaimed: number;
             amountContributed?: number | null;
             percentageContributed?: number | null;
+            deliveryOptionId?: string | null;
           };
         };
       };
       responses: { 201: Ok<ClaimResponse>; 400: Err; 409: Err };
     };
   };
+  "/api/claims/mine": {
+    get: {
+      responses: { 200: Ok<MyClaimResponse[]>; 401: Err };
+    };
+  };
+  "/api/items/{id}/claim-history": {
+    get: {
+      parameters: { path: { id: string } };
+      responses: { 200: Ok<ClaimResponse[]>; 403: Err; 404: Err };
+    };
+  };
+  "/api/claims/{id}/reset": {
+    patch: {
+      parameters: { path: { id: string } };
+      responses: { 204: Empty; 403: Err; 404: Err; 409: Err };
+    };
+  };
+  "/api/claims/{token}/confirm": {
+    post: {
+      parameters: { path: { token: string } };
+      responses: { 204: Empty; 404: Err; 409: Err };
+    };
+  };
+  "/api/claims/{id}/receive": {
+    patch: {
+      parameters: { path: { id: string } };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
   "/api/claims/{value}": {
     delete: {
       parameters: { path: { value: string } };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/claims": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<ClaimResponse[]>; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/delivery-options": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<DeliveryOptionResponse[]> };
+    };
+    post: {
+      parameters: { path: { slug: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            type: string;
+            label: string;
+            description?: string | null;
+            enabled: boolean;
+            sortOrder: number;
+          };
+        };
+      };
+      responses: { 201: Ok<DeliveryOptionResponse>; 403: Err; 404: Err; 422: Err };
+    };
+  };
+  "/api/registries/{slug}/delivery-options/{id}": {
+    put: {
+      parameters: { path: { slug: string; id: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            type: string;
+            label: string;
+            description?: string | null;
+            enabled: boolean;
+            sortOrder: number;
+          };
+        };
+      };
+      responses: { 200: Ok<DeliveryOptionResponse>; 403: Err; 404: Err; 422: Err };
+    };
+    delete: {
+      parameters: { path: { slug: string; id: string } };
       responses: { 204: Empty; 403: Err; 404: Err };
     };
   };

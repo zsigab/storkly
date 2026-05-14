@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ClaimDialog } from "./ClaimDialog";
 import { getApiErrorMessage } from "@/api/helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useItemClaims, useUnclaimItem } from "@/hooks/useClaims";
+import { useItemClaims, useItemClaimHistory, useUnclaimItem } from "@/hooks/useClaims";
 import { useAuth } from "@/hooks/useAuth";
 import type { ItemFlag, ItemResponse } from "@/api/schema";
 
@@ -59,20 +59,26 @@ export function ItemCard({
   const { user } = useAuth();
   const isTransitioning = useViewTransitionState(`/r/${slug}/items/${item.id}/edit`);
   const { data: claims = [] } = useItemClaims(item.id);
+  const { data: claimHistory = [] } = useItemClaimHistory(item.id, isOwner);
   const unclaimItem = useUnclaimItem(slug);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [claimTransitioning, setClaimTransitioning] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const claimTransitionName = `claim-item-${item.id}`;
 
   const quantityClaimed = claims.reduce((sum, c) => sum + c.quantityClaimed, 0);
   const totalContributed = claims.reduce((sum, c) => sum + (c.amountContributed ?? 0), 0);
+  const totalReceived = claims.reduce((sum, c) => sum + (c.amountReceived ?? 0), 0);
   const hasPartialContributions =
     item.priceReference != null && claims.some((c) => c.amountContributed != null);
-  const fundingPercent = hasPartialContributions
+  const claimedPercent = hasPartialContributions
     ? Math.min(100, Math.round((totalContributed / item.priceReference!) * 100))
     : 0;
+  const receivedPercent = hasPartialContributions
+    ? Math.min(100, Math.round((totalReceived / item.priceReference!) * 100))
+    : 0;
   const isClaimed = hasPartialContributions
-    ? fundingPercent >= 100
+    ? claimedPercent >= 100
     : quantityClaimed >= item.quantityDesired;
 
   const myAuthenticatedClaim =
@@ -223,21 +229,137 @@ export function ItemCard({
         </div>
       </div>
 
-      {isOwner && claims.length > 0 && (
+      {isOwner && claimHistory.length > 0 && (
         <div className="border-t pt-2">
-          <p className="text-muted-foreground text-xs">
-            {"Claimed by: "}
-            {claims
-              .map((c) => {
-                const name =
-                  c.claimerUserId !== null
-                    ? (subscriberNames[c.claimerUserId] ?? c.claimerName) || "A member"
-                    : (c.claimerName ?? "Anonymous");
-                const date = new Date(c.claimedAt).toLocaleDateString();
-                return `${name} (${date})`;
-              })
-              .join(", ")}
-          </p>
+          {/* Concise summary rows + toggle */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="space-y-0.5">
+              {hasPartialContributions
+                ? claims.map((c) => {
+                    const name =
+                      c.claimerUserId !== null
+                        ? (subscriberNames[c.claimerUserId] ?? c.claimerName) || "A member"
+                        : (c.claimerName ?? "Anonymous");
+                    const amtLabel =
+                      c.amountContributed != null
+                        ? `${item.currency ?? ""} ${c.amountContributed.toFixed(2)}`
+                        : c.percentageContributed != null
+                          ? `${c.percentageContributed}%`
+                          : null;
+                    const prefix = amtLabel !== null ? `${amtLabel} ` : "";
+                    const verb =
+                      c.receivedAt !== null
+                        ? "received"
+                        : c.confirmedAt !== null
+                          ? "confirmed"
+                          : "claimed";
+                    return (
+                      <p key={c.id} className="text-muted-foreground text-xs">
+                        {prefix}
+                        {verb} by <span className="font-medium">{name}</span>
+                      </p>
+                    );
+                  })
+                : (() => {
+                    const last = claimHistory[claimHistory.length - 1];
+                    if (last === undefined) return null;
+                    const name =
+                      last.claimerUserId !== null
+                        ? (subscriberNames[last.claimerUserId] ?? last.claimerName) || "A member"
+                        : (last.claimerName ?? "Anonymous");
+                    const qty =
+                      last.quantityClaimed === 1 ? "1 unit" : `${last.quantityClaimed} units`;
+                    const wasReset = last.releasedAt !== null && last.receivedAt !== null;
+                    const wasRejected = last.releasedAt !== null && last.receivedAt === null;
+                    const verb =
+                      wasReset || wasRejected
+                        ? "claimed"
+                        : last.receivedAt !== null
+                          ? "received"
+                          : last.confirmedAt !== null
+                            ? "confirmed"
+                            : "claimed";
+                    return (
+                      <p className="text-muted-foreground text-xs">
+                        {verb} {qty} by <span className="font-medium">{name}</span>
+                        {wasReset && last.releasedAt !== null && (
+                          <>, reset {new Date(last.releasedAt).toLocaleString()}</>
+                        )}
+                        {wasRejected && last.releasedAt !== null && (
+                          <>, rejected {new Date(last.releasedAt).toLocaleString()}</>
+                        )}
+                      </p>
+                    );
+                  })()}
+            </div>
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground shrink-0 text-xs"
+              onClick={() => setHistoryOpen((o) => !o)}
+            >
+              {historyOpen ? "▲" : "▼"}
+            </button>
+          </div>
+
+          {/* Expandable full history */}
+          <div
+            className={`grid transition-all duration-200 ease-in-out ${historyOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          >
+            <div className="overflow-hidden">
+              <div className="mt-1 space-y-2">
+                {claimHistory.map((c) => {
+                  const name =
+                    c.claimerUserId !== null
+                      ? (subscriberNames[c.claimerUserId] ?? c.claimerName) || "A member"
+                      : (c.claimerName ?? "Anonymous");
+                  const email =
+                    c.claimerEmail !== null && c.claimerEmail.length > 0 ? c.claimerEmail : null;
+                  const qty = c.quantityClaimed === 1 ? "1 unit" : `${c.quantityClaimed} units`;
+                  const wasReset = c.releasedAt !== null && c.receivedAt !== null;
+                  const wasRejected = c.releasedAt !== null && c.receivedAt === null;
+                  return (
+                    <div key={c.id} className="space-y-0.5 text-xs">
+                      <div className="text-muted-foreground">
+                        Claimed by <span className="font-medium">{name}</span>
+                        {email !== null && (
+                          <>
+                            {" "}
+                            <a href={`mailto:${email}`} className="hover:underline">
+                              ({email})
+                            </a>
+                          </>
+                        )}
+                        {" · "}
+                        {qty}
+                        {" · "}
+                        {new Date(c.claimedAt).toLocaleString()}
+                      </div>
+                      {c.confirmedAt !== null && (
+                        <div className="text-muted-foreground/70 pl-3">
+                          Confirmed {new Date(c.confirmedAt).toLocaleString()}
+                        </div>
+                      )}
+                      {c.receivedAt !== null && (
+                        <div className="text-muted-foreground/70 pl-3">
+                          Received {new Date(c.receivedAt).toLocaleString()}
+                        </div>
+                      )}
+                      {wasReset && c.releasedAt !== null && (
+                        <div className="text-destructive/70 pl-3">
+                          Reset {new Date(c.releasedAt).toLocaleString()}
+                        </div>
+                      )}
+                      {wasRejected && c.releasedAt !== null && (
+                        <div className="text-destructive/70 pl-3">
+                          Rejected {new Date(c.releasedAt).toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -245,16 +367,21 @@ export function ItemCard({
         <div className="space-y-1 border-t pt-2">
           <div className="text-muted-foreground flex justify-between text-xs">
             <span>
-              {item.currency ?? ""} {totalContributed.toFixed(2)} contributed
+              {item.currency ?? ""} {totalReceived.toFixed(2)} received of{" "}
+              {totalContributed.toFixed(2)} claimed
             </span>
             <span>
-              {fundingPercent}% of {item.currency ?? ""} {item.priceReference!.toFixed(2)}
+              {receivedPercent}% of {item.currency ?? ""} {item.priceReference!.toFixed(2)}
             </span>
           </div>
-          <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
+          <div className="bg-muted relative h-2 w-full overflow-hidden rounded-full">
             <div
-              className="bg-primary h-full rounded-full transition-all"
-              style={{ width: `${fundingPercent}%` }}
+              className="bg-primary/40 absolute h-full rounded-full transition-all"
+              style={{ width: `${claimedPercent}%` }}
+            />
+            <div
+              className="bg-primary absolute h-full rounded-full transition-all"
+              style={{ width: `${receivedPercent}%` }}
             />
           </div>
         </div>

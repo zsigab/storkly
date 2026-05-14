@@ -26,12 +26,14 @@ public class EmailService {
 
     @Async
     public void sendClaimConfirmation(String to, String name, String itemTitle, String token) {
-        String subject = "Your claim on Storkly";
+        String subject = "Confirm your claim on Storkly";
         String body = "Hi " + name + ",\n\n"
-                + "You've claimed \"" + itemTitle + "\".\n\n"
-                + "If you'd like to un-claim it, click the link below:\n\n"
+                + "You've requested to claim \"" + itemTitle + "\".\n\n"
+                + "Click the link below to confirm your claim:\n\n"
+                + emailProperties.frontendUrl() + "/claim/confirm?token=" + token + "\n\n"
+                + "If your plans change, you can use this link to un-claim:\n\n"
                 + emailProperties.frontendUrl() + "/un-claim?token=" + token + "\n\n"
-                + "Keep this link safe — it's the only way to manage your claim without an account.";
+                + "If you did not request this, you can ignore this email.";
         send(to, subject, body);
     }
 

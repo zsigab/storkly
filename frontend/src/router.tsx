@@ -14,8 +14,11 @@ import { EditRegistryPage } from "@/pages/registry/EditRegistryPage";
 import { RegistryPage } from "@/pages/registry/RegistryPage";
 import { AddItemPage } from "@/pages/registry/AddItemPage";
 import { EditItemPage } from "@/pages/registry/EditItemPage";
+import { ClaimsDashboardPage } from "@/pages/registry/ClaimsDashboardPage";
 import { OAuthCallbackPage } from "@/pages/auth/OAuthCallbackPage";
 import { UnclaimPage } from "@/pages/UnclaimPage";
+import { ConfirmClaimPage } from "@/pages/ConfirmClaimPage";
+import { MyClaimsPage } from "@/pages/MyClaimsPage";
 
 export const router = createBrowserRouter([
   {
@@ -26,6 +29,7 @@ export const router = createBrowserRouter([
       { path: "login", element: <LoginPage /> },
       { path: "oauth/callback", element: <OAuthCallbackPage /> },
       { path: "un-claim", element: <UnclaimPage /> },
+      { path: "claim/confirm", element: <ConfirmClaimPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "forgot-password", element: <ForgotPasswordPage /> },
@@ -35,6 +39,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <ProfilePage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "my-claims",
+        element: (
+          <RequireAuth>
+            <MyClaimsPage />
           </RequireAuth>
         ),
       },
@@ -76,6 +88,14 @@ export const router = createBrowserRouter([
         element: (
           <RequireAuth>
             <EditItemPage />
+          </RequireAuth>
+        ),
+      },
+      {
+        path: "r/:slug/claims",
+        element: (
+          <RequireAuth>
+            <ClaimsDashboardPage />
           </RequireAuth>
         ),
       },

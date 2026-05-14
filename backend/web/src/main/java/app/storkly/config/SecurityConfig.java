@@ -79,6 +79,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/claims/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/claims/*/confirm")
+                        .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/registries/{slug}/join")
                         .authenticated()
                         .requestMatchers("/api/docs/**", "/swagger-ui/**")

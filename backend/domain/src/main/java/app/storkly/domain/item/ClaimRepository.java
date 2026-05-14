@@ -14,9 +14,19 @@ public interface ClaimRepository {
 
     List<Claim> findActiveByItemId(UUID itemId);
 
+    List<Claim> findAllByItemId(UUID itemId);
+
     boolean existsActiveByItemId(UUID itemId);
 
     boolean existsActiveByUserAndRegistry(UUID userId, UUID registryId);
 
+    List<Claim> findActiveByRegistryId(UUID registryId);
+
+    List<MyClaimView> findActiveByUserId(UUID userId);
+
     void release(UUID id, OffsetDateTime releasedAt);
+
+    void receive(UUID id, OffsetDateTime receivedAt);
+
+    void confirm(UUID id, OffsetDateTime confirmedAt);
 }

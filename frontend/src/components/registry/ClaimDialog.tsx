@@ -17,12 +17,14 @@ import { cn } from "@/lib/utils";
 import { FormField } from "@/components/common/FormField";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useClaimItem } from "@/hooks/useClaims";
+import { useDeliveryOptions } from "@/hooks/useDeliveryOptions";
 
 const baseSchema = z.object({
   claimerName: z.string(),
   claimerEmail: z.string(),
   amount: z.string(),
   percentage: z.number().min(0).max(100),
+  deliveryOptionId: z.string().optional(),
 });
 
 const anonymousSchema = baseSchema.extend({
@@ -56,6 +58,7 @@ export function ClaimDialog({
   viewTransitionName,
 }: ClaimDialogProps): React.ReactElement {
   const claimItem = useClaimItem(slug);
+  const deliveryOptions = useDeliveryOptions(slug);
   const [partialEnabled, setPartialEnabled] = useState(false);
   const [lastTouched, setLastTouched] = useState<"amount" | "percentage">("percentage");
 
@@ -69,7 +72,13 @@ export function ClaimDialog({
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(isAuthenticated ? baseSchema : anonymousSchema),
-    defaultValues: { claimerName: "", claimerEmail: "", amount: "", percentage: 100 },
+    defaultValues: {
+      claimerName: "",
+      claimerEmail: "",
+      amount: "",
+      percentage: 100,
+      deliveryOptionId: "",
+    },
   });
 
   const percentage = watch("percentage");
@@ -96,7 +105,7 @@ export function ClaimDialog({
   const onSubmit = (values: FormValues): void => {
     let amountContributed: number | null = null;
     let percentageContributed: number | null = null;
-    if (partialEnabled) {
+    if (partialEnabled && values.percentage < 100) {
       percentageContributed = values.percentage;
       if (priceReference != null && values.amount !== "") {
         amountContributed = parseFloat(values.amount);
@@ -113,6 +122,7 @@ export function ClaimDialog({
           : { claimerName: values.claimerName, claimerEmail: values.claimerEmail }),
         amountContributed,
         percentageContributed,
+        deliveryOptionId: values.deliveryOptionId || null,
       },
       {
         onSuccess: () => {
@@ -129,7 +139,12 @@ export function ClaimDialog({
       <DialogPrimitive.Portal>
         <DialogPrimitive.Content
           className={cn(
-            "bg-card text-card-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-lg border p-6 shadow-lg",
+            "fixed top-1/2 left-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border p-6",
+            "bg-background/80 backdrop-blur-md",
+            "border-[var(--glass-border-color)]",
+            "shadow-[var(--glass-shadow)]",
+            "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
+            "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
           )}
           style={viewTransitionName !== undefined ? { viewTransitionName } : undefined}
         >
@@ -219,6 +234,40 @@ export function ClaimDialog({
                       onChange={(e) => handleAmountChange(e.target.value)}
                     />
                   </FormField>
+                )}
+              </div>
+            )}
+
+            {(deliveryOptions.data ?? []).length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">How will you give this gift?</p>
+                <div className="space-y-2">
+                  {(deliveryOptions.data ?? []).map((option) => (
+                    <label
+                      key={option.id}
+                      className="hover:bg-muted flex cursor-pointer items-center gap-3 rounded p-2"
+                    >
+                      <input
+                        type="radio"
+                        value={option.id}
+                        className="h-4 w-4"
+                        {...register("deliveryOptionId")}
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{option.label}</div>
+                        {option.description && (
+                          <div className="text-muted-foreground text-xs">{option.description}</div>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                {deliveryOptions.data?.some((o) =>
+                  ["SHIP_TO_ADDRESS", "MONEY_TRANSFER"].includes(o.type),
+                ) && (
+                  <p className="text-muted-foreground text-xs">
+                    Delivery and payment details will be sent via email.
+                  </p>
                 )}
               </div>
             )}

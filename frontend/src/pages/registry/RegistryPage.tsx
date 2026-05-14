@@ -181,6 +181,9 @@ export function RegistryPage(): React.ReactElement {
             {isOwner && (
               <>
                 <Button asChild variant="outline" size="sm">
+                  <Link to={`/r/${registry.slug}/claims`}>Claims</Link>
+                </Button>
+                <Button asChild variant="outline" size="sm">
                   <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
                 </Button>
                 {registry.visibility !== "HIDDEN" && (

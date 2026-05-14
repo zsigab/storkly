@@ -2,10 +2,12 @@ package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.CLAIM;
 import static app.storkly.domain.generated.Tables.ITEM;
+import static app.storkly.domain.generated.Tables.REGISTRY;
 
 import app.storkly.domain.generated.tables.records.ClaimRecord;
 import app.storkly.domain.item.Claim;
 import app.storkly.domain.item.ClaimRepository;
+import app.storkly.domain.item.MyClaimView;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -34,6 +36,9 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                 .set(CLAIM.PERCENTAGE_CONTRIBUTED, claim.percentageContributed())
                 .set(CLAIM.CLAIM_TOKEN, claim.claimToken())
                 .set(CLAIM.CLAIMED_AT, claim.claimedAt())
+                .set(CLAIM.DELIVERY_OPTION_ID, claim.deliveryOptionId())
+                .set(CLAIM.DELIVERY_TYPE, claim.deliveryType())
+                .set(CLAIM.CONFIRMED_AT, claim.confirmedAt())
                 .execute();
         return Claim.builder()
                 .id(id)
@@ -46,6 +51,9 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                 .percentageContributed(claim.percentageContributed())
                 .claimToken(claim.claimToken())
                 .claimedAt(claim.claimedAt())
+                .deliveryOptionId(claim.deliveryOptionId())
+                .deliveryType(claim.deliveryType())
+                .confirmedAt(claim.confirmedAt())
                 .build();
     }
 
@@ -65,7 +73,18 @@ public class ClaimRepositoryImpl implements ClaimRepository {
     @Override
     public List<Claim> findActiveByItemId(UUID itemId) {
         return dsl.selectFrom(CLAIM)
-                .where(CLAIM.ITEM_ID.eq(itemId).and(CLAIM.RELEASED_AT.isNull()))
+                .where(CLAIM.ITEM_ID.eq(itemId)
+                        .and(CLAIM.RELEASED_AT.isNull())
+                        .and(CLAIM.CONFIRMED_AT.isNotNull()))
+                .orderBy(CLAIM.CLAIMED_AT.asc())
+                .fetch()
+                .map(this::toClaim);
+    }
+
+    @Override
+    public List<Claim> findAllByItemId(UUID itemId) {
+        return dsl.selectFrom(CLAIM)
+                .where(CLAIM.ITEM_ID.eq(itemId))
                 .orderBy(CLAIM.CLAIMED_AT.asc())
                 .fetch()
                 .map(this::toClaim);
@@ -73,7 +92,9 @@ public class ClaimRepositoryImpl implements ClaimRepository {
 
     @Override
     public boolean existsActiveByItemId(UUID itemId) {
-        return dsl.fetchCount(CLAIM, CLAIM.ITEM_ID.eq(itemId).and(CLAIM.RELEASED_AT.isNull())) > 0;
+        return dsl.fetchCount(CLAIM, CLAIM.ITEM_ID.eq(itemId)
+                .and(CLAIM.RELEASED_AT.isNull())
+                .and(CLAIM.CONFIRMED_AT.isNotNull())) > 0;
     }
 
     @Override
@@ -85,14 +106,82 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                         .where(ITEM.REGISTRY_ID
                                 .eq(registryId)
                                 .and(CLAIM.CLAIMER_USER_ID.eq(userId))
-                                .and(CLAIM.RELEASED_AT.isNull())))
+                                .and(CLAIM.RELEASED_AT.isNull())
+                                .and(CLAIM.CONFIRMED_AT.isNotNull())))
                 > 0;
+    }
+
+    @Override
+    public List<Claim> findActiveByRegistryId(UUID registryId) {
+        return dsl.select(CLAIM.asterisk())
+                .from(CLAIM)
+                .join(ITEM)
+                .on(CLAIM.ITEM_ID.eq(ITEM.ID))
+                .where(ITEM.REGISTRY_ID.eq(registryId)
+                        .and(CLAIM.RELEASED_AT.isNull())
+                        .and(CLAIM.CONFIRMED_AT.isNotNull()))
+                .orderBy(CLAIM.CLAIMED_AT.desc())
+                .fetchInto(CLAIM)
+                .map(this::toClaim);
+    }
+
+    @Override
+    public List<MyClaimView> findActiveByUserId(UUID userId) {
+        return dsl.select(
+                        CLAIM.ID,
+                        CLAIM.ITEM_ID,
+                        ITEM.TITLE,
+                        REGISTRY.ID,
+                        REGISTRY.NAME,
+                        REGISTRY.SLUG,
+                        CLAIM.QUANTITY_CLAIMED,
+                        CLAIM.AMOUNT_CONTRIBUTED,
+                        CLAIM.PERCENTAGE_CONTRIBUTED,
+                        CLAIM.DELIVERY_TYPE,
+                        CLAIM.CLAIMED_AT)
+                .from(CLAIM)
+                .join(ITEM).on(CLAIM.ITEM_ID.eq(ITEM.ID))
+                .join(REGISTRY).on(ITEM.REGISTRY_ID.eq(REGISTRY.ID))
+                .where(CLAIM.CLAIMER_USER_ID.eq(userId)
+                        .and(CLAIM.RELEASED_AT.isNull())
+                        .and(CLAIM.CONFIRMED_AT.isNotNull()))
+                .orderBy(CLAIM.CLAIMED_AT.desc())
+                .fetch(r -> MyClaimView.builder()
+                        .claimId(r.get(CLAIM.ID))
+                        .itemId(r.get(CLAIM.ITEM_ID))
+                        .itemTitle(r.get(ITEM.TITLE))
+                        .registryId(r.get(REGISTRY.ID))
+                        .registryName(r.get(REGISTRY.NAME))
+                        .registrySlug(r.get(REGISTRY.SLUG))
+                        .quantityClaimed(r.get(CLAIM.QUANTITY_CLAIMED))
+                        .amountContributed(r.get(CLAIM.AMOUNT_CONTRIBUTED))
+                        .percentageContributed(r.get(CLAIM.PERCENTAGE_CONTRIBUTED))
+                        .deliveryType(r.get(CLAIM.DELIVERY_TYPE))
+                        .claimedAt(r.get(CLAIM.CLAIMED_AT))
+                        .build());
     }
 
     @Override
     public void release(UUID id, OffsetDateTime releasedAt) {
         dsl.update(CLAIM)
                 .set(CLAIM.RELEASED_AT, releasedAt)
+                .where(CLAIM.ID.eq(id))
+                .execute();
+    }
+
+    @Override
+    public void confirm(UUID id, OffsetDateTime confirmedAt) {
+        dsl.update(CLAIM)
+                .set(CLAIM.CONFIRMED_AT, confirmedAt)
+                .where(CLAIM.ID.eq(id))
+                .execute();
+    }
+
+    @Override
+    public void receive(UUID id, OffsetDateTime receivedAt) {
+        dsl.update(CLAIM)
+                .set(CLAIM.RECEIVED_AT, receivedAt)
+                .set(CLAIM.AMOUNT_RECEIVED, CLAIM.AMOUNT_CONTRIBUTED)
                 .where(CLAIM.ID.eq(id))
                 .execute();
     }
@@ -110,6 +199,11 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                 .claimToken(r.getClaimToken())
                 .claimedAt(r.getClaimedAt())
                 .releasedAt(r.getReleasedAt())
+                .deliveryOptionId(r.getDeliveryOptionId())
+                .deliveryType(r.getDeliveryType())
+                .receivedAt(r.getReceivedAt())
+                .amountReceived(r.getAmountReceived())
+                .confirmedAt(r.getConfirmedAt())
                 .build();
     }
 }

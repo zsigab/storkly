@@ -14,4 +14,9 @@ public record ClaimResponse(
         int quantityClaimed,
         @Nullable BigDecimal amountContributed,
         @Nullable Integer percentageContributed,
-        OffsetDateTime claimedAt) {}
+        OffsetDateTime claimedAt,
+        @Nullable OffsetDateTime confirmedAt,
+        @Nullable String deliveryType,
+        @Nullable OffsetDateTime receivedAt,
+        @Nullable BigDecimal amountReceived,
+        @Nullable OffsetDateTime releasedAt) {}
