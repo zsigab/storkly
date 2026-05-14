@@ -16,6 +16,7 @@ public record ClaimResponse(
         @Nullable Integer percentageContributed,
         OffsetDateTime claimedAt,
         @Nullable OffsetDateTime confirmedAt,
+        @Nullable UUID deliveryOptionId,
         @Nullable String deliveryType,
         @Nullable OffsetDateTime receivedAt,
         @Nullable BigDecimal amountReceived,

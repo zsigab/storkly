@@ -15,12 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PatchMapping;
 
 @RestController
 @RequiredArgsConstructor
@@ -48,8 +48,7 @@ public class ClaimController {
     }
 
     @GetMapping("/api/registries/{slug}/claims")
-    public List<ClaimResponse> listByRegistry(
-            @PathVariable String slug, @AuthenticationPrincipal User currentUser) {
+    public List<ClaimResponse> listByRegistry(@PathVariable String slug, @AuthenticationPrincipal User currentUser) {
         return claimService.findActiveByRegistry(slug, currentUser.id()).stream()
                 .map(c -> toResponse(c, true))
                 .toList();
@@ -97,8 +96,7 @@ public class ClaimController {
     }
 
     @GetMapping("/api/items/{id}/claim-history")
-    public List<ClaimResponse> history(
-            @PathVariable UUID id, @AuthenticationPrincipal User currentUser) {
+    public List<ClaimResponse> history(@PathVariable UUID id, @AuthenticationPrincipal User currentUser) {
         return claimService.findHistoryByItem(id, currentUser.id()).stream()
                 .map(c -> toResponse(c, true))
                 .toList();
@@ -134,6 +132,7 @@ public class ClaimController {
                 claim.percentageContributed(),
                 claim.claimedAt(),
                 claim.confirmedAt(),
+                claim.deliveryOptionId(),
                 claim.deliveryType(),
                 claim.receivedAt(),
                 claim.amountReceived(),
