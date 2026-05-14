@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, useNavigate, Link } from "react-router";
+import {
+  useParams,
+  useSearchParams,
+  useNavigate,
+  Link,
+  useViewTransitionState,
+} from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -27,6 +33,11 @@ export function RegistryPage(): React.ReactElement {
   const inviteToken = searchParams.get("invite");
   const { user } = useAuth();
   const safeSlug = slug ?? "";
+  const isEditTransitioning = useViewTransitionState(`/r/${safeSlug}/edit`);
+  const isClaimsTransitioning = useViewTransitionState(`/r/${safeSlug}/claims`);
+  const isAddItemTransitioning = useViewTransitionState(`/r/${safeSlug}/items/new`);
+  const isIncomingTransition = useViewTransitionState(`/r/${safeSlug}`);
+  const isDashboardTransitioning = useViewTransitionState("/dashboard");
   const { data: registry, isPending, isError, error } = useRegistry(safeSlug);
   const { data: categories = [] } = useRegistryCategories(safeSlug);
   const { data: items = [] } = useRegistryItems(safeSlug);
@@ -154,18 +165,27 @@ export function RegistryPage(): React.ReactElement {
   const uncategorizedItems = items.filter((i) => i.categoryId === null).sort(sortByClaimed);
 
   return (
-    <div className="mx-auto max-w-2xl py-10">
+    <div className="mx-auto max-w-2xl space-y-6 py-10">
       {user !== null && (
         <Link
           to="/dashboard"
-          className="text-muted-foreground hover:text-foreground mb-6 block text-sm"
+          viewTransition
+          className="text-muted-foreground hover:text-foreground block text-sm"
         >
           ← Back to dashboard
         </Link>
       )}
 
       {/* Header */}
-      <div className="space-y-4 border-b pb-6">
+      <div
+        className="bg-card border-border space-y-4 rounded-xl border p-6 shadow-md"
+        style={{
+          viewTransitionName:
+            isIncomingTransition || isDashboardTransitioning
+              ? `registry-card-${registry.slug}`
+              : undefined,
+        }}
+      >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-semibold tracking-tight">{registry.name}</h1>
@@ -180,11 +200,29 @@ export function RegistryPage(): React.ReactElement {
           <div className="flex shrink-0 items-center gap-2">
             {isOwner && (
               <>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/r/${registry.slug}/claims`}>Claims</Link>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  style={{
+                    viewTransitionName: isClaimsTransitioning ? "registry-claims" : undefined,
+                  }}
+                >
+                  <Link to={`/r/${registry.slug}/claims`} viewTransition>
+                    Claims
+                  </Link>
                 </Button>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/r/${registry.slug}/edit`}>Edit</Link>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  style={{
+                    viewTransitionName: isEditTransitioning ? "registry-edit" : undefined,
+                  }}
+                >
+                  <Link to={`/r/${registry.slug}/edit`} viewTransition>
+                    Edit
+                  </Link>
                 </Button>
                 {registry.visibility !== "HIDDEN" && (
                   <Button
@@ -211,8 +249,16 @@ export function RegistryPage(): React.ReactElement {
                     {showGetLink ? "Hide Link" : "Show Link"}
                   </Button>
                 )}
-                <Button asChild size="sm">
-                  <Link to={`/r/${registry.slug}/items/new`}>Add Item</Link>
+                <Button
+                  asChild
+                  size="sm"
+                  style={{
+                    viewTransitionName: isAddItemTransitioning ? "item-add" : undefined,
+                  }}
+                >
+                  <Link to={`/r/${registry.slug}/items/new`} viewTransition>
+                    Add Item
+                  </Link>
                 </Button>
               </>
             )}
@@ -352,7 +398,7 @@ export function RegistryPage(): React.ReactElement {
       </div>
 
       {/* Content */}
-      <div className="space-y-6 pt-6">
+      <div className="space-y-6">
         {items.length === 0 && (
           <p className="text-muted-foreground py-8 text-center text-sm">
             {isOwner ? "No items yet. Use Add Item to get started." : "No items yet."}

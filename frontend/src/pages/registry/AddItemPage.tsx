@@ -1,20 +1,30 @@
-import { useParams, Link } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { ItemForm } from "@/components/registry/ItemForm";
+import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { useCreateItem } from "@/hooks/useItems";
 import { useRegistryCategories } from "@/hooks/useRegistries";
 
 export function AddItemPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const safeSlug = slug ?? "";
   const createItem = useCreateItem(safeSlug);
   const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);
 
+  const handleBack = (): void => {
+    void navigate(`/r/${safeSlug}`, { viewTransition: true });
+  };
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6 py-10">
+    <GlassCardLayout viewTransitionName="item-add">
       <div className="space-y-1">
-        <Link to={`/r/${safeSlug}`} className="text-muted-foreground hover:text-foreground text-sm">
+        <button
+          type="button"
+          onClick={handleBack}
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
           ← Back to registry
-        </Link>
+        </button>
         <h1 className="text-3xl font-semibold tracking-tight">Add item</h1>
       </div>
       {categoriesPending ? (
@@ -29,6 +39,6 @@ export function AddItemPage(): React.ReactElement {
           submitLabel="Add item"
         />
       )}
-    </div>
+    </GlassCardLayout>
   );
 }

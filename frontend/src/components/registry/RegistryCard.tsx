@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useViewTransitionState } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import type { RegistryResponse } from "@/api/schema";
 
@@ -7,9 +7,20 @@ interface RegistryCardProps {
 }
 
 export function RegistryCard({ registry }: RegistryCardProps): React.ReactElement {
+  const isForwardTransitioning = useViewTransitionState(`/r/${registry.slug}`);
+  const isDashboardTransitioning = useViewTransitionState("/dashboard");
+
   return (
-    <Link to={`/r/${registry.slug}`} className="block">
-      <div className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors">
+    <Link to={`/r/${registry.slug}`} viewTransition className="block">
+      <div
+        className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors"
+        style={{
+          viewTransitionName:
+            isForwardTransitioning || isDashboardTransitioning
+              ? `registry-card-${registry.slug}`
+              : undefined,
+        }}
+      >
         <div className="flex items-center justify-between gap-2">
           <h3 className="font-semibold">{registry.name}</h3>
           <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>

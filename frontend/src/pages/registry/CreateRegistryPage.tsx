@@ -1,14 +1,19 @@
 import { Link } from "react-router";
 import { RegistryForm } from "@/components/registry/RegistryForm";
+import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { useCreateRegistry } from "@/hooks/useRegistries";
 
 export function CreateRegistryPage(): React.ReactElement {
   const createRegistry = useCreateRegistry();
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 py-10">
-      <div className="space-y-2">
-        <Link to="/dashboard" className="text-muted-foreground hover:text-foreground text-sm">
+    <GlassCardLayout viewTransitionName="registry-new">
+      <div className="space-y-1">
+        <Link
+          to="/dashboard"
+          viewTransition
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
           ← Back to dashboard
         </Link>
         <h1 className="text-3xl font-semibold tracking-tight">Create registry</h1>
@@ -21,6 +26,6 @@ export function CreateRegistryPage(): React.ReactElement {
         error={createRegistry.error}
         submitLabel="Create registry"
       />
-    </div>
+    </GlassCardLayout>
   );
 }

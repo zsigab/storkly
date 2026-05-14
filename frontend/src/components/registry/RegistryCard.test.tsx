@@ -6,6 +6,7 @@ vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
+    useViewTransitionState: () => false,
     Link: ({
       to,
       children,

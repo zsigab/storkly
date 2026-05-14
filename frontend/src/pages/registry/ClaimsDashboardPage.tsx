@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { flushSync } from "react-dom";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useViewTransitionState } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -71,7 +71,7 @@ function ClaimRow({
 
   return (
     <div
-      className="bg-background/60 flex items-start justify-between gap-4 rounded-xl border border-[var(--glass-border-color)] p-4 shadow-[var(--glass-shadow)] backdrop-blur-md"
+      className="bg-card border-border flex items-start justify-between gap-4 rounded-lg border p-4 shadow-md"
       style={{
         viewTransitionName: resetTransitioning && !confirmReset ? resetTransitionName : undefined,
         visibility: confirmReset ? "hidden" : undefined,
@@ -185,6 +185,8 @@ function ClaimRow({
 export function ClaimsDashboardPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
   const safeSlug = slug ?? "";
+  const isClaimsTransitioning = useViewTransitionState(`/r/${safeSlug}/claims`);
+  const isBackTransitioning = useViewTransitionState(`/r/${safeSlug}`);
 
   const {
     data: claims = [],
@@ -209,10 +211,22 @@ export function ClaimsDashboardPage(): React.ReactElement {
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-10">
       <div className="space-y-2">
-        <Link to={`/r/${safeSlug}`} className="text-muted-foreground hover:text-foreground text-sm">
+        <Link
+          to={`/r/${safeSlug}`}
+          viewTransition
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
           ← Back to registry
         </Link>
-        <h1 className="text-3xl font-semibold tracking-tight">Claims</h1>
+        <h1
+          className="text-3xl font-semibold tracking-tight"
+          style={{
+            viewTransitionName:
+              isClaimsTransitioning || isBackTransitioning ? "registry-claims" : undefined,
+          }}
+        >
+          Claims
+        </h1>
       </div>
 
       {claimsError && (

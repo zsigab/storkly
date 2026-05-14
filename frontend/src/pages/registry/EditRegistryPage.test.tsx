@@ -104,7 +104,7 @@ describe("EditRegistryPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/r/my-registry");
   });
 
-  it("renders back to dashboard link", async () => {
+  it("renders back to registry button", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValueOnce({
       data: registryFixture,
@@ -113,11 +113,7 @@ describe("EditRegistryPage", () => {
     });
     renderPage();
     await waitFor(() =>
-      expect(screen.getByRole("link", { name: /back to dashboard/i })).toBeInTheDocument(),
-    );
-    expect(screen.getByRole("link", { name: /back to dashboard/i })).toHaveAttribute(
-      "href",
-      "/dashboard",
+      expect(screen.getByRole("button", { name: /back to registry/i })).toBeInTheDocument(),
     );
   });
 

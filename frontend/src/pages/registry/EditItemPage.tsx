@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { ItemForm } from "@/components/registry/ItemForm";
+import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { useItem, useUpdateItem, useDeleteItem } from "@/hooks/useItems";
 import { useItemClaims } from "@/hooks/useClaims";
 import { useRegistryCategories } from "@/hooks/useRegistries";
@@ -75,55 +76,44 @@ export function EditItemPage(): React.ReactElement {
   };
 
   return (
-    <div className="mx-auto max-w-2xl py-10">
-      <div className="relative">
-        {/* gradient blob — gives backdrop-blur something to blur against */}
-        <div
-          className="from-primary/15 via-background to-secondary/20 pointer-events-none absolute -inset-8 rounded-3xl bg-gradient-to-br blur-2xl"
-          aria-hidden="true"
-        />
-        <div
-          className="border-border/50 bg-card relative space-y-6 rounded-2xl border px-8 py-8 shadow-xl backdrop-blur-xl"
-          style={{ viewTransitionName: `item-${safeId}` }}
-        >
-          <div className="space-y-1">
-            <button
-              type="button"
-              onClick={handleBack}
-              className="text-muted-foreground hover:text-foreground text-sm"
-            >
-              ← Back to registry
-            </button>
-            <h1 className="text-3xl font-semibold tracking-tight">Edit item</h1>
-          </div>
-          <ItemForm
-            defaultValues={{
-              title: item.title,
-              description: item.description ?? "",
-              urlOriginal: item.urlOriginal ?? "",
-              imageUrl: item.imageUrl ?? "",
-              priceReference: item.priceReference !== null ? String(item.priceReference) : "",
-              currency: item.currency ?? "",
-              categoryId: item.categoryId ?? "",
-              flag: item.flag,
-              quantityDesired: String(item.quantityDesired),
-              notes: item.notes ?? "",
-              alreadyOwned: item.alreadyOwned,
-            }}
-            categories={categories ?? []}
-            onSubmit={(values) => updateItem.mutate({ id: safeId, ...values })}
-            isPending={updateItem.isPending}
-            isError={updateItem.isError}
-            error={updateItem.error}
-            submitLabel="Save changes"
-            onDelete={handleDelete}
-            isDeletePending={deleteItem.isPending}
-            isClaimed={isClaimed}
-            onDirtyChange={setIsDirty}
-          />
+    <>
+      <GlassCardLayout viewTransitionName={`item-${safeId}`}>
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-muted-foreground hover:text-foreground text-sm"
+          >
+            ← Back to registry
+          </button>
+          <h1 className="text-3xl font-semibold tracking-tight">Edit item</h1>
         </div>
-      </div>
-
+        <ItemForm
+          defaultValues={{
+            title: item.title,
+            description: item.description ?? "",
+            urlOriginal: item.urlOriginal ?? "",
+            imageUrl: item.imageUrl ?? "",
+            priceReference: item.priceReference !== null ? String(item.priceReference) : "",
+            currency: item.currency ?? "",
+            categoryId: item.categoryId ?? "",
+            flag: item.flag,
+            quantityDesired: String(item.quantityDesired),
+            notes: item.notes ?? "",
+            alreadyOwned: item.alreadyOwned,
+          }}
+          categories={categories ?? []}
+          onSubmit={(values) => updateItem.mutate({ id: safeId, ...values })}
+          isPending={updateItem.isPending}
+          isError={updateItem.isError}
+          error={updateItem.error}
+          submitLabel="Save changes"
+          onDelete={handleDelete}
+          isDeletePending={deleteItem.isPending}
+          isClaimed={isClaimed}
+          onDirtyChange={setIsDirty}
+        />
+      </GlassCardLayout>
       <Dialog open={discardDialogOpen} onOpenChange={setDiscardDialogOpen}>
         <DialogContent className="bg-card text-card-foreground">
           <DialogHeader>
@@ -148,6 +138,6 @@ export function EditItemPage(): React.ReactElement {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

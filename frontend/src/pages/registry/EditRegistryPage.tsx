@@ -1,15 +1,22 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { RegistryForm } from "@/components/registry/RegistryForm";
+import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { ConfirmNameDialog } from "@/components/common/ConfirmNameDialog";
 import { useRegistry, useUpdateRegistry, useDeleteRegistry } from "@/hooks/useRegistries";
 
 export function EditRegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
-  const { data: registry, isPending, isError } = useRegistry(slug ?? "");
-  const updateRegistry = useUpdateRegistry(slug ?? "");
+  const navigate = useNavigate();
+  const safeSlug = slug ?? "";
+  const { data: registry, isPending, isError } = useRegistry(safeSlug);
+  const updateRegistry = useUpdateRegistry(safeSlug);
   const deleteRegistry = useDeleteRegistry();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleBack = (): void => {
+    void navigate(`/r/${safeSlug}`, { viewTransition: true });
+  };
 
   if (isPending) {
     return (
@@ -32,27 +39,33 @@ export function EditRegistryPage(): React.ReactElement {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6 py-10">
-      <div className="space-y-2">
-        <Link to="/dashboard" className="text-muted-foreground hover:text-foreground text-sm">
-          ← Back to dashboard
-        </Link>
-        <h1 className="text-3xl font-semibold tracking-tight">Edit registry</h1>
-      </div>
-      <RegistryForm
-        defaultValues={{
-          name: registry.name,
-          description: registry.description ?? "",
-          visibility: registry.visibility,
-        }}
-        onSubmit={(values) => updateRegistry.mutate(values)}
-        isPending={updateRegistry.isPending}
-        isError={updateRegistry.isError}
-        error={updateRegistry.error}
-        submitLabel="Save changes"
-        onDelete={() => setDeleteDialogOpen(true)}
-        isDeletePending={deleteRegistry.isPending}
-      />
+    <>
+      <GlassCardLayout viewTransitionName="registry-edit">
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="text-muted-foreground hover:text-foreground text-sm"
+          >
+            ← Back to registry
+          </button>
+          <h1 className="text-3xl font-semibold tracking-tight">Edit registry</h1>
+        </div>
+        <RegistryForm
+          defaultValues={{
+            name: registry.name,
+            description: registry.description ?? "",
+            visibility: registry.visibility,
+          }}
+          onSubmit={(values) => updateRegistry.mutate(values)}
+          isPending={updateRegistry.isPending}
+          isError={updateRegistry.isError}
+          error={updateRegistry.error}
+          submitLabel="Save changes"
+          onDelete={() => setDeleteDialogOpen(true)}
+          isDeletePending={deleteRegistry.isPending}
+        />
+      </GlassCardLayout>
       <ConfirmNameDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
@@ -63,6 +76,6 @@ export function EditRegistryPage(): React.ReactElement {
         onConfirm={handleDelete}
         isPending={deleteRegistry.isPending}
       />
-    </div>
+    </>
   );
 }
