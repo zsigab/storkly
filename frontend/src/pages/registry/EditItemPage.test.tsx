@@ -116,7 +116,7 @@ describe("EditItemPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/r/baby-shower", { viewTransition: true });
   });
 
-  it("calls DELETE and navigates when delete button is clicked", async () => {
+  it("calls DELETE and navigates when delete is confirmed", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     vi.mocked(api.GET).mockResolvedValueOnce({
@@ -128,6 +128,10 @@ describe("EditItemPage", () => {
     renderPage();
     await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
     fireEvent.click(screen.getByRole("button", { name: /delete item/i }));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /^delete$/i })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /^delete$/i }));
     await waitFor(() =>
       expect(api.DELETE).toHaveBeenCalledWith(
         "/api/items/{id}",
