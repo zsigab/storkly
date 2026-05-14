@@ -196,6 +196,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=ghcr.io/zsigab/storkly-fe,push-by-digest=true,name-canonical=true,push=true
+          build-args: VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY }}
 
       - name: Export digest
         run: |

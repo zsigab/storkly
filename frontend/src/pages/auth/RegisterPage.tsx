@@ -81,7 +81,7 @@ export function RegisterPage(): React.ReactElement {
 
           <div className="space-y-2">
             <Turnstile
-              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? "1x00000000000000000000AA"}
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ""}
               onSuccess={(token) => setValue("captchaToken", token, { shouldValidate: true })}
             />
             {errors.captchaToken !== undefined && (
