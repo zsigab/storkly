@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormField } from "@/components/common/FormField";
+import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { getApiErrorMessage } from "@/api/helpers";
 
 const displayNameSchema = z.object({
@@ -48,15 +49,24 @@ export function ProfilePage(): React.ReactElement {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8 py-8">
-      <div>
-        <div className="mb-6 flex items-center justify-between">
+    <GlassCardLayout viewTransitionName="profile">
+      <div className="space-y-1">
+        <Link
+          to="/dashboard"
+          viewTransition
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
+          ← Back to dashboard
+        </Link>
+        <div className="flex items-center justify-between">
           <h1 className="text-3xl font-semibold tracking-tight">Profile</h1>
           <Link to="/my-claims" className="text-primary text-sm hover:underline">
             My claims
           </Link>
         </div>
+      </div>
 
+      <div>
         <div className="mb-8 space-y-4">
           <div>
             <label className="text-sm font-medium">Email</label>
@@ -129,6 +139,6 @@ export function ProfilePage(): React.ReactElement {
           </div>
         </div>
       </div>
-    </div>
+    </GlassCardLayout>
   );
 }

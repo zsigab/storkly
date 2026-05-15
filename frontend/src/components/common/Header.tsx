@@ -13,6 +13,7 @@ export function Header(): React.ReactElement {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
           to={user !== null ? "/dashboard" : "/"}
+          viewTransition
           className="text-primary text-xl font-semibold"
         >
           Storkly
@@ -20,7 +21,11 @@ export function Header(): React.ReactElement {
         <nav className="flex items-center gap-4">
           {user !== null ? (
             <>
-              <Link to="/profile" className="hover:text-foreground text-muted-foreground text-sm">
+              <Link
+                to="/profile"
+                viewTransition
+                className="hover:text-foreground text-muted-foreground text-sm"
+              >
                 {user.displayName}
               </Link>
               <Button
