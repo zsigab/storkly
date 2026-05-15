@@ -3,6 +3,7 @@ import {
   useParams,
   useSearchParams,
   useNavigate,
+  useLocation,
   Link,
   useViewTransitionState,
 } from "react-router";
@@ -38,6 +39,12 @@ export function RegistryPage(): React.ReactElement {
   const isAddItemTransitioning = useViewTransitionState(`/r/${safeSlug}/items/new`);
   const isIncomingTransition = useViewTransitionState(`/r/${safeSlug}`);
   const isDashboardTransitioning = useViewTransitionState("/dashboard");
+  const { state: navState } = useLocation();
+  const fromRegistryCard =
+    navState !== null &&
+    typeof navState === "object" &&
+    "fromRegistryCard" in navState &&
+    (navState as Record<string, unknown>).fromRegistryCard === true;
   const { data: registry, isPending, isError, error } = useRegistry(safeSlug);
   const { data: categories = [] } = useRegistryCategories(safeSlug);
   const { data: items = [] } = useRegistryItems(safeSlug);
@@ -72,14 +79,6 @@ export function RegistryPage(): React.ReactElement {
       void navigate(`/r/${registry.slug}`, { replace: true });
     }
   }, [registry, safeSlug, navigate]);
-
-  if (isPending) {
-    return (
-      <div className="mx-auto max-w-2xl py-10 text-center">
-        <p className="text-muted-foreground">Loading…</p>
-      </div>
-    );
-  }
 
   if (isError) {
     const status = getApiErrorStatus(error);
@@ -148,8 +147,6 @@ export function RegistryPage(): React.ReactElement {
     );
   }
 
-  if (registry === undefined) return <></>;
-
   const claimedItemIds = new Set(allClaims.map((c) => c.itemId));
   const sortByClaimed = (a: { id: string }, b: { id: string }): number => {
     const aClaimed = claimedItemIds.has(a.id) ? 1 : 0;
@@ -181,319 +178,336 @@ export function RegistryPage(): React.ReactElement {
         className="bg-card border-border space-y-4 rounded-xl border p-6 shadow-md"
         style={{
           viewTransitionName:
-            isIncomingTransition || isDashboardTransitioning
-              ? `registry-card-${registry.slug}`
+            (fromRegistryCard &&
+              isIncomingTransition &&
+              !isClaimsTransitioning &&
+              !isEditTransitioning &&
+              !isAddItemTransitioning) ||
+            isDashboardTransitioning
+              ? `registry-card-${safeSlug}`
               : undefined,
         }}
       >
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-semibold tracking-tight">{registry.name}</h1>
-            <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
-              {registry.visibility === "PUBLIC"
-                ? "Public"
-                : registry.visibility === "HIDDEN"
-                  ? "Hidden"
-                  : "Private"}
-            </Badge>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {isOwner && (
-              <>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  style={{
-                    viewTransitionName: isClaimsTransitioning ? "registry-claims" : undefined,
-                  }}
-                >
-                  <Link to={`/r/${registry.slug}/claims`} viewTransition>
-                    Claims
-                  </Link>
-                </Button>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  style={{
-                    viewTransitionName: isEditTransitioning ? "registry-edit" : undefined,
-                  }}
-                >
-                  <Link to={`/r/${registry.slug}/edit`} viewTransition>
-                    Edit
-                  </Link>
-                </Button>
-                {registry.visibility !== "HIDDEN" && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="min-w-24"
-                    disabled={generateInvite.isPending}
-                    onClick={() => {
-                      if (showGetLink) {
-                        setShowGetLink(false);
-                      } else {
-                        setShowGetLink(true);
-                        if (inviteUrl === null) {
-                          const origin = window.location.origin;
-                          generateInvite.mutate(undefined, {
-                            onSuccess: (data) => {
-                              setInviteUrl(`${origin}/r/${registry.slug}?invite=${data.token}`);
-                            },
-                          });
-                        }
-                      }
-                    }}
-                  >
-                    {showGetLink ? "Hide Link" : "Show Link"}
-                  </Button>
+        {isPending || registry === undefined ? (
+          <div className="bg-muted h-8 w-48 animate-pulse rounded" />
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-semibold tracking-tight">{registry.name}</h1>
+                <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
+                  {registry.visibility === "PUBLIC"
+                    ? "Public"
+                    : registry.visibility === "HIDDEN"
+                      ? "Hidden"
+                      : "Private"}
+                </Badge>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {isOwner && (
+                  <>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      style={{
+                        viewTransitionName: isClaimsTransitioning ? "registry-claims" : undefined,
+                      }}
+                    >
+                      <Link to={`/r/${registry.slug}/claims`} viewTransition>
+                        Claims
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      style={{
+                        viewTransitionName: isEditTransitioning ? "registry-edit" : undefined,
+                      }}
+                    >
+                      <Link to={`/r/${registry.slug}/edit`} viewTransition>
+                        Edit
+                      </Link>
+                    </Button>
+                    {registry.visibility !== "HIDDEN" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-w-24"
+                        disabled={generateInvite.isPending}
+                        onClick={() => {
+                          if (showGetLink) {
+                            setShowGetLink(false);
+                          } else {
+                            setShowGetLink(true);
+                            if (inviteUrl === null) {
+                              const origin = window.location.origin;
+                              generateInvite.mutate(undefined, {
+                                onSuccess: (data) => {
+                                  setInviteUrl(`${origin}/r/${registry.slug}?invite=${data.token}`);
+                                },
+                              });
+                            }
+                          }
+                        }}
+                      >
+                        {showGetLink ? "Hide Link" : "Show Link"}
+                      </Button>
+                    )}
+                    <Button
+                      asChild
+                      size="sm"
+                      style={{
+                        viewTransitionName: isAddItemTransitioning ? "item-add" : undefined,
+                      }}
+                    >
+                      <Link to={`/r/${registry.slug}/items/new`} viewTransition>
+                        Add Item
+                      </Link>
+                    </Button>
+                  </>
                 )}
-                <Button
-                  asChild
-                  size="sm"
-                  style={{
-                    viewTransitionName: isAddItemTransitioning ? "item-add" : undefined,
-                  }}
-                >
-                  <Link to={`/r/${registry.slug}/items/new`} viewTransition>
-                    Add Item
-                  </Link>
-                </Button>
-              </>
-            )}
-            {(isSubscriber || hasUnsubscribed) &&
-              (hasUnsubscribed ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => joinRegistry.mutate(inviteToken ?? "")}
-                  disabled={joinRegistry.isPending}
-                >
-                  {joinRegistry.isPending ? "Subscribing…" : "Re-subscribe"}
-                </Button>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    unsubscribeRegistry.mutate(registry.slug);
-                    setHasUnsubscribed(true);
-                  }}
-                  disabled={unsubscribeRegistry.isPending || userHasClaims}
-                  title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
-                >
-                  {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
-                </Button>
-              ))}
-          </div>
-        </div>
-
-        {isOwner && registry.visibility !== "HIDDEN" && (
-          <div
-            className={`grid transition-all duration-200 ease-in-out ${showGetLink ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-          >
-            <div className="overflow-hidden">
-              <div className="space-y-2 pt-1">
-                {inviteUrl === null ? (
-                  <div className="bg-muted h-9 animate-pulse rounded-md" />
-                ) : (
-                  <div className="flex gap-2">
-                    <Input value={inviteUrl} readOnly className="h-9 text-xs" />
+                {(isSubscriber || hasUnsubscribed) &&
+                  (hasUnsubscribed ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => joinRegistry.mutate(inviteToken ?? "")}
+                      disabled={joinRegistry.isPending}
+                    >
+                      {joinRegistry.isPending ? "Subscribing…" : "Re-subscribe"}
+                    </Button>
+                  ) : (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        void navigator.clipboard.writeText(inviteUrl);
-                        setCopiedLink(true);
-                        setTimeout(() => setCopiedLink(false), 2000);
+                        unsubscribeRegistry.mutate(registry.slug);
+                        setHasUnsubscribed(true);
                       }}
+                      disabled={unsubscribeRegistry.isPending || userHasClaims}
+                      title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
                     >
-                      {copiedLink ? "Copied!" : "Copy"}
+                      {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
                     </Button>
+                  ))}
+              </div>
+            </div>
+
+            {isOwner && registry.visibility !== "HIDDEN" && (
+              <div
+                className={`grid transition-all duration-200 ease-in-out ${showGetLink ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="space-y-2 pt-1">
+                    {inviteUrl === null ? (
+                      <div className="bg-muted h-9 animate-pulse rounded-md" />
+                    ) : (
+                      <div className="flex gap-2">
+                        <Input value={inviteUrl} readOnly className="h-9 text-xs" />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            void navigator.clipboard.writeText(inviteUrl);
+                            setCopiedLink(true);
+                            setTimeout(() => setCopiedLink(false), 2000);
+                          }}
+                        >
+                          {copiedLink ? "Copied!" : "Copy"}
+                        </Button>
+                      </div>
+                    )}
+                    {generateInvite.isError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>
+                          {getApiErrorMessage(generateInvite.error)}
+                        </AlertDescription>
+                      </Alert>
+                    )}
                   </div>
+                </div>
+              </div>
+            )}
+
+            {registry.description !== null &&
+              (isOwner ? (
+                <>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+                    onClick={() => setDescriptionOpen((o) => !o)}
+                  >
+                    Description
+                    <span>{descriptionOpen ? "▲" : "▼"}</span>
+                  </button>
+                  <div
+                    className={`grid transition-all duration-200 ease-in-out ${descriptionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="pt-1">
+                        <MarkdownContent
+                          content={registry.description}
+                          className="text-muted-foreground"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <MarkdownContent content={registry.description} className="text-muted-foreground" />
+              ))}
+
+            {inviteToken !== null && !isOwner && !isSubscriber && (
+              <div className="border-border space-y-3 rounded-lg border p-4">
+                <p className="text-sm font-medium">You've been invited to join this registry.</p>
+                {user === null ? (
+                  <>
+                    <p className="text-muted-foreground text-sm">
+                      You need an account to join this registry with your invite link.
+                    </p>
+                    <div className="flex gap-3">
+                      <Button asChild>
+                        <Link
+                          to="/register"
+                          state={{ from: { pathname: `/r/${safeSlug}?invite=${inviteToken}` } }}
+                        >
+                          Create account
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline">
+                        <Link
+                          to="/login"
+                          state={{ from: { pathname: `/r/${safeSlug}?invite=${inviteToken}` } }}
+                        >
+                          Sign in
+                        </Link>
+                      </Button>
+                    </div>
+                  </>
+                ) : joinRegistry.isSuccess ? (
+                  <p className="text-muted-foreground text-sm">You've joined this registry.</p>
+                ) : (
+                  <Button
+                    onClick={() => joinRegistry.mutate(inviteToken)}
+                    disabled={joinRegistry.isPending}
+                  >
+                    {joinRegistry.isPending ? "Joining…" : "Join registry"}
+                  </Button>
                 )}
-                {generateInvite.isError && (
+                {joinRegistry.isError && (
                   <Alert variant="destructive">
-                    <AlertDescription>{getApiErrorMessage(generateInvite.error)}</AlertDescription>
+                    <AlertDescription>{getApiErrorMessage(joinRegistry.error)}</AlertDescription>
                   </Alert>
                 )}
               </div>
-            </div>
-          </div>
-        )}
-
-        {registry.description !== null &&
-          (isOwner ? (
-            <>
-              <button
-                type="button"
-                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
-                onClick={() => setDescriptionOpen((o) => !o)}
-              >
-                Description
-                <span>{descriptionOpen ? "▲" : "▼"}</span>
-              </button>
-              <div
-                className={`grid transition-all duration-200 ease-in-out ${descriptionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-              >
-                <div className="overflow-hidden">
-                  <div className="pt-1">
-                    <MarkdownContent
-                      content={registry.description}
-                      className="text-muted-foreground"
-                    />
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <MarkdownContent content={registry.description} className="text-muted-foreground" />
-          ))}
-
-        {inviteToken !== null && !isOwner && !isSubscriber && (
-          <div className="border-border space-y-3 rounded-lg border p-4">
-            <p className="text-sm font-medium">You've been invited to join this registry.</p>
-            {user === null ? (
-              <>
-                <p className="text-muted-foreground text-sm">
-                  You need an account to join this registry with your invite link.
-                </p>
-                <div className="flex gap-3">
-                  <Button asChild>
-                    <Link
-                      to="/register"
-                      state={{ from: { pathname: `/r/${safeSlug}?invite=${inviteToken}` } }}
-                    >
-                      Create account
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline">
-                    <Link
-                      to="/login"
-                      state={{ from: { pathname: `/r/${safeSlug}?invite=${inviteToken}` } }}
-                    >
-                      Sign in
-                    </Link>
-                  </Button>
-                </div>
-              </>
-            ) : joinRegistry.isSuccess ? (
-              <p className="text-muted-foreground text-sm">You've joined this registry.</p>
-            ) : (
-              <Button
-                onClick={() => joinRegistry.mutate(inviteToken)}
-                disabled={joinRegistry.isPending}
-              >
-                {joinRegistry.isPending ? "Joining…" : "Join registry"}
-              </Button>
             )}
-            {joinRegistry.isError && (
-              <Alert variant="destructive">
-                <AlertDescription>{getApiErrorMessage(joinRegistry.error)}</AlertDescription>
-              </Alert>
-            )}
-          </div>
+          </>
         )}
       </div>
 
       {/* Content */}
-      <div className="space-y-6">
-        {items.length === 0 && (
-          <p className="text-muted-foreground py-8 text-center text-sm">
-            {isOwner ? "No items yet. Use Add Item to get started." : "No items yet."}
-          </p>
-        )}
+      {!isPending && registry !== undefined && (
+        <div className="space-y-6">
+          {items.length === 0 && (
+            <p className="text-muted-foreground py-8 text-center text-sm">
+              {isOwner ? "No items yet. Use Add Item to get started." : "No items yet."}
+            </p>
+          )}
 
-        {categoriesWithItems.map(({ cat, catItems }) => (
-          <div key={cat.id} className="space-y-2">
-            <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
-              {cat.name}
-            </h2>
-            {catItems.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                slug={registry.slug}
-                isOwner={isOwner}
-                categoryName={cat.name}
-                subscriberNames={subscriberNames}
-              />
-            ))}
-          </div>
-        ))}
-
-        {uncategorizedItems.length > 0 && (
-          <div className="space-y-2">
-            {uncategorizedItems.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                slug={registry.slug}
-                isOwner={isOwner}
-                subscriberNames={subscriberNames}
-              />
-            ))}
-          </div>
-        )}
-
-        {isOwner && (
-          <div className="space-y-3">
-            <button
-              type="button"
-              className="flex items-center gap-1 text-left"
-              onClick={() => setSubscribersOpen((o) => !o)}
-            >
-              <h2 className="text-lg font-semibold">
-                Subscribers{" "}
-                <span className="text-muted-foreground text-base font-normal">
-                  ({subscribers.length})
-                </span>
+          {categoriesWithItems.map(({ cat, catItems }) => (
+            <div key={cat.id} className="space-y-2">
+              <h2 className="text-muted-foreground text-sm font-semibold tracking-wide uppercase">
+                {cat.name}
               </h2>
-              <span className="text-muted-foreground text-sm">{subscribersOpen ? "▲" : "▼"}</span>
-            </button>
-            <div
-              className={`grid transition-all duration-200 ease-in-out ${subscribersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-            >
-              <div className="overflow-hidden">
-                <div className="pt-1">
-                  {subscribers.length === 0 ? (
-                    <p className="text-muted-foreground text-sm">No subscribers yet.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {subscribers.map((subscriber) => {
-                        const claimedItems = allClaims
-                          .filter((c) => c.claimerUserId === subscriber.userId)
-                          .map((c) => items.find((i) => i.id === c.itemId))
-                          .filter((i) => i !== undefined);
-                        return (
-                          <li
-                            key={subscriber.userId}
-                            className="space-y-1 rounded-lg border px-3 py-2"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium">{subscriber.displayName}</span>
-                              <span className="text-muted-foreground text-xs">
-                                {new Date(subscriber.joinedAt).toLocaleDateString()}
-                              </span>
-                            </div>
-                            {claimedItems.length > 0 && (
-                              <p className="text-muted-foreground text-xs">
-                                {"Claimed: "}
-                                {claimedItems.map((i) => i.title).join(", ")}
-                              </p>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+              {catItems.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  slug={safeSlug}
+                  isOwner={isOwner}
+                  categoryName={cat.name}
+                  subscriberNames={subscriberNames}
+                />
+              ))}
+            </div>
+          ))}
+
+          {uncategorizedItems.length > 0 && (
+            <div className="space-y-2">
+              {uncategorizedItems.map((item) => (
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  slug={safeSlug}
+                  isOwner={isOwner}
+                  subscriberNames={subscriberNames}
+                />
+              ))}
+            </div>
+          )}
+
+          {isOwner && (
+            <div className="space-y-3">
+              <button
+                type="button"
+                className="flex items-center gap-1 text-left"
+                onClick={() => setSubscribersOpen((o) => !o)}
+              >
+                <h2 className="text-lg font-semibold">
+                  Subscribers{" "}
+                  <span className="text-muted-foreground text-base font-normal">
+                    ({subscribers.length})
+                  </span>
+                </h2>
+                <span className="text-muted-foreground text-sm">{subscribersOpen ? "▲" : "▼"}</span>
+              </button>
+              <div
+                className={`grid transition-all duration-200 ease-in-out ${subscribersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+              >
+                <div className="overflow-hidden">
+                  <div className="pt-1">
+                    {subscribers.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">No subscribers yet.</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {subscribers.map((subscriber) => {
+                          const claimedItems = allClaims
+                            .filter((c) => c.claimerUserId === subscriber.userId)
+                            .map((c) => items.find((i) => i.id === c.itemId))
+                            .filter((i) => i !== undefined);
+                          return (
+                            <li
+                              key={subscriber.userId}
+                              className="space-y-1 rounded-lg border px-3 py-2"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium">
+                                  {subscriber.displayName}
+                                </span>
+                                <span className="text-muted-foreground text-xs">
+                                  {new Date(subscriber.joinedAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              {claimedItems.length > 0 && (
+                                <p className="text-muted-foreground text-xs">
+                                  {"Claimed: "}
+                                  {claimedItems.map((i) => i.title).join(", ")}
+                                </p>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

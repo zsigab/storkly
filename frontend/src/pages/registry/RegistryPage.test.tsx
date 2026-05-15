@@ -15,6 +15,7 @@ vi.mock("react-router", async () => {
     useNavigate: () => mockNavigate,
     useParams: () => mockParams,
     useSearchParams: () => [mockSearchParams],
+    useLocation: () => ({ state: null }),
     useViewTransitionState: () => false,
     Link: ({
       to,

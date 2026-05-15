@@ -11,7 +11,12 @@ export function RegistryCard({ registry }: RegistryCardProps): React.ReactElemen
   const isDashboardTransitioning = useViewTransitionState("/dashboard");
 
   return (
-    <Link to={`/r/${registry.slug}`} viewTransition className="block">
+    <Link
+      to={`/r/${registry.slug}`}
+      viewTransition
+      state={{ fromRegistryCard: true }}
+      className="block"
+    >
       <div
         className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors"
         style={{

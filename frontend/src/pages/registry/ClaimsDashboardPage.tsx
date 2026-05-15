@@ -263,14 +263,6 @@ export function ClaimsDashboardPage(): React.ReactElement {
   const optionLabelMap = new Map<string, string>(deliveryOptions.map((o) => [o.id, o.label]));
   const groups = groupClaims(claims);
 
-  if (claimsPending) {
-    return (
-      <div className="mx-auto max-w-2xl py-10 text-center">
-        <p className="text-muted-foreground">Loading…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-2xl space-y-8 py-10">
       <div className="space-y-2">
@@ -296,8 +288,10 @@ export function ClaimsDashboardPage(): React.ReactElement {
 
       <div className="border-border border-t pt-6">
         <h2 className="mb-4 text-lg font-medium">
-          {claims.length === 0 ? "Claim activity" : `Claim activity (${claims.length})`}
+          {claims.length > 0 ? `Claim activity (${claims.length})` : "Claim activity"}
         </h2>
+
+        {claimsPending && <div className="bg-muted h-6 w-32 animate-pulse rounded" />}
 
         {claimsError && (
           <Alert variant="destructive">
@@ -305,7 +299,7 @@ export function ClaimsDashboardPage(): React.ReactElement {
           </Alert>
         )}
 
-        {claims.length === 0 && !claimsError && (
+        {!claimsPending && claims.length === 0 && !claimsError && (
           <p className="text-muted-foreground">No active claims yet.</p>
         )}
 
