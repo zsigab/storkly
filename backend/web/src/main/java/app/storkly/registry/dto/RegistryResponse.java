@@ -12,4 +12,6 @@ public record RegistryResponse(
         @Nullable String description,
         RegistryVisibility visibility,
         UUID ownerId,
+        String themeColor,
+        String themeBackground,
         OffsetDateTime createdAt) {}

@@ -48,8 +48,13 @@ public class RegistryController {
     @ResponseStatus(HttpStatus.CREATED)
     public RegistryResponse create(
             @RequestBody @Valid RegistryCreateRequest request, @AuthenticationPrincipal User currentUser) {
-        Registry registry =
-                registryService.create(request.name(), request.description(), request.visibility(), currentUser.id());
+        Registry registry = registryService.create(
+                request.name(),
+                request.description(),
+                request.visibility(),
+                request.themeColor(),
+                request.themeBackground(),
+                currentUser.id());
         return toResponse(registry);
     }
 
@@ -65,7 +70,13 @@ public class RegistryController {
             @RequestBody @Valid RegistryUpdateRequest request,
             @AuthenticationPrincipal User currentUser) {
         Registry registry = registryService.update(
-                slug, request.name(), request.description(), request.visibility(), currentUser.id());
+                slug,
+                request.name(),
+                request.description(),
+                request.visibility(),
+                request.themeColor(),
+                request.themeBackground(),
+                currentUser.id());
         return toResponse(registry);
     }
 
@@ -128,6 +139,8 @@ public class RegistryController {
                 registry.description(),
                 registry.visibility(),
                 registry.ownerId(),
+                registry.themeColor(),
+                registry.themeBackground(),
                 registry.createdAt());
     }
 }

@@ -24,6 +24,8 @@ export interface RegistryResponse {
   description: string | null;
   visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
   ownerId: string;
+  themeColor: string;
+  themeBackground: string;
   createdAt: string;
 }
 
@@ -207,6 +209,8 @@ export type paths = {
             name: string;
             description?: string | null;
             visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+            themeColor?: string | null;
+            themeBackground?: string | null;
           };
         };
       };
@@ -226,6 +230,8 @@ export type paths = {
             name?: string | null;
             description?: string | null;
             visibility?: "PUBLIC" | "PRIVATE" | "HIDDEN" | null;
+            themeColor?: string | null;
+            themeBackground?: string | null;
           };
         };
       };

@@ -7,4 +7,6 @@ import org.jspecify.annotations.Nullable;
 public record RegistryUpdateRequest(
         @Nullable @Size(max = 64) String name,
         @Nullable String description,
-        @Nullable RegistryVisibility visibility) {}
+        @Nullable RegistryVisibility visibility,
+        @Nullable @Size(max = 16) String themeColor,
+        @Nullable @Size(max = 16) String themeBackground) {}

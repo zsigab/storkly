@@ -117,12 +117,13 @@ describe("ThemeSelector", () => {
   });
 
   describe("Background section", () => {
-    it("renders Off, Blobs, and Stars background buttons", () => {
+    it("renders Off, Blobs, Stars, and Blobs + Stars background buttons", () => {
       renderSelector();
       openPanel();
       expect(screen.getByRole("button", { name: /^off$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^blobs$/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /^stars$/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^blobs \+ stars$/i })).toBeInTheDocument();
     });
 
     it("sets data-background to default when Blobs is clicked", () => {

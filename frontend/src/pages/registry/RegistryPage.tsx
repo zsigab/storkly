@@ -26,6 +26,7 @@ import {
 } from "@/hooks/useRegistries";
 import { useAllItemClaims } from "@/hooks/useClaims";
 import { useRegistryItems } from "@/hooks/useItems";
+import { useTheme, isThemeColor, isThemeBackground } from "@/hooks/useTheme";
 
 export function RegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
@@ -33,6 +34,7 @@ export function RegistryPage(): React.ReactElement {
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
   const { user } = useAuth();
+  const { setRegistryOverride, clearRegistryOverride } = useTheme();
   const safeSlug = slug ?? "";
   const isEditTransitioning = useViewTransitionState(`/r/${safeSlug}/edit`);
   const isClaimsTransitioning = useViewTransitionState(`/r/${safeSlug}/claims`);
@@ -92,6 +94,20 @@ export function RegistryPage(): React.ReactElement {
     measure();
     return () => observer.disconnect();
   }, [registry?.name, isOwner, isSubscriber, hasUnsubscribed]);
+
+  useEffect(() => {
+    if (registry !== undefined) {
+      const color = isThemeColor(registry.themeColor) ? registry.themeColor : "peach";
+      const background = isThemeBackground(registry.themeBackground)
+        ? registry.themeBackground
+        : "none";
+      setRegistryOverride(color, background);
+    }
+  }, [registry, setRegistryOverride]);
+
+  useEffect(() => {
+    return () => clearRegistryOverride();
+  }, [clearRegistryOverride]);
 
   useEffect(() => {
     if (joinRegistry.isSuccess) setHasUnsubscribed(false);

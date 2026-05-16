@@ -36,6 +36,8 @@ const registryFixture = {
   description: "A great registry",
   visibility: "PUBLIC" as const,
   ownerId: "u1",
+  themeColor: "peach",
+  themeBackground: "none",
   createdAt: "2024-01-01T00:00:00Z",
 };
 
@@ -98,7 +100,13 @@ describe("EditRegistryPage", () => {
     await waitFor(() =>
       expect(api.PATCH).toHaveBeenCalledWith("/api/registries/{slug}", {
         params: { path: { slug: "my-registry" } },
-        body: { name: "Updated Registry", description: "A great registry", visibility: "PUBLIC" },
+        body: {
+          name: "Updated Registry",
+          description: "A great registry",
+          visibility: "PUBLIC",
+          themeColor: "peach",
+          themeBackground: "none",
+        },
       }),
     );
     expect(mockNavigate).toHaveBeenCalledWith("/r/my-registry");

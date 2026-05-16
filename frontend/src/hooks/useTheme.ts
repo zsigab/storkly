@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -12,7 +13,7 @@ import { createElement } from "react";
 export type ThemeColor = "peach" | "blue" | "pink" | "green" | "purple" | "beige";
 export type ThemeStyle = "glass";
 export type ThemeMode = "light" | "dark";
-export type ThemeBackground = "none" | "default" | "stars";
+export type ThemeBackground = "none" | "default" | "stars" | "both";
 
 export interface ThemeState {
   color: ThemeColor;
@@ -28,6 +29,8 @@ interface ThemeContextValue {
   setStyle: (style: ThemeStyle) => void;
   toggleMode: () => void;
   setBackground: (bg: ThemeBackground) => void;
+  setRegistryOverride: (color: ThemeColor, background: ThemeBackground) => void;
+  clearRegistryOverride: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -39,7 +42,7 @@ interface ThemeProviderProps {
 const STORAGE_KEY = "storkly-theme";
 const COLORS: readonly ThemeColor[] = ["peach", "blue", "pink", "green", "purple", "beige"];
 const STYLES: readonly ThemeStyle[] = ["glass"];
-const BACKGROUNDS: readonly ThemeBackground[] = ["none", "default", "stars"];
+const BACKGROUNDS: readonly ThemeBackground[] = ["none", "default", "stars", "both"];
 
 // Concrete HSL values per colour/mode — mirrors globals.css accent overrides.
 // Using literal values (not var(--primary)) means the backgroundImage string
@@ -151,7 +154,7 @@ function makeBlobBg(color: ThemeColor, mode: ThemeMode): string {
   ].join(", ");
 }
 
-function isThemeColor(v: unknown): v is ThemeColor {
+export function isThemeColor(v: unknown): v is ThemeColor {
   return typeof v === "string" && (COLORS as readonly string[]).includes(v);
 }
 
@@ -159,7 +162,7 @@ function isThemeStyle(v: unknown): v is ThemeStyle {
   return typeof v === "string" && (STYLES as readonly string[]).includes(v);
 }
 
-function isThemeBackground(v: unknown): v is ThemeBackground {
+export function isThemeBackground(v: unknown): v is ThemeBackground {
   return typeof v === "string" && (BACKGROUNDS as readonly string[]).includes(v);
 }
 
@@ -223,18 +226,39 @@ function computeBgStyle(theme: ThemeState): CSSProperties {
       backgroundPosition: "center",
     };
   }
+  if (theme.background === "both") {
+    return {
+      backgroundImage: `${makeStarBg(theme.color, theme.mode)}, ${makeBlobBg(theme.color, theme.mode)}`,
+      backgroundSize: "cover, auto",
+      backgroundPosition: "center, 0 0",
+    };
+  }
   return {};
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElement {
   const [theme, setTheme] = useState<ThemeState>(getInitialTheme);
+  const [registryOverride, setRegistryTheme] = useState<{
+    color: ThemeColor;
+    background: ThemeBackground;
+  } | null>(null);
+
+  const effectiveColor = registryOverride?.color ?? theme.color;
+  const effectiveBackground = registryOverride?.background ?? theme.background;
 
   useEffect(() => {
-    applyTheme(theme);
+    const el = document.documentElement;
+    el.dataset["color"] = effectiveColor;
+    el.dataset["style"] = theme.style;
+    el.dataset["background"] = effectiveBackground;
+    el.classList.toggle("dark", theme.mode === "dark");
     localStorage.setItem(STORAGE_KEY, JSON.stringify(theme));
-  }, [theme]);
+  }, [theme, effectiveColor, effectiveBackground]);
 
-  const bgStyle = useMemo(() => computeBgStyle(theme), [theme]);
+  const bgStyle = useMemo(
+    () => computeBgStyle({ ...theme, color: effectiveColor, background: effectiveBackground }),
+    [theme, effectiveColor, effectiveBackground],
+  );
 
   const setColor = (color: ThemeColor): void => {
     setTheme((t) => ({ ...t, color }));
@@ -252,9 +276,31 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     setTheme((t) => ({ ...t, background }));
   };
 
+  const setRegistryOverride = useCallback(
+    (color: ThemeColor, background: ThemeBackground): void => {
+      setRegistryTheme({ color, background });
+    },
+    [],
+  );
+
+  const clearRegistryOverride = useCallback((): void => {
+    setRegistryTheme(null);
+  }, []);
+
   return createElement(
     ThemeContext.Provider,
-    { value: { theme, bgStyle, setColor, setStyle, toggleMode, setBackground } },
+    {
+      value: {
+        theme,
+        bgStyle,
+        setColor,
+        setStyle,
+        toggleMode,
+        setBackground,
+        setRegistryOverride,
+        clearRegistryOverride,
+      },
+    },
     children,
   );
 }

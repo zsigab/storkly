@@ -13,4 +13,6 @@ public record Registry(
         String slug,
         @Nullable String description,
         RegistryVisibility visibility,
+        String themeColor,
+        String themeBackground,
         OffsetDateTime createdAt) {}

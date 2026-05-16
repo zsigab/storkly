@@ -11,10 +11,31 @@ import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { MarkdownToolbar } from "@/components/common/MarkdownToolbar";
 import { getApiErrorMessage } from "@/api/helpers";
 
+const THEME_COLORS = [
+  { value: "peach", label: "Peach", swatch: "hsl(15 85% 68%)" },
+  { value: "blue", label: "Blue", swatch: "hsl(217 91% 60%)" },
+  { value: "pink", label: "Pink", swatch: "hsl(340 75% 64%)" },
+  { value: "green", label: "Green", swatch: "hsl(160 84% 39%)" },
+  { value: "purple", label: "Purple", swatch: "hsl(271 81% 56%)" },
+  { value: "beige", label: "Beige", swatch: "hsl(35 50% 70%)" },
+] as const;
+
+const THEME_BACKGROUNDS = [
+  { value: "none", label: "Clean" },
+  { value: "default", label: "Blobs" },
+  { value: "stars", label: "Stars" },
+  { value: "both", label: "Blobs + Stars" },
+] as const;
+
+type ThemeColorValue = (typeof THEME_COLORS)[number]["value"];
+type ThemeBackgroundValue = (typeof THEME_BACKGROUNDS)[number]["value"];
+
 const schema = z.object({
   name: z.string().min(1, "Name is required").max(64, "Name must be 64 characters or fewer"),
   description: z.string(),
   visibility: z.enum(["PUBLIC", "PRIVATE", "HIDDEN"]),
+  themeColor: z.enum(["peach", "blue", "pink", "green", "purple", "beige"]),
+  themeBackground: z.enum(["none", "default", "stars", "both"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -25,6 +46,8 @@ interface RegistryFormProps {
     name: string;
     description: string | null;
     visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+    themeColor: string;
+    themeBackground: string;
   }) => void;
   isPending: boolean;
   isError: boolean;
@@ -63,11 +86,15 @@ export function RegistryForm({
       name: "",
       description: "",
       visibility: "PUBLIC",
+      themeColor: "peach" as ThemeColorValue,
+      themeBackground: "none" as ThemeBackgroundValue,
       ...defaultValues,
     },
   });
 
   const descriptionValue = watch("description");
+  const themeColor = watch("themeColor");
+  const themeBackground = watch("themeBackground");
   const { ref: descriptionRegisterRef, ...descriptionRegistration } = register("description");
 
   return (
@@ -79,6 +106,8 @@ export function RegistryForm({
           name: values.name,
           description: values.description.length > 0 ? values.description : null,
           visibility: values.visibility,
+          themeColor: values.themeColor,
+          themeBackground: values.themeBackground,
         }),
       )}
     >
@@ -157,6 +186,48 @@ export function RegistryForm({
           <option value="HIDDEN">Hidden — only you can see it</option>
         </select>
       </FormField>
+
+      <div className="space-y-2">
+        <p className="text-sm leading-none font-medium">Theme color</p>
+        <div className="flex gap-2">
+          {THEME_COLORS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setValue("themeColor", opt.value)}
+              aria-label={opt.label}
+              aria-pressed={themeColor === opt.value}
+              className="h-6 w-6 rounded-full transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{
+                backgroundColor: opt.swatch,
+                boxShadow:
+                  themeColor === opt.value
+                    ? `0 0 0 2px hsl(var(--background)), 0 0 0 4px ${opt.swatch}`
+                    : "none",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm leading-none font-medium">Theme style</p>
+        <div className="flex flex-wrap gap-1.5">
+          {THEME_BACKGROUNDS.map((opt) => (
+            <Button
+              key={opt.value}
+              type="button"
+              variant={themeBackground === opt.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setValue("themeBackground", opt.value)}
+              aria-pressed={themeBackground === opt.value}
+              className="text-xs"
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {isError && (
         <Alert variant="destructive">

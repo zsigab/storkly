@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { RegistryPage } from "./RegistryPage";
 
 vi.mock("@/api", () => ({ api: { GET: vi.fn(), POST: vi.fn(), DELETE: vi.fn() } }));
@@ -40,6 +41,8 @@ const registryFixture = {
   description: "A great registry",
   visibility: "PUBLIC" as const,
   ownerId: "owner-uuid",
+  themeColor: "peach",
+  themeBackground: "none",
   createdAt: "2024-01-01T00:00:00Z",
 };
 
@@ -68,11 +71,17 @@ function renderPage(storedUser: object | null = null) {
     },
     writable: true,
   });
+  Object.defineProperty(window, "matchMedia", {
+    value: vi.fn().mockReturnValue({ matches: false }),
+    writable: true,
+  });
   render(
     <QueryClientProvider client={makeClient()}>
-      <AuthProvider>
-        <RegistryPage />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <RegistryPage />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>,
   );
 }

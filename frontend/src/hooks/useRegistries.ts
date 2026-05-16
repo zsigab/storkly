@@ -38,6 +38,8 @@ export function useCreateRegistry() {
       name: string;
       description: string | null;
       visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+      themeColor: string;
+      themeBackground: string;
     }): Promise<RegistryResponse> => {
       const { data, error } = await api.POST("/api/registries", { body: values });
       if (error !== undefined) throw error;
@@ -60,6 +62,8 @@ export function useUpdateRegistry(slug: string) {
       name: string;
       description: string | null;
       visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+      themeColor: string;
+      themeBackground: string;
     }): Promise<RegistryResponse> => {
       const { data, error } = await api.PATCH("/api/registries/{slug}", {
         params: { path: { slug } },

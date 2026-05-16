@@ -31,6 +31,8 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                     .set(REGISTRY.SLUG, registry.slug())
                     .set(REGISTRY.DESCRIPTION, registry.description())
                     .set(REGISTRY.VISIBILITY, mapVisibility(registry.visibility()))
+                    .set(REGISTRY.THEME_COLOR, registry.themeColor())
+                    .set(REGISTRY.THEME_BACKGROUND, registry.themeBackground())
                     .set(REGISTRY.CREATED_AT, registry.createdAt())
                     .execute();
             return Registry.builder()
@@ -40,6 +42,8 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                     .slug(registry.slug())
                     .description(registry.description())
                     .visibility(registry.visibility())
+                    .themeColor(registry.themeColor())
+                    .themeBackground(registry.themeBackground())
                     .createdAt(registry.createdAt())
                     .build();
         } else {
@@ -48,6 +52,8 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                     .set(REGISTRY.SLUG, registry.slug())
                     .set(REGISTRY.DESCRIPTION, registry.description())
                     .set(REGISTRY.VISIBILITY, mapVisibility(registry.visibility()))
+                    .set(REGISTRY.THEME_COLOR, registry.themeColor())
+                    .set(REGISTRY.THEME_BACKGROUND, registry.themeBackground())
                     .where(REGISTRY.ID.eq(registry.id()))
                     .execute();
             return registry;
@@ -109,6 +115,8 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                 .slug(r.getSlug())
                 .description(r.getDescription())
                 .visibility(mapVisibility(r.getVisibility()))
+                .themeColor(r.getThemeColor())
+                .themeBackground(r.getThemeBackground())
                 .createdAt(r.getCreatedAt())
                 .build();
     }

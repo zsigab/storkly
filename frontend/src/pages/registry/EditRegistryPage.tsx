@@ -4,6 +4,7 @@ import { RegistryForm } from "@/components/registry/RegistryForm";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { ConfirmNameDialog } from "@/components/common/ConfirmNameDialog";
 import { useRegistry, useUpdateRegistry, useDeleteRegistry } from "@/hooks/useRegistries";
+import { isThemeColor, isThemeBackground } from "@/hooks/useTheme";
 
 export function EditRegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
@@ -56,6 +57,10 @@ export function EditRegistryPage(): React.ReactElement {
             name: registry.name,
             description: registry.description ?? "",
             visibility: registry.visibility,
+            themeColor: isThemeColor(registry.themeColor) ? registry.themeColor : "peach",
+            themeBackground: isThemeBackground(registry.themeBackground)
+              ? registry.themeBackground
+              : "none",
           }}
           onSubmit={(values) => updateRegistry.mutate(values)}
           isPending={updateRegistry.isPending}

@@ -82,7 +82,8 @@ class RegistryControllerIntegrationTest {
     void createRegistry_authenticated_returnsCreated() {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-        RegistryCreateRequest request = new RegistryCreateRequest("My New Registry", null, RegistryVisibility.PUBLIC);
+        RegistryCreateRequest request =
+                new RegistryCreateRequest("My New Registry", null, RegistryVisibility.PUBLIC, null, null);
 
         restTestClient
                 .post()
@@ -103,7 +104,8 @@ class RegistryControllerIntegrationTest {
     void createHiddenRegistry_andFetchAsGuest_returnsForbidden() {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-        RegistryCreateRequest request = new RegistryCreateRequest("Secret", null, RegistryVisibility.HIDDEN);
+        RegistryCreateRequest request =
+                new RegistryCreateRequest("Secret", null, RegistryVisibility.HIDDEN, null, null);
         AtomicReference<String> slugRef = new AtomicReference<>();
 
         restTestClient

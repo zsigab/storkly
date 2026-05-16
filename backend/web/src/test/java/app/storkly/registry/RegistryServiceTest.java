@@ -84,6 +84,8 @@ class RegistryServiceTest {
                 .name("Test Registry")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -114,6 +116,8 @@ class RegistryServiceTest {
                 .name("Test Registry")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -145,6 +149,8 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -167,6 +173,8 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -191,6 +199,8 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PRIVATE)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
         RegistryInvite invite = RegistryInvite.builder()
@@ -220,6 +230,8 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PRIVATE)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
         RegistryInvite invite = RegistryInvite.builder()
@@ -251,6 +263,8 @@ class RegistryServiceTest {
                 .name("A")
                 .slug(slug)
                 .visibility(RegistryVisibility.PRIVATE)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
         RegistryInvite invite = RegistryInvite.builder()
@@ -279,6 +293,8 @@ class RegistryServiceTest {
                 .name("Baby Registry")
                 .slug(oldSlug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -286,7 +302,7 @@ class RegistryServiceTest {
         when(registryRepository.existsBySlug(newSlug)).thenReturn(false);
         when(registryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        registryService.update(oldSlug, newName, null, null, ownerId);
+        registryService.update(oldSlug, newName, null, null, null, null, ownerId);
 
         verify(slugRedirectRepository).save(oldSlug, registryId);
     }
@@ -303,13 +319,15 @@ class RegistryServiceTest {
                 .name("Baby Registry")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
         when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
         when(registryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        registryService.update(slug, "Baby Registry", null, null, ownerId);
+        registryService.update(slug, "Baby Registry", null, null, null, null, ownerId);
 
         verify(slugRedirectRepository, never()).save(any(), any());
     }
@@ -326,6 +344,8 @@ class RegistryServiceTest {
                 .name("Mikey's Registry")
                 .slug(newSlug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 

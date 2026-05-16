@@ -27,6 +27,7 @@ const BG_OPTIONS: BgOption[] = [
   { value: "none", label: "Off" },
   { value: "default", label: "Blobs" },
   { value: "stars", label: "Stars" },
+  { value: "both", label: "Blobs + Stars" },
 ];
 
 export function ThemeSelector(): React.ReactElement {

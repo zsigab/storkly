@@ -74,6 +74,8 @@ describe("CreateRegistryPage", () => {
         description: null,
         visibility: "PUBLIC",
         ownerId: "u1",
+        themeColor: "peach",
+        themeBackground: "none",
         createdAt: "2024-01-01T00:00:00Z",
       },
       error: undefined,
@@ -84,7 +86,13 @@ describe("CreateRegistryPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /create registry/i }));
     await waitFor(() =>
       expect(api.POST).toHaveBeenCalledWith("/api/registries", {
-        body: { name: "My Registry", description: null, visibility: "PUBLIC" },
+        body: {
+          name: "My Registry",
+          description: null,
+          visibility: "PUBLIC",
+          themeColor: "peach",
+          themeBackground: "none",
+        },
       }),
     );
     expect(mockNavigate).toHaveBeenCalledWith("/r/my-registry");

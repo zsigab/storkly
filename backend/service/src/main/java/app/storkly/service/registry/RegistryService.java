@@ -40,7 +40,13 @@ public class RegistryService {
     private final ClaimRepository claimRepository;
 
     @Transactional
-    public Registry create(String name, @Nullable String description, RegistryVisibility visibility, UUID ownerId) {
+    public Registry create(
+            String name,
+            @Nullable String description,
+            RegistryVisibility visibility,
+            @Nullable String themeColor,
+            @Nullable String themeBackground,
+            UUID ownerId) {
         String slug = generateUniqueSlug(name);
         Registry registry = Registry.builder()
                 .ownerId(ownerId)
@@ -48,6 +54,8 @@ public class RegistryService {
                 .slug(slug)
                 .description(description)
                 .visibility(visibility)
+                .themeColor(themeColor != null ? themeColor : "peach")
+                .themeBackground(themeBackground != null ? themeBackground : "none")
                 .createdAt(OffsetDateTime.now())
                 .build();
         return registryRepository.save(registry);
@@ -80,6 +88,8 @@ public class RegistryService {
             @Nullable String name,
             @Nullable String description,
             @Nullable RegistryVisibility visibility,
+            @Nullable String themeColor,
+            @Nullable String themeBackground,
             UUID currentUserId) {
         Registry registry = resolveBySlug(slug);
         assertOwner(registry, currentUserId);
@@ -100,6 +110,8 @@ public class RegistryService {
                 .slug(newSlug)
                 .description(description != null ? description : registry.description())
                 .visibility(visibility != null ? visibility : registry.visibility())
+                .themeColor(themeColor != null ? themeColor : registry.themeColor())
+                .themeBackground(themeBackground != null ? themeBackground : registry.themeBackground())
                 .createdAt(registry.createdAt())
                 .build();
         return registryRepository.save(updated);
