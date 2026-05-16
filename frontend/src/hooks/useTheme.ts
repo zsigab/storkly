@@ -194,7 +194,7 @@ function getInitialTheme(): ThemeState {
     color: "peach",
     style: "glass",
     mode: prefersDark ? "dark" : "light",
-    background: "none",
+    background: "both",
   };
 }
 

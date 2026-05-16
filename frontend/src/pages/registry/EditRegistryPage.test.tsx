@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { EditRegistryPage } from "./EditRegistryPage";
 
 vi.mock("@/api", () => ({ api: { GET: vi.fn(), PATCH: vi.fn(), DELETE: vi.fn() } }));
@@ -50,9 +51,11 @@ function makeClient() {
 function renderPage() {
   render(
     <QueryClientProvider client={makeClient()}>
-      <AuthProvider>
-        <EditRegistryPage />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <EditRegistryPage />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>,
   );
 }
@@ -61,6 +64,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   Object.defineProperty(window, "localStorage", {
     value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
+    writable: true,
+  });
+  Object.defineProperty(window, "matchMedia", {
+    value: vi.fn().mockReturnValue({ matches: false }),
     writable: true,
   });
 });

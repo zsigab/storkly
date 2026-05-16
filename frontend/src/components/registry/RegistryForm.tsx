@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +10,7 @@ import { FormField } from "@/components/common/FormField";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { MarkdownToolbar } from "@/components/common/MarkdownToolbar";
 import { getApiErrorMessage } from "@/api/helpers";
+import { useTheme } from "@/hooks/useTheme";
 
 const THEME_COLORS = [
   { value: "peach", label: "Peach", swatch: "hsl(15 85% 68%)" },
@@ -87,7 +88,7 @@ export function RegistryForm({
       description: "",
       visibility: "PUBLIC",
       themeColor: "peach" as ThemeColorValue,
-      themeBackground: "none" as ThemeBackgroundValue,
+      themeBackground: "both" as ThemeBackgroundValue,
       ...defaultValues,
     },
   });
@@ -96,6 +97,16 @@ export function RegistryForm({
   const themeColor = watch("themeColor");
   const themeBackground = watch("themeBackground");
   const { ref: descriptionRegisterRef, ...descriptionRegistration } = register("description");
+
+  const { setRegistryOverride, clearRegistryOverride } = useTheme();
+
+  useEffect(() => {
+    setRegistryOverride(themeColor, themeBackground);
+  }, [themeColor, themeBackground, setRegistryOverride]);
+
+  useEffect(() => {
+    return () => clearRegistryOverride();
+  }, [clearRegistryOverride]);
 
   return (
     <form

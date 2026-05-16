@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { CreateRegistryPage } from "./CreateRegistryPage";
 
 vi.mock("@/api", () => ({ api: { GET: vi.fn(), POST: vi.fn() } }));
@@ -36,9 +37,11 @@ function makeClient() {
 function renderPage() {
   render(
     <QueryClientProvider client={makeClient()}>
-      <AuthProvider>
-        <CreateRegistryPage />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CreateRegistryPage />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>,
   );
 }
@@ -47,6 +50,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   Object.defineProperty(window, "localStorage", {
     value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
+    writable: true,
+  });
+  Object.defineProperty(window, "matchMedia", {
+    value: vi.fn().mockReturnValue({ matches: false }),
     writable: true,
   });
 });
@@ -75,7 +82,7 @@ describe("CreateRegistryPage", () => {
         visibility: "PUBLIC",
         ownerId: "u1",
         themeColor: "peach",
-        themeBackground: "none",
+        themeBackground: "both",
         createdAt: "2024-01-01T00:00:00Z",
       },
       error: undefined,
@@ -91,7 +98,7 @@ describe("CreateRegistryPage", () => {
           description: null,
           visibility: "PUBLIC",
           themeColor: "peach",
-          themeBackground: "none",
+          themeBackground: "both",
         },
       }),
     );
