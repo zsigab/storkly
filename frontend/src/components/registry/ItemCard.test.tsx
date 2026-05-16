@@ -106,13 +106,12 @@ describe("ItemCard", () => {
     expect(screen.getAllByText("Please get size L").length).toBeGreaterThan(0);
   });
 
-  it("shows full description and notes label in expanded view after clicking card", async () => {
+  it("shows full description and notes in expanded view after clicking card", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     renderCard({ item: { ...base, notes: "Please get size L" } });
     fireEvent.click(screen.getByText("Baby Carrier").closest("div")!);
     expect(screen.getByText("Great for newborns")).toBeInTheDocument();
-    expect(screen.getByText("Notes for gifters")).toBeInTheDocument();
     expect(screen.getByText("Please get size L")).toBeInTheDocument();
   });
 

@@ -261,15 +261,9 @@ export function ItemCard({
 
         <div className="min-w-0 flex-1 space-y-1">
           {renderTitle()}
-          {/* Collapsed-only preview: notes if present, otherwise description */}
-          {!isExpanded &&
-            (item.notes !== null ? (
-              <p className="text-muted-foreground line-clamp-2 text-xs italic">{item.notes}</p>
-            ) : item.description !== null ? (
-              <p className="text-muted-foreground line-clamp-2 text-sm whitespace-pre-wrap">
-                {item.description}
-              </p>
-            ) : null)}
+          {item.notes !== null && (
+            <p className="text-muted-foreground text-xs italic">{item.notes}</p>
+          )}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>
             {item.priceReference !== null && (
@@ -283,6 +277,17 @@ export function ItemCard({
               </span>
             )}
           </div>
+          {item.urlOriginal !== null && (
+            <a
+              href={item.urlOriginal}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground text-xs hover:underline"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {getDomain(item.urlOriginal)}
+            </a>
+          )}
         </div>
 
         <div
@@ -299,27 +304,10 @@ export function ItemCard({
       >
         <div className="overflow-hidden">
           <div className="space-y-1.5 pt-1">
-            {item.urlOriginal !== null && (
-              <a
-                href={item.urlOriginal}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-muted-foreground text-xs hover:underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {getDomain(item.urlOriginal)}
-              </a>
-            )}
             {item.description !== null && (
               <p className="text-muted-foreground text-sm whitespace-pre-wrap">
                 {item.description}
               </p>
-            )}
-            {item.notes !== null && (
-              <div>
-                <p className="text-muted-foreground text-xs font-medium">Notes for gifters</p>
-                <p className="text-muted-foreground text-xs italic">{item.notes}</p>
-              </div>
             )}
           </div>
         </div>
