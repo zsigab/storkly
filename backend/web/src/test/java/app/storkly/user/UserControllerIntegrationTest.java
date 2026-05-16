@@ -72,7 +72,7 @@ class UserControllerIntegrationTest {
         restTestClient
                 .post()
                 .uri("/api/auth/login")
-                .body(new LoginRequest(email, password))
+                .body(new LoginRequest(email, password, false))
                 .exchange()
                 .expectStatus()
                 .isOk()

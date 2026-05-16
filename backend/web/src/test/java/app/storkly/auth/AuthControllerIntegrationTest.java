@@ -88,7 +88,7 @@ class AuthControllerIntegrationTest {
                 .isCreated();
 
         // Unverified user — login should be rejected
-        LoginRequest loginRequest = new LoginRequest(email, "password123");
+        LoginRequest loginRequest = new LoginRequest(email, "password123", false);
         restTestClient
                 .post()
                 .uri("/api/auth/login")
@@ -100,7 +100,7 @@ class AuthControllerIntegrationTest {
 
     @Test
     void login_invalidCredentials_returnsUnauthorized() {
-        LoginRequest loginRequest = new LoginRequest("nouser@example.com", "wrongpass");
+        LoginRequest loginRequest = new LoginRequest("nouser@example.com", "wrongpass", false);
 
         restTestClient
                 .post()
