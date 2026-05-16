@@ -80,8 +80,7 @@ public class ClaimService {
 
         // 100% contribution = full claim: covers the full cost of all desired units
         // Skip this for fund items — they always use contribution tracking
-        boolean fullClaimByPercentage =
-                !isFund && percentageContributed != null && percentageContributed == 100;
+        boolean fullClaimByPercentage = !isFund && percentageContributed != null && percentageContributed == 100;
         int effectiveQuantity = fullClaimByPercentage ? item.quantityDesired() : quantityClaimed;
         BigDecimal effectiveAmount = fullClaimByPercentage ? null : amountContributed;
         Integer effectivePercentage = fullClaimByPercentage ? null : percentageContributed;

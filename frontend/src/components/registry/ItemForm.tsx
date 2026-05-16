@@ -87,9 +87,11 @@ interface ItemFormProps {
 function SourcePill({
   source,
   onChange,
+  disabled = false,
 }: {
   source: TextFieldSource;
   onChange: (s: TextFieldSource) => void;
+  disabled?: boolean;
 }): React.ReactElement {
   return (
     <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
@@ -105,8 +107,9 @@ function SourcePill({
           key={s}
           type="button"
           onClick={() => onChange(s)}
+          disabled={disabled}
           className={cn(
-            "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+            "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-50",
             source === s
               ? "text-primary-foreground"
               : "text-muted-foreground hover:text-foreground",
@@ -312,6 +315,7 @@ export function ItemForm({
   const descriptionValue = watch("description");
   const itemTypeValue = watch("itemType");
   const isFundForm = itemTypeValue === "FUND";
+  const urlOriginalValue = watch("urlOriginal");
 
   // FLIP: animate wrapper height after imageSource causes a content change.
   // capturedHeight is set synchronously in the event handler (before re-render),
@@ -343,9 +347,10 @@ export function ItemForm({
   }, [previewMode]);
 
   const hasScrapedData = scrapedSnapshot !== null;
-  const showTitleToggle = hasScrapedData && scrapedSnapshot.title !== null;
-  const showDescriptionToggle = hasScrapedData && scrapedSnapshot.description !== null;
-  const showPriceToggle = hasScrapedData && scrapedSnapshot.priceReference !== null;
+  const hasUrl = urlOriginalValue.length > 0;
+  const showTitleToggle = hasUrl && (!hasScrapedData || scrapedSnapshot.title !== null);
+  const showDescriptionToggle = hasUrl && (!hasScrapedData || scrapedSnapshot.description !== null);
+  const showPriceToggle = hasUrl && (!hasScrapedData || scrapedSnapshot.priceReference !== null);
   const imageSourceOptions: ImageSource[] =
     hasScrapedData && scrapedSnapshot.imageUrl !== null
       ? ["none", "product-url", "url", "upload"]
@@ -383,10 +388,7 @@ export function ItemForm({
     }
   }
 
-  async function handleUrlBlur(e: React.FocusEvent<HTMLInputElement>): Promise<void> {
-    void urlRegistration.onBlur(e);
-    const url = e.target.value.trim();
-    if (!url || url === urlAtFocus.current.trim()) return;
+  async function performFetch(url: string): Promise<ScrapedSnapshot | null> {
     setPreviewUnavailable(false);
     try {
       let result = await fetchPreview(url);
@@ -396,17 +398,8 @@ export function ItemForm({
       }
       if (!result.supported) {
         setPreviewUnavailable(true);
-        return;
+        return null;
       }
-
-      const snap: CustomSnapshot = {
-        title: getValues("title"),
-        description: getValues("description"),
-        priceReference: getValues("priceReference"),
-        currency: getValues("currency"),
-      };
-      setCustomSnapshot(snap);
-
       const scraped: ScrapedSnapshot = {
         title: result.title,
         description: result.description,
@@ -415,57 +408,76 @@ export function ItemForm({
         imageUrl: result.imageUrl,
       };
       setScrapedSnapshot(scraped);
-
-      const newSources: Record<OverridableField, TextFieldSource> = {
-        title: "custom",
-        description: "custom",
-        price: "custom",
-      };
-
-      let filled = false;
-
-      if (scraped.title !== null) {
-        if (snap.title === "") {
-          setValue("title", scraped.title);
-          newSources.title = "url";
-          filled = true;
-        }
-        // else: conflict — toggle appears at "custom", field value preserved
-      }
-
-      if (scraped.description !== null) {
-        if (snap.description === "") {
-          setValue("description", scraped.description);
-          newSources.description = "url";
-          filled = true;
-        }
-      }
-
-      if (scraped.priceReference !== null) {
-        if (snap.priceReference === "") {
-          setValue("priceReference", scraped.priceReference);
-          if (scraped.currency !== null) {
-            setValue("currency", scraped.currency);
-          }
-          newSources.price = "url";
-          filled = true;
-        }
-      } else if (scraped.currency !== null && snap.currency === "") {
-        setValue("currency", scraped.currency);
-        filled = true;
-      }
-
-      if (scraped.imageUrl !== null && imageSource === "none") {
-        setValue("imageUrl", scraped.imageUrl);
-        setImageSource("product-url");
-        filled = true;
-      }
-
-      setFieldSources(newSources);
-      setAutoFilled(filled);
+      return scraped;
     } catch {
       setPreviewUnavailable(true);
+      return null;
     }
+  }
+
+  async function handleUrlBlur(e: React.FocusEvent<HTMLInputElement>): Promise<void> {
+    void urlRegistration.onBlur(e);
+    const url = e.target.value.trim();
+    if (!url || url === urlAtFocus.current.trim()) return;
+
+    const snap: CustomSnapshot = {
+      title: getValues("title"),
+      description: getValues("description"),
+      priceReference: getValues("priceReference"),
+      currency: getValues("currency"),
+    };
+    setCustomSnapshot(snap);
+
+    const scraped = await performFetch(url);
+    if (scraped === null) return;
+
+    const newSources: Record<OverridableField, TextFieldSource> = {
+      title: "custom",
+      description: "custom",
+      price: "custom",
+    };
+
+    let filled = false;
+
+    if (scraped.title !== null) {
+      if (snap.title === "") {
+        setValue("title", scraped.title);
+        newSources.title = "url";
+        filled = true;
+      }
+      // else: conflict — toggle appears at "custom", field value preserved
+    }
+
+    if (scraped.description !== null) {
+      if (snap.description === "") {
+        setValue("description", scraped.description);
+        newSources.description = "url";
+        filled = true;
+      }
+    }
+
+    if (scraped.priceReference !== null) {
+      if (snap.priceReference === "") {
+        setValue("priceReference", scraped.priceReference);
+        if (scraped.currency !== null) {
+          setValue("currency", scraped.currency);
+        }
+        newSources.price = "url";
+        filled = true;
+      }
+    } else if (scraped.currency !== null && snap.currency === "") {
+      setValue("currency", scraped.currency);
+      filled = true;
+    }
+
+    if (scraped.imageUrl !== null && imageSource === "none") {
+      setValue("imageUrl", scraped.imageUrl);
+      setImageSource("product-url");
+      filled = true;
+    }
+
+    setFieldSources(newSources);
+    setAutoFilled(filled);
   }
 
   function handleFieldSourceChange(field: OverridableField, source: TextFieldSource): void {
@@ -482,6 +494,26 @@ export function ItemForm({
         if (field === "description") return { ...base, description: currentDescription };
         return { ...base, priceReference: currentPriceReference, currency: currentCurrency };
       });
+
+      if (!hasScrapedData) {
+        const url = getValues("urlOriginal");
+        if (url) {
+          void performFetch(url).then((scraped) => {
+            if (scraped === null) return;
+            setFieldSources((prev) => ({ ...prev, [field]: "url" }));
+            if (field === "title" && scraped.title !== null) {
+              setValue("title", scraped.title);
+            } else if (field === "description" && scraped.description !== null) {
+              setValue("description", scraped.description);
+            } else if (field === "price") {
+              if (scraped.priceReference !== null)
+                setValue("priceReference", scraped.priceReference);
+              if (scraped.currency !== null) setValue("currency", scraped.currency);
+            }
+          });
+        }
+        return;
+      }
     }
     setFieldSources((prev) => ({ ...prev, [field]: source }));
     if (source === "url" && scrapedSnapshot !== null) {
@@ -602,11 +634,14 @@ export function ItemForm({
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showTitleToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           aria-hidden={!showTitleToggle}
         >
-          <div className="overflow-hidden pb-1.5">
-            <SourcePill
-              source={fieldSources.title}
-              onChange={(s) => handleFieldSourceChange("title", s)}
-            />
+          <div className="overflow-hidden">
+            <div className="pb-1.5">
+              <SourcePill
+                source={fieldSources.title}
+                onChange={(s) => handleFieldSourceChange("title", s)}
+                disabled={isFetching}
+              />
+            </div>
           </div>
         </div>
         <Input
@@ -820,11 +855,14 @@ export function ItemForm({
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showDescriptionToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           aria-hidden={!showDescriptionToggle}
         >
-          <div className="overflow-hidden pb-1.5">
-            <SourcePill
-              source={fieldSources.description}
-              onChange={(s) => handleFieldSourceChange("description", s)}
-            />
+          <div className="overflow-hidden">
+            <div className="pb-1.5">
+              <SourcePill
+                source={fieldSources.description}
+                onChange={(s) => handleFieldSourceChange("description", s)}
+                disabled={isFetching}
+              />
+            </div>
           </div>
         </div>
 
@@ -912,11 +950,14 @@ export function ItemForm({
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showPriceToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           aria-hidden={!showPriceToggle}
         >
-          <div className="overflow-hidden pb-1.5">
-            <SourcePill
-              source={fieldSources.price}
-              onChange={(s) => handleFieldSourceChange("price", s)}
-            />
+          <div className="overflow-hidden">
+            <div className="pb-1.5">
+              <SourcePill
+                source={fieldSources.price}
+                onChange={(s) => handleFieldSourceChange("price", s)}
+                disabled={isFetching}
+              />
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
