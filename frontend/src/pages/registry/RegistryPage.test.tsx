@@ -87,7 +87,9 @@ describe("RegistryPage", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage();
-    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "My Registry" })).toBeInTheDocument(),
+    );
     expect(screen.getByText("A great registry")).toBeInTheDocument();
   });
 
@@ -102,7 +104,9 @@ describe("RegistryPage", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage({ id: "other-uuid", email: "other@example.com", displayName: "Other" });
-    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "My Registry" })).toBeInTheDocument(),
+    );
     expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
   });
 
@@ -181,7 +185,9 @@ describe("RegistryPage", () => {
       return Promise.resolve({ data: [], error: undefined, response: new Response() });
     });
     renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
-    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "My Registry" })).toBeInTheDocument(),
+    );
     expect(screen.queryByRole("button", { name: /get invite link/i })).not.toBeInTheDocument();
   });
 
@@ -212,7 +218,9 @@ describe("RegistryPage", () => {
       response: new Response(),
     });
     renderPage({ id: "owner-uuid", email: "owner@example.com", displayName: "Owner" });
-    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "My Registry" })).toBeInTheDocument(),
+    );
     expect(screen.queryByDisplayValue(/\/r\/my-registry/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /show link/i }));
     await waitFor(() =>
@@ -313,7 +321,9 @@ describe("RegistryPage", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage();
-    await waitFor(() => expect(screen.getByText("My Registry")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: "My Registry" })).toBeInTheDocument(),
+    );
     expect(screen.queryByRole("link", { name: /back to dashboard/i })).not.toBeInTheDocument();
   });
 });

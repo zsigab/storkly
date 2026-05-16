@@ -26,8 +26,8 @@ export function RegistryCard({ registry }: RegistryCardProps): React.ReactElemen
               : undefined,
         }}
       >
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-semibold">{registry.name}</h3>
+        <div className="grid grid-cols-[1fr_auto] items-start gap-x-2">
+          <h3 className="font-semibold break-words">{registry.name}</h3>
           <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
             {registry.visibility === "PUBLIC"
               ? "Public"

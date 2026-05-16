@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   useParams,
   useSearchParams,
@@ -69,6 +69,29 @@ export function RegistryPage(): React.ReactElement {
   const [copiedLink, setCopiedLink] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
   const userHasClaims = user !== null && allClaims.some((c) => c.claimerUserId === user.id);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const titleMeasureRef = useRef<HTMLSpanElement>(null);
+  const buttonsRef = useRef<HTMLDivElement>(null);
+  const [isSingleLine, setIsSingleLine] = useState(false);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const container = containerRef.current;
+      const titleSpan = titleMeasureRef.current;
+      if (!container || !titleSpan) return;
+      const containerWidth = container.offsetWidth;
+      const titleNaturalWidth = titleSpan.offsetWidth;
+      const buttonsWidth = buttonsRef.current?.offsetWidth ?? 0;
+      setIsSingleLine(titleNaturalWidth + 16 + buttonsWidth <= containerWidth);
+    };
+    const observer = new ResizeObserver(measure);
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+    measure();
+    return () => observer.disconnect();
+  }, [registry?.name, isOwner, isSubscriber, hasUnsubscribed]);
 
   useEffect(() => {
     if (joinRegistry.isSuccess) setHasUnsubscribed(false);
@@ -192,107 +215,150 @@ export function RegistryPage(): React.ReactElement {
           <div className="bg-muted h-8 w-48 animate-pulse rounded" />
         ) : (
           <>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <h1 className="text-3xl font-semibold tracking-tight">{registry.name}</h1>
-                <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
-                  {registry.visibility === "PUBLIC"
-                    ? "Public"
-                    : registry.visibility === "HIDDEN"
-                      ? "Hidden"
-                      : "Private"}
-                </Badge>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                {isOwner && (
-                  <>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      style={{
-                        viewTransitionName: isClaimsTransitioning ? "registry-claims" : undefined,
-                      }}
-                    >
-                      <Link to={`/r/${registry.slug}/claims`} viewTransition>
-                        Claims
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      style={{
-                        viewTransitionName: isEditTransitioning ? "registry-edit" : undefined,
-                      }}
-                    >
-                      <Link to={`/r/${registry.slug}/edit`} viewTransition>
-                        Edit
-                      </Link>
-                    </Button>
-                    {registry.visibility !== "HIDDEN" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="min-w-24"
-                        disabled={generateInvite.isPending}
-                        onClick={() => {
-                          if (showGetLink) {
-                            setShowGetLink(false);
-                          } else {
-                            setShowGetLink(true);
-                            if (inviteUrl === null) {
-                              const origin = window.location.origin;
-                              generateInvite.mutate(undefined, {
-                                onSuccess: (data) => {
-                                  setInviteUrl(`${origin}/r/${registry.slug}?invite=${data.token}`);
-                                },
-                              });
-                            }
-                          }
-                        }}
-                      >
-                        {showGetLink ? "Hide Link" : "Show Link"}
-                      </Button>
+            <div ref={containerRef} className="relative">
+              {/* Hidden span measures the title's natural single-line width */}
+              <span
+                ref={titleMeasureRef}
+                className="pointer-events-none invisible absolute text-3xl font-semibold tracking-tight whitespace-nowrap"
+                aria-hidden="true"
+              >
+                {registry.name}
+              </span>
+
+              {(() => {
+                const visibilityBadge = (
+                  <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
+                    {registry.visibility === "PUBLIC"
+                      ? "Public"
+                      : registry.visibility === "HIDDEN"
+                        ? "Hidden"
+                        : "Private"}
+                  </Badge>
+                );
+
+                const actionButtons = (
+                  <div ref={buttonsRef} className="flex flex-wrap items-center gap-2">
+                    {isOwner && (
+                      <>
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          style={{
+                            viewTransitionName: isClaimsTransitioning
+                              ? "registry-claims"
+                              : undefined,
+                          }}
+                        >
+                          <Link to={`/r/${registry.slug}/claims`} viewTransition>
+                            Claims
+                          </Link>
+                        </Button>
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="sm"
+                          style={{
+                            viewTransitionName: isEditTransitioning ? "registry-edit" : undefined,
+                          }}
+                        >
+                          <Link to={`/r/${registry.slug}/edit`} viewTransition>
+                            Edit
+                          </Link>
+                        </Button>
+                        {registry.visibility !== "HIDDEN" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="min-w-24"
+                            disabled={generateInvite.isPending}
+                            onClick={() => {
+                              if (showGetLink) {
+                                setShowGetLink(false);
+                              } else {
+                                setShowGetLink(true);
+                                if (inviteUrl === null) {
+                                  const origin = window.location.origin;
+                                  generateInvite.mutate(undefined, {
+                                    onSuccess: (data) => {
+                                      setInviteUrl(
+                                        `${origin}/r/${registry.slug}?invite=${data.token}`,
+                                      );
+                                    },
+                                  });
+                                }
+                              }
+                            }}
+                          >
+                            {showGetLink ? "Hide Link" : "Show Link"}
+                          </Button>
+                        )}
+                        <Button
+                          asChild
+                          size="sm"
+                          style={{
+                            viewTransitionName: isAddItemTransitioning ? "item-add" : undefined,
+                          }}
+                        >
+                          <Link to={`/r/${registry.slug}/items/new`} viewTransition>
+                            Add Item
+                          </Link>
+                        </Button>
+                      </>
                     )}
-                    <Button
-                      asChild
-                      size="sm"
-                      style={{
-                        viewTransitionName: isAddItemTransitioning ? "item-add" : undefined,
-                      }}
-                    >
-                      <Link to={`/r/${registry.slug}/items/new`} viewTransition>
-                        Add Item
-                      </Link>
-                    </Button>
+                    {(isSubscriber || hasUnsubscribed) &&
+                      (hasUnsubscribed ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => joinRegistry.mutate(inviteToken ?? "")}
+                          disabled={joinRegistry.isPending}
+                        >
+                          {joinRegistry.isPending ? "Subscribing…" : "Re-subscribe"}
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            unsubscribeRegistry.mutate(registry.slug);
+                            setHasUnsubscribed(true);
+                          }}
+                          disabled={unsubscribeRegistry.isPending || userHasClaims}
+                          title={
+                            userHasClaims ? "Release your claims before unsubscribing" : undefined
+                          }
+                        >
+                          {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
+                        </Button>
+                      ))}
+                  </div>
+                );
+
+                return isSingleLine ? (
+                  /* Title fits on one line — put buttons to its right, badge below */
+                  <>
+                    <div className="flex items-start justify-between gap-4">
+                      <h1 className="text-3xl font-semibold tracking-tight break-words">
+                        {registry.name}
+                      </h1>
+                      {actionButtons}
+                    </div>
+                    <div className="mt-1">{visibilityBadge}</div>
                   </>
-                )}
-                {(isSubscriber || hasUnsubscribed) &&
-                  (hasUnsubscribed ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => joinRegistry.mutate(inviteToken ?? "")}
-                      disabled={joinRegistry.isPending}
-                    >
-                      {joinRegistry.isPending ? "Subscribing…" : "Re-subscribe"}
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        unsubscribeRegistry.mutate(registry.slug);
-                        setHasUnsubscribed(true);
-                      }}
-                      disabled={unsubscribeRegistry.isPending || userHasClaims}
-                      title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
-                    >
-                      {unsubscribeRegistry.isPending ? "Unsubscribing…" : "Unsubscribe"}
-                    </Button>
-                  ))}
-              </div>
+                ) : (
+                  /* Title is multi-line — full width, badge + buttons on the row below */
+                  <>
+                    <h1 className="text-3xl font-semibold tracking-tight break-words">
+                      {registry.name}
+                    </h1>
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
+                      {visibilityBadge}
+                      {actionButtons}
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {isOwner && registry.visibility !== "HIDDEN" && (
