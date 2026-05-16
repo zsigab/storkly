@@ -16,7 +16,11 @@ export function useLogin() {
       from?: string;
     }) => {
       const { data, error } = await api.POST("/api/auth/login", {
-        body: { email: values.email, password: values.password, rememberMe: values.rememberMe },
+        body: {
+          email: values.email,
+          password: values.password,
+          ...(values.rememberMe !== undefined && { rememberMe: values.rememberMe }),
+        },
       });
       if (error !== undefined) throw error;
       if (data === undefined || data === null) throw new Error("No response from server");

@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 const schema = z.object({
   email: z.string().email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
-  rememberMe: z.boolean().default(false),
+  rememberMe: z.boolean(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -27,7 +27,7 @@ export function LoginPage(): React.ReactElement {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { rememberMe: false } });
 
   if (user !== null) {
     return <Navigate to="/dashboard" replace />;

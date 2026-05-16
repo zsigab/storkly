@@ -16,8 +16,10 @@ class IkeaScraperTest {
 
     @Test
     void supports_withIkeaUrl_returnsTrue() {
-        assertThat(scraper.supports("https://www.ikea.com/ph/en/p/krummelur-00593407/")).isTrue();
-        assertThat(scraper.supports("https://www.ikea.com/gb/en/p/some-product/")).isTrue();
+        assertThat(scraper.supports("https://www.ikea.com/ph/en/p/krummelur-00593407/"))
+                .isTrue();
+        assertThat(scraper.supports("https://www.ikea.com/gb/en/p/some-product/"))
+                .isTrue();
     }
 
     @Test
