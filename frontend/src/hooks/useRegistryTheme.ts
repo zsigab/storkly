@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect } from "react";
 import { useRegistry } from "./useRegistries";
 import { isThemeBackground, isThemeColor, useTheme } from "./useTheme";
 
@@ -14,9 +14,6 @@ export function useRegistryTheme(slug: string): void {
         : "both";
       setRegistryOverride(color, background);
     }
-  }, [registry, setRegistryOverride]);
-
-  useEffect(() => {
     return () => clearRegistryOverride();
-  }, [clearRegistryOverride]);
+  }, [registry, setRegistryOverride, clearRegistryOverride]);
 }

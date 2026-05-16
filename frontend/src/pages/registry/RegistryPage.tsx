@@ -103,11 +103,8 @@ export function RegistryPage(): React.ReactElement {
         : "none";
       setRegistryOverride(color, background);
     }
-  }, [registry, setRegistryOverride]);
-
-  useEffect(() => {
     return () => clearRegistryOverride();
-  }, [clearRegistryOverride]);
+  }, [registry, setRegistryOverride, clearRegistryOverride]);
 
   useEffect(() => {
     if (joinRegistry.isSuccess) setHasUnsubscribed(false);

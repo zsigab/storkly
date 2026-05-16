@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -104,7 +104,7 @@ export function RegistryForm({
     setRegistryOverride(themeColor, themeBackground);
   }, [themeColor, themeBackground, setRegistryOverride]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     return () => clearRegistryOverride();
   }, [clearRegistryOverride]);
 
