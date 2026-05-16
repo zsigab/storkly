@@ -1,6 +1,7 @@
 package app.storkly.service.item;
 
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
 import app.storkly.domain.exception.InvalidTokenException;
@@ -164,6 +165,9 @@ public class ClaimService {
         if (claim.releasedAt() != null) {
             throw new InvalidTokenException("This claim has already been released");
         }
+        if (claim.receivedAt() != null) {
+            throw new ClaimAlreadyReceivedException();
+        }
         claimRepository.release(claim.id(), OffsetDateTime.now());
     }
 
@@ -172,6 +176,9 @@ public class ClaimService {
         Claim claim = claimRepository.findById(id).orElseThrow(ClaimNotFoundException::new);
         if (claim.releasedAt() != null) {
             throw new InvalidTokenException("This claim has already been released");
+        }
+        if (claim.receivedAt() != null) {
+            throw new ClaimAlreadyReceivedException();
         }
         boolean isClaimer =
                 claim.claimerUserId() != null && claim.claimerUserId().equals(currentUserId);

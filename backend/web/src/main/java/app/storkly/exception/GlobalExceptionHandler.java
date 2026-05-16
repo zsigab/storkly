@@ -3,6 +3,7 @@ package app.storkly.exception;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.AlreadySubscribedException;
 import app.storkly.domain.exception.CategoryNotFoundException;
+import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
 import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
@@ -49,6 +50,7 @@ public class GlobalExceptionHandler {
         ItemHasClaimsException.class,
         SubscriberHasClaimsException.class,
         ClaimNotReceivedException.class,
+        ClaimAlreadyReceivedException.class,
         DeliveryOptionHasClaimsException.class
     })
     public ProblemDetail handleConflict(RuntimeException ex) {

@@ -216,7 +216,12 @@ export function ItemCard({
               variant="outline"
               size="sm"
               onClick={handleUnclaim}
-              disabled={unclaimItem.isPending}
+              disabled={unclaimItem.isPending || myAuthenticatedClaim.receivedAt !== null}
+              title={
+                myAuthenticatedClaim.receivedAt !== null
+                  ? "This gift has already been received"
+                  : undefined
+              }
             >
               {unclaimItem.isPending ? "Releasing…" : "Unclaim"}
             </Button>

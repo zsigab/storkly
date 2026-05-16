@@ -115,6 +115,7 @@ export interface MyClaimResponse {
   percentageContributed: number | null;
   deliveryType: string | null;
   claimedAt: string;
+  receivedAt: string | null;
 }
 
 export interface DeliveryOptionResponse {

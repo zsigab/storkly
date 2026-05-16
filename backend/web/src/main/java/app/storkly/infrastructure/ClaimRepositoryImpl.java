@@ -143,7 +143,8 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                         CLAIM.AMOUNT_CONTRIBUTED,
                         CLAIM.PERCENTAGE_CONTRIBUTED,
                         CLAIM.DELIVERY_TYPE,
-                        CLAIM.CLAIMED_AT)
+                        CLAIM.CLAIMED_AT,
+                        CLAIM.RECEIVED_AT)
                 .from(CLAIM)
                 .join(ITEM)
                 .on(CLAIM.ITEM_ID.eq(ITEM.ID))
@@ -166,6 +167,7 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                         .percentageContributed(r.get(CLAIM.PERCENTAGE_CONTRIBUTED))
                         .deliveryType(r.get(CLAIM.DELIVERY_TYPE))
                         .claimedAt(r.get(CLAIM.CLAIMED_AT))
+                        .receivedAt(r.get(CLAIM.RECEIVED_AT))
                         .build());
     }
 

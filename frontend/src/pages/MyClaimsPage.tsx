@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { useMyActiveClaims, useUnclaimItem } from "@/hooks/useClaims";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,7 +59,14 @@ export function MyClaimsPage(): React.ReactElement {
               className="bg-card flex items-center justify-between rounded-lg border p-4"
             >
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="truncate font-medium">{claim.itemTitle}</p>
+                <div className="flex items-center gap-2">
+                  <p className="truncate font-medium">{claim.itemTitle}</p>
+                  {!!claim.receivedAt && (
+                    <Badge variant="secondary" className="shrink-0">
+                      Received
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-muted-foreground text-sm">
                   <Link
                     to={`/r/${claim.registrySlug}`}
@@ -78,7 +86,7 @@ export function MyClaimsPage(): React.ReactElement {
                 variant="ghost"
                 size="sm"
                 className="text-destructive hover:text-destructive ml-4 shrink-0"
-                disabled={unclaim.isPending}
+                disabled={unclaim.isPending || !!claim.receivedAt}
                 onClick={() => handleUnclaim(claim.claimId, claim.itemId)}
               >
                 Un-claim

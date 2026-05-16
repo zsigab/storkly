@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.item.Claim;
@@ -218,6 +219,33 @@ class ClaimServiceTest {
         assertThatThrownBy(() -> claimService.unclaimByToken("ghost")).isInstanceOf(ClaimNotFoundException.class);
     }
 
+    @Test
+    void unclaimByToken_receivedClaim_throwsClaimAlreadyReceived() {
+        UUID claimId = UUID.randomUUID();
+        Claim received = claimWithReceivedAt(
+                claimId, UUID.randomUUID(), null, OffsetDateTime.now().minusHours(1));
+        when(claimRepository.findByClaimToken("received-token")).thenReturn(Optional.of(received));
+
+        assertThatThrownBy(() -> claimService.unclaimByToken("received-token"))
+                .isInstanceOf(ClaimAlreadyReceivedException.class);
+
+        verify(claimRepository, never()).release(any(), any());
+    }
+
+    @Test
+    void unclaimById_receivedClaim_throwsClaimAlreadyReceived() {
+        UUID claimId = UUID.randomUUID();
+        UUID claimerId = UUID.randomUUID();
+        Claim received = claimWithReceivedAt(
+                claimId, UUID.randomUUID(), claimerId, OffsetDateTime.now().minusHours(1));
+        when(claimRepository.findById(claimId)).thenReturn(Optional.of(received));
+
+        assertThatThrownBy(() -> claimService.unclaimById(claimId, claimerId))
+                .isInstanceOf(ClaimAlreadyReceivedException.class);
+
+        verify(claimRepository, never()).release(any(), any());
+    }
+
     private Registry publicRegistry() {
         return Registry.builder()
                 .id(registryId)
@@ -256,6 +284,20 @@ class ClaimServiceTest {
                 .claimToken("token-" + id)
                 .claimedAt(OffsetDateTime.now())
                 .releasedAt(releasedAt)
+                .build();
+    }
+
+    private Claim claimWithReceivedAt(UUID id, UUID itemId, UUID claimerUserId, OffsetDateTime receivedAt) {
+        return Claim.builder()
+                .id(id)
+                .itemId(itemId)
+                .claimerUserId(claimerUserId)
+                .claimerName("Alice")
+                .claimerEmail("alice@example.com")
+                .quantityClaimed(1)
+                .claimToken("token-" + id)
+                .claimedAt(OffsetDateTime.now())
+                .receivedAt(receivedAt)
                 .build();
     }
 }

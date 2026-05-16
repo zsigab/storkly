@@ -18,4 +18,5 @@ public record MyClaimView(
         @Nullable BigDecimal amountContributed,
         @Nullable Integer percentageContributed,
         @Nullable String deliveryType,
-        OffsetDateTime claimedAt) {}
+        OffsetDateTime claimedAt,
+        @Nullable OffsetDateTime receivedAt) {}

@@ -59,7 +59,10 @@ public class ClaimController {
         UUID userId = currentUser != null ? currentUser.id() : null;
         ClaimService.ClaimListView view = claimService.findByItem(id, userId);
         return view.claims().stream()
-                .map(c -> toResponse(c, view.viewerIsOwnerOrCoOwner()))
+                .map(c -> toResponse(
+                        c,
+                        view.viewerIsOwnerOrCoOwner()
+                                || (userId != null && userId.equals(c.claimerUserId()))))
                 .toList();
     }
 
@@ -91,7 +94,8 @@ public class ClaimController {
                         v.amountContributed(),
                         v.percentageContributed(),
                         v.deliveryType(),
-                        v.claimedAt()))
+                        v.claimedAt(),
+                        v.receivedAt()))
                 .toList();
     }
 
