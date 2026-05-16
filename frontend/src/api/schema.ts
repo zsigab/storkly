@@ -163,7 +163,7 @@ export type paths = {
     post: {
       requestBody: {
         content: {
-          "application/json": { email: string; password: string };
+          "application/json": { email: string; password: string; rememberMe?: boolean };
         };
       };
       responses: { 200: Ok<TokenResponse>; 401: Err };

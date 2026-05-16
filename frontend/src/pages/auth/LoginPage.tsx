@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 const schema = z.object({
   email: z.string().email("Enter a valid email address"),
   password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().default(false),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -59,6 +60,15 @@ export function LoginPage(): React.ReactElement {
               {...register("password")}
             />
           </FormField>
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm select-none">
+            <input
+              type="checkbox"
+              className="border-border accent-primary h-4 w-4 rounded"
+              {...register("rememberMe")}
+            />
+            Remember me for 90 days
+          </label>
 
           {login.isError && (
             <Alert variant="destructive">

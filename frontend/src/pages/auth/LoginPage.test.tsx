@@ -78,7 +78,7 @@ describe("LoginPage", () => {
     await waitFor(() => expect(screen.getByText(/enter a valid email/i)).toBeInTheDocument());
   });
 
-  it("calls API on valid submission", async () => {
+  it("calls API on valid submission without remember me", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.POST).mockResolvedValueOnce({
       data: { email: "a@b.com", displayName: "Alice" },
@@ -91,7 +91,26 @@ describe("LoginPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
     await waitFor(() =>
       expect(api.POST).toHaveBeenCalledWith("/api/auth/login", {
-        body: { email: "a@b.com", password: "secret123" },
+        body: { email: "a@b.com", password: "secret123", rememberMe: false },
+      }),
+    );
+  });
+
+  it("sends rememberMe: true when checkbox is checked", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.POST).mockResolvedValueOnce({
+      data: { email: "a@b.com", displayName: "Alice" },
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "a@b.com" } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: "secret123" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: /remember me/i }));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+    await waitFor(() =>
+      expect(api.POST).toHaveBeenCalledWith("/api/auth/login", {
+        body: { email: "a@b.com", password: "secret123", rememberMe: true },
       }),
     );
   });

@@ -28,12 +28,27 @@ public class JwtService {
         return buildToken(user, jwtProperties.accessTokenExpiry().toMillis());
     }
 
-    public String generateRefreshToken(User user) {
-        return buildToken(user, jwtProperties.refreshTokenExpiry().toMillis());
+    public String generateRefreshToken(User user, boolean rememberMe) {
+        long expiryMillis = rememberMe
+                ? jwtProperties.rememberMeTokenExpiry().toMillis()
+                : jwtProperties.refreshTokenExpiry().toMillis();
+        long now = System.currentTimeMillis();
+        return Jwts.builder()
+                .subject(user.email())
+                .issuedAt(new Date(now))
+                .expiration(new Date(now + expiryMillis))
+                .claim("rem", rememberMe)
+                .signWith(signingKey())
+                .compact();
     }
 
     public String extractEmail(String token) {
         return parseClaims(token).getSubject();
+    }
+
+    public boolean extractRememberMe(String token) {
+        Boolean rem = parseClaims(token).get("rem", Boolean.class);
+        return rem != null && rem;
     }
 
     public boolean isValid(String token) {

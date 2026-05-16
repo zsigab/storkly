@@ -30,7 +30,7 @@ public class OAuthSuccessHandler implements AuthenticationSuccessHandler {
         User user = principal.getStorklyUser();
 
         String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user, false);
 
         setAccessTokenCookie(response, accessToken);
         setRefreshTokenCookie(response, refreshToken);

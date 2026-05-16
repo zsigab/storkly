@@ -10,8 +10,10 @@ import app.storkly.config.CookieProperties;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.user.User;
 import app.storkly.service.auth.AuthService;
+import app.storkly.service.auth.JwtProperties;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Duration;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +32,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private static final int ACCESS_TOKEN_MAX_AGE = 3600; // 1 hour
-    private static final int REFRESH_TOKEN_MAX_AGE = 604800; // 7 days
-
     private final AuthService authService;
     private final JwtService jwtService;
+    private final JwtProperties jwtProperties;
     private final UserDetailsService userDetailsService;
     private final CookieProperties cookieProperties;
 
@@ -58,9 +58,9 @@ public class AuthController {
     public TokenResponse login(@RequestBody @Valid LoginRequest request, HttpServletResponse response) {
         User user = authService.authenticate(request.email(), request.password());
         String accessToken = jwtService.generateAccessToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user, request.rememberMe());
         setAccessTokenCookie(response, accessToken);
-        setRefreshTokenCookie(response, refreshToken);
+        setRefreshTokenCookie(response, refreshToken, request.rememberMe());
         return new TokenResponse(user.id(), user.email(), user.displayName());
     }
 
@@ -70,12 +70,13 @@ public class AuthController {
         if (refreshToken == null || !jwtService.isValid(refreshToken)) {
             throw new InvalidTokenException("Invalid or missing refresh token");
         }
+        boolean rememberMe = jwtService.extractRememberMe(refreshToken);
         String email = jwtService.extractEmail(refreshToken);
         User user = (User) userDetailsService.loadUserByUsername(email);
         String newAccessToken = jwtService.generateAccessToken(user);
-        String newRefreshToken = jwtService.generateRefreshToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user, rememberMe);
         setAccessTokenCookie(response, newAccessToken);
-        setRefreshTokenCookie(response, newRefreshToken);
+        setRefreshTokenCookie(response, newRefreshToken, rememberMe);
         return new TokenResponse(user.id(), user.email(), user.displayName());
     }
 
@@ -100,17 +101,18 @@ public class AuthController {
         cookie.setHttpOnly(true);
         cookie.setSecure(cookieProperties.secure());
         cookie.setPath("/");
-        cookie.setMaxAge(ACCESS_TOKEN_MAX_AGE);
+        cookie.setMaxAge((int) jwtProperties.accessTokenExpiry().toSeconds());
         cookie.setAttribute("SameSite", "Strict");
         response.addCookie(cookie);
     }
 
-    private void setRefreshTokenCookie(HttpServletResponse response, String token) {
+    private void setRefreshTokenCookie(HttpServletResponse response, String token, boolean rememberMe) {
+        Duration expiry = rememberMe ? jwtProperties.rememberMeTokenExpiry() : jwtProperties.refreshTokenExpiry();
         Cookie cookie = new Cookie("refresh_token", token);
         cookie.setHttpOnly(true);
         cookie.setSecure(cookieProperties.secure());
         cookie.setPath("/api/auth/refresh");
-        cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
+        cookie.setMaxAge((int) expiry.toSeconds());
         cookie.setAttribute("SameSite", "Strict");
         response.addCookie(cookie);
     }

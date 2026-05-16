@@ -32,7 +32,8 @@ storkly:
   jwt:
     secret: "test-secret-key-must-be-at-least-32-characters-long-for-hmac"
     access-token-expiry: PT15M
-    refresh-token-expiry: P7D
+    refresh-token-expiry: P1D
+    remember-me-token-expiry: P90D
   cookie:
     secure: false
   cors:

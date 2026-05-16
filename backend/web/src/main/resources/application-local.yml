@@ -46,7 +46,8 @@ storkly:
   jwt:
     secret: "local-development-secret-key-change-in-production-must-be-long"
     access-token-expiry: PT1H
-    refresh-token-expiry: P7D
+    refresh-token-expiry: P1D
+    remember-me-token-expiry: P90D
   mail:
     frontend-url: http://localhost:5173
   cookie:
