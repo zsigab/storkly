@@ -82,12 +82,38 @@ beforeEach(() => {
 });
 
 describe("ItemCard", () => {
-  it("renders item title and description", async () => {
+  it("renders item title", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     renderCard();
     expect(screen.getByText("Baby Carrier")).toBeInTheDocument();
+  });
+
+  it("shows description in expanded view after clicking card", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard();
+    // description is always in DOM via the grid-rows expanded section (CSS-hidden when collapsed)
+    fireEvent.click(screen.getByText("Baby Carrier").closest("div")!);
     expect(screen.getByText("Great for newborns")).toBeInTheDocument();
+  });
+
+  it("shows notes for gifters in collapsed view when notes are set", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({ item: { ...base, notes: "Please get size L" } });
+    // notes appears in both the collapsed preview and the grid-rows section
+    expect(screen.getAllByText("Please get size L").length).toBeGreaterThan(0);
+  });
+
+  it("shows full description and notes label in expanded view after clicking card", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({ item: { ...base, notes: "Please get size L" } });
+    fireEvent.click(screen.getByText("Baby Carrier").closest("div")!);
+    expect(screen.getByText("Great for newborns")).toBeInTheDocument();
+    expect(screen.getByText("Notes for gifters")).toBeInTheDocument();
+    expect(screen.getByText("Please get size L")).toBeInTheDocument();
   });
 
   it("renders price and flag badge", async () => {
@@ -108,6 +134,17 @@ describe("ItemCard", () => {
     );
   });
 
+  it("renders domain link in expanded view", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({ item: { ...base, urlOriginal: "https://www.example.com/item" } });
+    fireEvent.click(screen.getByText("Baby Carrier").closest("div")!);
+    expect(screen.getByRole("link", { name: "example.com" })).toHaveAttribute(
+      "href",
+      "https://www.example.com/item",
+    );
+  });
+
   it("renders image when imageUrl is present", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
@@ -121,8 +158,7 @@ describe("ItemCard", () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     renderCard({ categoryName: "Furniture" });
-    const placeholder = screen.getByText("F");
-    expect(placeholder).toBeInTheDocument();
+    expect(screen.getByText("F")).toBeInTheDocument();
   });
 
   it("renders generic placeholder when imageUrl and categoryName are both null", async () => {

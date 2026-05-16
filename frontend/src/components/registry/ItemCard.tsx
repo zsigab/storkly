@@ -42,6 +42,14 @@ function getCategoryInitial(name: string): string {
   return name.charAt(0).toUpperCase();
 }
 
+function getDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
 interface ItemCardProps {
   item: ItemResponse;
   slug: string;
@@ -65,6 +73,7 @@ export function ItemCard({
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [claimTransitioning, setClaimTransitioning] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const claimTransitionName = `claim-item-${item.id}`;
 
   const quantityClaimed = claims.reduce((sum, c) => sum + c.quantityClaimed, 0);
@@ -115,17 +124,34 @@ export function ItemCard({
     void vt.finished.then(() => setClaimTransitioning(false));
   };
 
+  const handleCardClick = (): void => {
+    setIsExpanded((prev) => !prev);
+  };
+
+  const imageStyle: React.CSSProperties = {
+    width: isExpanded ? "12rem" : "4rem",
+    height: isExpanded ? "12rem" : "4rem",
+    transition: "width 200ms ease-in-out, height 200ms ease-in-out",
+    flexShrink: 0,
+  };
+
   const renderImagePlaceholder = (): React.ReactElement => {
     if (item.imageUrl !== null) {
       return (
-        <img src={item.imageUrl} alt={item.title} className="h-16 w-16 rounded-md object-cover" />
+        <img
+          src={item.imageUrl}
+          alt={item.title}
+          style={imageStyle}
+          className="rounded-md object-cover"
+        />
       );
     }
 
     if (typeof categoryName === "string") {
       return (
         <div
-          className={`${getCategoryColor(categoryName)} flex h-16 w-16 items-center justify-center rounded-md font-semibold text-gray-700`}
+          style={imageStyle}
+          className={`${getCategoryColor(categoryName)} flex items-center justify-center rounded-md font-semibold text-gray-700`}
         >
           {getCategoryInitial(categoryName)}
         </div>
@@ -133,15 +159,93 @@ export function ItemCard({
     }
 
     return (
-      <div className="bg-muted flex h-16 w-16 items-center justify-center rounded-md">
+      <div style={imageStyle} className="bg-muted flex items-center justify-center rounded-md">
         <Gift className="text-muted-foreground h-8 w-8" />
       </div>
     );
   };
 
+  const renderTitle = (): React.ReactElement => {
+    if (item.urlOriginal !== null) {
+      return (
+        <a
+          href={item.urlOriginal}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {item.title}
+        </a>
+      );
+    }
+    return <p className="font-medium">{item.title}</p>;
+  };
+
+  const renderActionButtons = (): React.ReactNode => {
+    if (item.alreadyOwned) {
+      return (
+        <>
+          {isOwner && (
+            <Button asChild variant="outline" size="sm">
+              <Link to={`/r/${slug}/items/${item.id}/edit`} viewTransition>
+                Edit
+              </Link>
+            </Button>
+          )}
+          <Badge variant="secondary">Already owned</Badge>
+        </>
+      );
+    }
+    if (isOwner) {
+      return (
+        <Button asChild variant="outline" size="sm">
+          <Link to={`/r/${slug}/items/${item.id}/edit`} viewTransition>
+            Edit
+          </Link>
+        </Button>
+      );
+    }
+    if (myAuthenticatedClaim !== undefined) {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleUnclaim();
+          }}
+          disabled={unclaimItem.isPending || myAuthenticatedClaim.receivedAt !== null}
+          title={
+            myAuthenticatedClaim.receivedAt !== null
+              ? "This gift has already been received"
+              : undefined
+          }
+        >
+          {unclaimItem.isPending ? "Releasing…" : "Unclaim"}
+        </Button>
+      );
+    }
+    if (isClaimed) {
+      return <span className="text-muted-foreground text-sm">Claimed</span>;
+    }
+    return (
+      <Button
+        size="sm"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleClaimOpen();
+        }}
+      >
+        Claim
+      </Button>
+    );
+  };
+
   return (
     <div
-      className="bg-card border-border space-y-2 rounded-lg border p-3 shadow-md"
+      className="bg-card border-border cursor-pointer space-y-2 rounded-lg border p-3 shadow-md"
+      onClick={handleCardClick}
       style={{
         viewTransitionName: isTransitioning
           ? `item-${item.id}`
@@ -151,29 +255,21 @@ export function ItemCard({
         visibility: claimDialogOpen ? "hidden" : undefined,
       }}
     >
-      <div className="flex items-center gap-3">
-        {/* Image or placeholder */}
-        <div className="shrink-0">{renderImagePlaceholder()}</div>
+      {/* Always-visible top row */}
+      <div className="flex items-start gap-3">
+        {renderImagePlaceholder()}
 
-        {/* Text content */}
         <div className="min-w-0 flex-1 space-y-1">
-          {item.urlOriginal !== null ? (
-            <a
-              href={item.urlOriginal}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium hover:underline"
-            >
-              {item.title}
-            </a>
-          ) : (
-            <p className="font-medium">{item.title}</p>
-          )}
-          {item.description !== null && (
-            <p className="text-muted-foreground line-clamp-2 text-sm whitespace-pre-wrap">
-              {item.description}
-            </p>
-          )}
+          {renderTitle()}
+          {/* Collapsed-only preview: notes if present, otherwise description */}
+          {!isExpanded &&
+            (item.notes !== null ? (
+              <p className="text-muted-foreground line-clamp-2 text-xs italic">{item.notes}</p>
+            ) : item.description !== null ? (
+              <p className="text-muted-foreground line-clamp-2 text-sm whitespace-pre-wrap">
+                {item.description}
+              </p>
+            ) : null)}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>
             {item.priceReference !== null && (
@@ -187,57 +283,50 @@ export function ItemCard({
               </span>
             )}
           </div>
-          {item.notes !== null && (
-            <p className="text-muted-foreground text-xs italic">{item.notes}</p>
-          )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          {item.alreadyOwned ? (
-            <>
-              {isOwner && (
-                <Button asChild variant="outline" size="sm">
-                  <Link to={`/r/${slug}/items/${item.id}/edit`} viewTransition>
-                    Edit
-                  </Link>
-                </Button>
-              )}
-              <Badge variant="secondary">Already owned</Badge>
-            </>
-          ) : isOwner ? (
-            <Button asChild variant="outline" size="sm">
-              <Link to={`/r/${slug}/items/${item.id}/edit`} viewTransition>
-                Edit
-              </Link>
-            </Button>
-          ) : myAuthenticatedClaim !== undefined ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleUnclaim}
-              disabled={unclaimItem.isPending || myAuthenticatedClaim.receivedAt !== null}
-              title={
-                myAuthenticatedClaim.receivedAt !== null
-                  ? "This gift has already been received"
-                  : undefined
-              }
-            >
-              {unclaimItem.isPending ? "Releasing…" : "Unclaim"}
-            </Button>
-          ) : isClaimed ? (
-            <span className="text-muted-foreground text-sm">Claimed</span>
-          ) : (
-            <Button size="sm" onClick={handleClaimOpen}>
-              Claim
-            </Button>
-          )}
+        <div
+          className="flex shrink-0 flex-col items-end gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {renderActionButtons()}
+        </div>
+      </div>
+
+      {/* Expanded content: slides in/out with grid-rows trick */}
+      <div
+        className={`grid transition-all duration-200 ease-in-out ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+      >
+        <div className="overflow-hidden">
+          <div className="space-y-1.5 pt-1">
+            {item.urlOriginal !== null && (
+              <a
+                href={item.urlOriginal}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground text-xs hover:underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {getDomain(item.urlOriginal)}
+              </a>
+            )}
+            {item.description !== null && (
+              <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                {item.description}
+              </p>
+            )}
+            {item.notes !== null && (
+              <div>
+                <p className="text-muted-foreground text-xs font-medium">Notes for gifters</p>
+                <p className="text-muted-foreground text-xs italic">{item.notes}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       {isOwner && claimHistory.length > 0 && (
-        <div className="border-t pt-2">
-          {/* Concise summary rows + toggle */}
+        <div className="border-t pt-2" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-start justify-between gap-2">
             <div className="space-y-0.5">
               {hasPartialContributions
@@ -308,13 +397,15 @@ export function ItemCard({
             <button
               type="button"
               className="text-muted-foreground hover:text-foreground shrink-0 text-xs"
-              onClick={() => setHistoryOpen((o) => !o)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setHistoryOpen((o) => !o);
+              }}
             >
               {historyOpen ? "▲" : "▼"}
             </button>
           </div>
 
-          {/* Expandable full history */}
           <div
             className={`grid transition-all duration-200 ease-in-out ${historyOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           >
