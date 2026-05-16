@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import type { CategoryResponse, ItemFlag } from "@/api/schema";
+import type { CategoryResponse, ItemFlag, ItemType } from "@/api/schema";
 
 const schema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -32,6 +32,7 @@ const schema = z.object({
     .refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1, "Quantity must be at least 1"),
   notes: z.string(),
   alreadyOwned: z.boolean(),
+  itemType: z.enum(["PRODUCT", "FUND"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -66,6 +67,7 @@ interface ItemFormValues {
   quantityDesired: number;
   notes: string | null;
   alreadyOwned: boolean;
+  itemType: ItemType;
 }
 
 interface ItemFormProps {
@@ -284,6 +286,7 @@ export function ItemForm({
       quantityDesired: "1",
       notes: "",
       alreadyOwned: false,
+      itemType: "PRODUCT" as const,
       ...defaultValues,
     },
   });
@@ -307,6 +310,8 @@ export function ItemForm({
   const alreadyOwnedValue = watch("alreadyOwned");
   const imageUrlValue = watch("imageUrl");
   const descriptionValue = watch("description");
+  const itemTypeValue = watch("itemType");
+  const isFundForm = itemTypeValue === "FUND";
 
   // FLIP: animate wrapper height after imageSource causes a content change.
   // capturedHeight is set synchronously in the event handler (before re-render),
@@ -556,13 +561,42 @@ export function ItemForm({
             values.priceReference.length > 0 ? parseFloat(values.priceReference) : null,
           currency: values.currency.length > 0 ? values.currency : null,
           categoryId: values.categoryId.length > 0 ? values.categoryId : null,
-          flag: values.flag,
-          quantityDesired: parseInt(values.quantityDesired, 10),
+          flag: isFundForm ? "EXACT_ONLY" : values.flag,
+          quantityDesired: isFundForm ? 1 : parseInt(values.quantityDesired, 10),
           notes: values.notes.length > 0 ? values.notes : null,
           alreadyOwned: values.alreadyOwned,
+          itemType: values.itemType,
         }),
       )}
     >
+      <div className="space-y-2">
+        <span className="text-sm leading-none font-medium">Type</span>
+        <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
+          <div
+            className={cn(
+              "bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out",
+              isFundForm && "translate-x-full",
+            )}
+            style={{ width: "calc(50% - 4px)" }}
+          />
+          {(["PRODUCT", "FUND"] as const).map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setValue("itemType", type)}
+              className={cn(
+                "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                itemTypeValue === type
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {type === "PRODUCT" ? "Product" : "Fund"}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <FormField label="Title" htmlFor="title" error={errors.title?.message}>
         <div
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showTitleToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
@@ -871,7 +905,9 @@ export function ItemForm({
       </div>
 
       <div className="space-y-2">
-        <span className="text-sm leading-none font-medium">Price</span>
+        <span className="text-sm leading-none font-medium">
+          {isFundForm ? "Fund target" : "Price"}
+        </span>
         <div
           className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showPriceToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
           aria-hidden={!showPriceToggle}
@@ -908,25 +944,29 @@ export function ItemForm({
         </div>
       </div>
 
-      <FormField label="How we want it" htmlFor="flag" error={errors.flag?.message}>
-        <select
-          id="flag"
-          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          {...register("flag")}
-        >
-          <option value="EXACT_ONLY">Exact only — please buy exactly this</option>
-          <option value="SIMILAR_OK">Similar OK — functionally equivalent is fine</option>
-          <option value="SIMILAR_CHEAPER">Cheaper OK — a cheaper alternative is preferred</option>
-        </select>
-      </FormField>
+      {!isFundForm && (
+        <FormField label="How we want it" htmlFor="flag" error={errors.flag?.message}>
+          <select
+            id="flag"
+            className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+            {...register("flag")}
+          >
+            <option value="EXACT_ONLY">Exact only — please buy exactly this</option>
+            <option value="SIMILAR_OK">Similar OK — functionally equivalent is fine</option>
+            <option value="SIMILAR_CHEAPER">Cheaper OK — a cheaper alternative is preferred</option>
+          </select>
+        </FormField>
+      )}
 
-      <FormField
-        label="Quantity wanted"
-        htmlFor="quantityDesired"
-        error={errors.quantityDesired?.message}
-      >
-        <Input id="quantityDesired" type="number" min="1" {...register("quantityDesired")} />
-      </FormField>
+      {!isFundForm && (
+        <FormField
+          label="Quantity wanted"
+          htmlFor="quantityDesired"
+          error={errors.quantityDesired?.message}
+        >
+          <Input id="quantityDesired" type="number" min="1" {...register("quantityDesired")} />
+        </FormField>
+      )}
 
       <label className="flex cursor-pointer items-center gap-3">
         <input
@@ -937,8 +977,12 @@ export function ItemForm({
           onChange={(e) => setValue("alreadyOwned", e.target.checked)}
         />
         <div className="flex flex-col">
-          <span className="text-sm font-medium">We already have this</span>
-          <span className="text-muted-foreground text-xs">(will be marked as claimed)</span>
+          <span className="text-sm font-medium">
+            {isFundForm ? "Close this fund" : "We already have this"}
+          </span>
+          <span className="text-muted-foreground text-xs">
+            {isFundForm ? "(no new contributions will be accepted)" : "(will be marked as claimed)"}
+          </span>
         </div>
       </label>
 

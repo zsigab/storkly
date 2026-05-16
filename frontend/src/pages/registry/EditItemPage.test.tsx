@@ -47,6 +47,7 @@ const itemFixture = {
   notes: "Blue preferred",
   sortOrder: 0,
   alreadyOwned: false,
+  itemType: "PRODUCT" as const,
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };

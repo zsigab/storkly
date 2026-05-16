@@ -45,6 +45,7 @@ interface ClaimDialogProps {
   isAuthenticated?: boolean;
   viewTransitionName?: string | undefined;
   maxAmount?: number | null;
+  isFund?: boolean;
 }
 
 export function ClaimDialog({
@@ -58,6 +59,7 @@ export function ClaimDialog({
   isAuthenticated = false,
   viewTransitionName,
   maxAmount,
+  isFund = false,
 }: ClaimDialogProps): React.ReactElement {
   const claimItem = useClaimItem(slug);
   const deliveryOptions = useDeliveryOptions(slug);
@@ -76,6 +78,7 @@ export function ClaimDialog({
     control,
     setValue,
     watch,
+    setError,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(isAuthenticated ? baseSchema : anonymousSchema),
@@ -89,7 +92,7 @@ export function ClaimDialog({
   });
 
   useEffect(() => {
-    if (open) {
+    if (open && !isFund) {
       setValue("percentage", maxPercent);
       if (priceReference != null && maxAmount != null) {
         setValue("amount", maxAmount.toFixed(2));
@@ -100,6 +103,15 @@ export function ClaimDialog({
 
   const percentage = watch("percentage");
   const amount = watch("amount");
+  const amountFloat = parseFloat(amount);
+  const overLimitBy =
+    isFund &&
+    maxAmount !== null &&
+    maxAmount !== undefined &&
+    !isNaN(amountFloat) &&
+    amountFloat > maxAmount
+      ? amountFloat - maxAmount
+      : null;
 
   const handleAmountChange = (raw: string): void => {
     setLastTouched("amount");
@@ -123,7 +135,14 @@ export function ClaimDialog({
   const onSubmit = (values: FormValues): void => {
     let amountContributed: number | null = null;
     let percentageContributed: number | null = null;
-    if (partialEnabled && values.percentage < 100) {
+    if (isFund) {
+      const amt = parseFloat(values.amount);
+      if (isNaN(amt) || amt <= 0) {
+        setError("amount", { message: "Amount must be greater than 0" });
+        return;
+      }
+      amountContributed = amt;
+    } else if (partialEnabled && values.percentage < 100) {
       percentageContributed = Math.min(values.percentage, maxPercent);
       if (priceReference != null && values.amount !== "") {
         const raw = parseFloat(values.amount);
@@ -169,7 +188,7 @@ export function ClaimDialog({
           style={viewTransitionName !== undefined ? { viewTransitionName } : undefined}
         >
           <DialogHeader>
-            <DialogTitle>Claim item</DialogTitle>
+            <DialogTitle>{isFund ? "Contribute to fund" : "Claim item"}</DialogTitle>
             <DialogDescription className="line-clamp-1">{itemTitle}</DialogDescription>
           </DialogHeader>
           <form className="space-y-4 pt-2" noValidate onSubmit={handleSubmit(onSubmit)}>
@@ -202,63 +221,75 @@ export function ClaimDialog({
               </>
             )}
 
-            <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300"
-                checked={partialEnabled}
-                onChange={(e) => setPartialEnabled(e.target.checked)}
-              />
-              <span className="text-sm font-medium">Contribute a partial amount</span>
-            </label>
+            {!isFund && (
+              <label className="flex cursor-pointer items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300"
+                  checked={partialEnabled}
+                  onChange={(e) => setPartialEnabled(e.target.checked)}
+                />
+                <span className="text-sm font-medium">Contribute a partial amount</span>
+              </label>
+            )}
 
-            {partialEnabled && (
+            {(isFund || partialEnabled) && (
               <div className="space-y-3 rounded-md border p-3">
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="partialPercentage" className="text-sm font-medium">
-                      Percentage
-                    </label>
-                    <span className="text-muted-foreground text-sm">{percentage}%</span>
-                  </div>
-                  <Controller
-                    control={control}
-                    name="percentage"
-                    render={({ field }) => (
-                      <input
-                        id="partialPercentage"
-                        type="range"
-                        min={1}
-                        max={maxPercent}
-                        className="accent-primary w-full"
-                        value={field.value}
-                        onChange={(e) => handlePercentageChange(Number(e.target.value))}
-                      />
+                {!isFund && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="partialPercentage" className="text-sm font-medium">
+                        Percentage
+                      </label>
+                      <span className="text-muted-foreground text-sm">{percentage}%</span>
+                    </div>
+                    <Controller
+                      control={control}
+                      name="percentage"
+                      render={({ field }) => (
+                        <input
+                          id="partialPercentage"
+                          type="range"
+                          min={1}
+                          max={maxPercent}
+                          className="accent-primary w-full"
+                          value={field.value}
+                          onChange={(e) => handlePercentageChange(Number(e.target.value))}
+                        />
+                      )}
+                    />
+                    {maxPercent < 100 && (
+                      <p className="text-muted-foreground text-xs">
+                        {100 - maxPercent}% already contributed by others
+                      </p>
                     )}
-                  />
-                  {maxPercent < 100 && (
-                    <p className="text-muted-foreground text-xs">
-                      {100 - maxPercent}% already contributed by others
-                    </p>
-                  )}
-                </div>
+                  </div>
+                )}
 
-                {priceReference != null && (
+                {(isFund || priceReference != null) && (
                   <FormField
                     label={`Amount${currency ? ` (${currency})` : ""}`}
                     htmlFor="partialAmount"
+                    error={errors.amount?.message}
                   >
                     <Input
                       id="partialAmount"
                       type="number"
                       step="0.01"
                       min="0.01"
-                      max={maxAmount ?? priceReference}
+                      max={isFund ? undefined : (maxAmount ?? priceReference ?? undefined)}
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => handleAmountChange(e.target.value)}
                     />
                   </FormField>
+                )}
+
+                {overLimitBy !== null && (
+                  <p className="text-warning text-xs">
+                    This is {currency ?? ""} {overLimitBy.toFixed(2)} over the target — that&apos;s
+                    fine, the excess goes to the parents.
+                  </p>
                 )}
               </div>
             )}
@@ -318,7 +349,13 @@ export function ClaimDialog({
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={claimItem.isPending}>
-                {claimItem.isPending ? "Claiming…" : "Claim item"}
+                {claimItem.isPending
+                  ? isFund
+                    ? "Contributing…"
+                    : "Claiming…"
+                  : isFund
+                    ? "Contribute"
+                    : "Claim item"}
               </Button>
             </div>
           </form>

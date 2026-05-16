@@ -49,6 +49,7 @@ export interface CategoryResponse {
 }
 
 export type ItemFlag = "EXACT_ONLY" | "SIMILAR_OK" | "SIMILAR_CHEAPER";
+export type ItemType = "PRODUCT" | "FUND";
 export type SourceSite = "LAZADA_PH" | "SHOPEE_PH" | "AMAZON" | "GALAXUS" | "SM" | "ROBINSONS" | "MANUAL";
 
 export interface LinkPreviewResponse {
@@ -84,6 +85,7 @@ export interface ItemResponse {
   notes: string | null;
   sortOrder: number;
   alreadyOwned: boolean;
+  itemType: ItemType;
   createdAt: string;
   updatedAt: string;
 }

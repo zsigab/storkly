@@ -76,21 +76,35 @@ export function ItemCard({
   const [historyOpen, setHistoryOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const claimTransitionName = `claim-item-${item.id}`;
+  const isFund = item.itemType === "FUND";
 
   const quantityClaimed = claims.reduce((sum, c) => sum + c.quantityClaimed, 0);
   const totalContributed = claims.reduce((sum, c) => sum + (c.amountContributed ?? 0), 0);
   const totalReceived = claims.reduce((sum, c) => sum + (c.amountReceived ?? 0), 0);
-  const hasPartialContributions =
-    item.priceReference != null && claims.some((c) => c.amountContributed != null);
-  const claimedPercent = hasPartialContributions
-    ? Math.min(100, Math.round((totalContributed / item.priceReference!) * 100))
-    : 0;
-  const receivedPercent = hasPartialContributions
-    ? Math.min(100, Math.round((totalReceived / item.priceReference!) * 100))
-    : 0;
-  const isClaimed = hasPartialContributions
-    ? claimedPercent >= 100
-    : quantityClaimed >= item.quantityDesired;
+  const hasContributions = claims.some((c) => c.amountContributed != null);
+  const hasPartialContributions = item.priceReference != null && hasContributions;
+  const claimedPercent = (() => {
+    if (isFund && item.priceReference === null) return totalContributed > 0 ? 100 : 0;
+    if (!hasPartialContributions) return 0;
+    return Math.min(100, Math.round((totalContributed / item.priceReference!) * 100));
+  })();
+  const receivedPercent = (() => {
+    if (isFund && item.priceReference === null) {
+      return totalContributed > 0
+        ? Math.min(100, Math.round((totalReceived / totalContributed) * 100))
+        : 0;
+    }
+    if (!hasPartialContributions) return 0;
+    return Math.min(100, Math.round((totalReceived / item.priceReference!) * 100));
+  })();
+  const fundFullyCovered =
+    isFund && item.priceReference !== null && totalContributed >= item.priceReference;
+  const isClaimed = fundFullyCovered
+    ? false
+    : hasPartialContributions
+      ? claimedPercent >= 100
+      : quantityClaimed >= item.quantityDesired;
+  const showProgressBar = isFund ? hasContributions : hasPartialContributions;
   const remainingAmount =
     item.priceReference != null ? Math.max(0, item.priceReference - totalContributed) : null;
 
@@ -196,7 +210,7 @@ export function ItemCard({
               </Link>
             </Button>
           )}
-          <Badge variant="secondary">Already owned</Badge>
+          <Badge variant="secondary">{isFund ? "Fund closed" : "Already owned"}</Badge>
         </>
       );
     }
@@ -206,6 +220,22 @@ export function ItemCard({
           <Link to={`/r/${slug}/items/${item.id}/edit`} viewTransition>
             Edit
           </Link>
+        </Button>
+      );
+    }
+    if (isFund) {
+      if (fundFullyCovered) {
+        return <span className="text-muted-foreground text-sm">Fully funded</span>;
+      }
+      return (
+        <Button
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClaimOpen();
+          }}
+        >
+          Contribute
         </Button>
       );
     }
@@ -268,13 +298,13 @@ export function ItemCard({
             <p className="text-muted-foreground text-xs italic">{item.notes}</p>
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>
+            {!isFund && <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>}
             {item.priceReference !== null && (
               <span className="text-muted-foreground text-sm">
                 {item.currency ?? ""} {formatPrice(item.priceReference)}
               </span>
             )}
-            {item.quantityDesired > 1 && (
+            {!isFund && item.quantityDesired > 1 && (
               <span className="text-muted-foreground text-sm">
                 {quantityClaimed}/{item.quantityDesired} claimed
               </span>
@@ -329,7 +359,7 @@ export function ItemCard({
             }}
           >
             <div className="space-y-0.5">
-              {hasPartialContributions
+              {(isFund ? hasContributions : hasPartialContributions)
                 ? claims.map((c) => {
                     const name =
                       c.claimerUserId !== null
@@ -457,16 +487,18 @@ export function ItemCard({
         </div>
       )}
 
-      {hasPartialContributions && (
+      {showProgressBar && (
         <div className="space-y-1 border-t pt-2">
           <div className="text-muted-foreground flex justify-between text-xs">
             <span>
               {item.currency ?? ""} {formatPrice(totalReceived)} received of{" "}
-              {formatPrice(totalContributed)} claimed
+              {formatPrice(totalContributed)} {isFund ? "pledged" : "claimed"}
             </span>
-            <span>
-              {receivedPercent}% of {item.currency ?? ""} {formatPrice(item.priceReference!)}
-            </span>
+            {item.priceReference !== null && (
+              <span>
+                {receivedPercent}% of {item.currency ?? ""} {formatPrice(item.priceReference)}
+              </span>
+            )}
           </div>
           <div className="bg-muted relative h-2 w-full overflow-hidden rounded-full">
             <div
@@ -497,6 +529,7 @@ export function ItemCard({
         currency={item.currency}
         isAuthenticated={user !== null}
         maxAmount={remainingAmount}
+        isFund={isFund}
         viewTransitionName={claimTransitioning && claimDialogOpen ? claimTransitionName : undefined}
       />
     </div>

@@ -46,6 +46,7 @@ const base: ItemResponse = {
   notes: null,
   sortOrder: 0,
   alreadyOwned: false,
+  itemType: "PRODUCT",
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };
@@ -233,5 +234,52 @@ describe("ItemCard", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: /unclaim/i })).toBeInTheDocument(),
     );
+  });
+
+  it("fund item shows Contribute button instead of Claim", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({ item: { ...base, itemType: "FUND", priceReference: 200, currency: "USD" } });
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /contribute/i })).toBeInTheDocument(),
+    );
+  });
+
+  it("fund item shows Fund closed badge when alreadyOwned is true", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({
+      item: { ...base, itemType: "FUND", alreadyOwned: true, priceReference: 200, currency: "USD" },
+    });
+    await waitFor(() => expect(screen.getByText("Fund closed")).toBeInTheDocument());
+  });
+
+  it("fund item shows Fully funded when contributions meet target", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({
+      data: [
+        {
+          id: "c1",
+          itemId: "item-1",
+          claimerUserId: null,
+          claimerName: "Alice",
+          claimerEmail: "a@b.com",
+          quantityClaimed: 1,
+          amountContributed: 200,
+          claimedAt: "2024-01-01T00:00:00Z",
+        },
+      ],
+      error: undefined,
+      response: new Response(),
+    });
+    renderCard({ item: { ...base, itemType: "FUND", priceReference: 200, currency: "USD" } });
+    await waitFor(() => expect(screen.getByText("Fully funded")).toBeInTheDocument());
+  });
+
+  it("fund item does not show flag badge", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    renderCard({ item: { ...base, itemType: "FUND" } });
+    await waitFor(() => expect(screen.queryByText("Exact only")).not.toBeInTheDocument());
   });
 });

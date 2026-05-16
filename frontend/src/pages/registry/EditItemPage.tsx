@@ -103,6 +103,7 @@ export function EditItemPage(): React.ReactElement {
             quantityDesired: String(item.quantityDesired),
             notes: item.notes ?? "",
             alreadyOwned: item.alreadyOwned,
+            itemType: item.itemType,
           }}
           categories={categories ?? []}
           onSubmit={(values) => updateItem.mutate({ id: safeId, ...values })}

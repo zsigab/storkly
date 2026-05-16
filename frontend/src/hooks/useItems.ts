@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { api } from "@/api";
-import type { ItemFlag, ItemResponse } from "@/api/schema";
+import type { ItemFlag, ItemResponse, ItemType } from "@/api/schema";
 
 export function useItem(id: string, slug: string) {
   const queryClient = useQueryClient();
@@ -53,6 +53,7 @@ export function useCreateItem(slug: string) {
       quantityDesired: number;
       notes: string | null;
       alreadyOwned: boolean;
+      itemType: ItemType;
     }): Promise<ItemResponse> => {
       const { data, error } = await api.POST("/api/registries/{slug}/items", {
         params: { path: { slug } },
@@ -89,6 +90,7 @@ export function useUpdateItem(slug: string) {
       quantityDesired: number;
       notes: string | null;
       alreadyOwned: boolean;
+      itemType: ItemType;
     }): Promise<ItemResponse> => {
       const { data, error } = await api.PATCH("/api/items/{id}", {
         params: { path: { id } },
