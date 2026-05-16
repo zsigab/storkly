@@ -95,7 +95,7 @@ export function RegistryPage(): React.ReactElement {
     return () => observer.disconnect();
   }, [registry?.name, isOwner, isSubscriber, hasUnsubscribed]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (registry !== undefined) {
       const color = isThemeColor(registry.themeColor) ? registry.themeColor : "peach";
       const background = isThemeBackground(registry.themeBackground)

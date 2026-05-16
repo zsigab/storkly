@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
   type CSSProperties,
@@ -256,7 +257,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
   const effectiveColor = registryOverride?.color ?? theme.color;
   const effectiveBackground = registryOverride?.background ?? theme.background;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = document.documentElement;
     el.dataset["color"] = effectiveColor;
     el.dataset["style"] = theme.style;
