@@ -9,7 +9,7 @@ import { getApiErrorMessage } from "@/api/helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useItemClaims, useItemClaimHistory, useUnclaimItem } from "@/hooks/useClaims";
 import { useAuth } from "@/hooks/useAuth";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, formatPrice } from "@/lib/utils";
 import type { ItemFlag, ItemResponse } from "@/api/schema";
 
 const FLAG_LABELS: Record<ItemFlag, string> = {
@@ -178,7 +178,7 @@ export function ItemCard({
             <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>
             {item.priceReference !== null && (
               <span className="text-muted-foreground text-sm">
-                {item.currency ?? ""} {item.priceReference.toFixed(2)}
+                {item.currency ?? ""} {formatPrice(item.priceReference)}
               </span>
             )}
             {item.quantityDesired > 1 && (
@@ -248,7 +248,7 @@ export function ItemCard({
                         : (c.claimerName ?? "Anonymous");
                     const amtLabel =
                       c.amountContributed != null
-                        ? `${item.currency ?? ""} ${c.amountContributed.toFixed(2)}`
+                        ? `${item.currency ?? ""} ${formatPrice(c.amountContributed)}`
                         : c.percentageContributed != null
                           ? `${c.percentageContributed}%`
                           : null;
@@ -377,11 +377,11 @@ export function ItemCard({
         <div className="space-y-1 border-t pt-2">
           <div className="text-muted-foreground flex justify-between text-xs">
             <span>
-              {item.currency ?? ""} {totalReceived.toFixed(2)} received of{" "}
-              {totalContributed.toFixed(2)} claimed
+              {item.currency ?? ""} {formatPrice(totalReceived)} received of{" "}
+              {formatPrice(totalContributed)} claimed
             </span>
             <span>
-              {receivedPercent}% of {item.currency ?? ""} {item.priceReference!.toFixed(2)}
+              {receivedPercent}% of {item.currency ?? ""} {formatPrice(item.priceReference!)}
             </span>
           </div>
           <div className="bg-muted relative h-2 w-full overflow-hidden rounded-full">

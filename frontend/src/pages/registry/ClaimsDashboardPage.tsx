@@ -15,7 +15,7 @@ import {
 import { useRegistryItems } from "@/hooks/useItems";
 import { useDeliveryOptions } from "@/hooks/useDeliveryOptions";
 import { getApiErrorMessage } from "@/api/helpers";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, formatPrice } from "@/lib/utils";
 import type { ClaimResponse, ItemResponse } from "@/api/schema";
 
 const KNOWN_DELIVERY_TYPES = ["IN_PERSON", "SHIP_TO_ADDRESS", "MONEY_TRANSFER"];
@@ -159,14 +159,14 @@ function ClaimRow({
           {claim.amountContributed !== null && (
             <>
               {" "}
-              &middot; Pledged {item?.currency ?? ""} {claim.amountContributed.toFixed(2)}
+              &middot; Pledged {item?.currency ?? ""} {formatPrice(claim.amountContributed)}
             </>
           )}
           {claim.receivedAt !== null && <> &middot; Received {formatDateTime(claim.receivedAt)}</>}
           {claim.amountReceived !== null && (
             <>
               {" "}
-              &middot; {item?.currency ?? ""} {claim.amountReceived.toFixed(2)}
+              &middot; {item?.currency ?? ""} {formatPrice(claim.amountReceived)}
             </>
           )}
         </div>
