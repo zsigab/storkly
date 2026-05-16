@@ -546,7 +546,7 @@ export function RegistryPage(): React.ReactElement {
                           return (
                             <li
                               key={subscriber.userId}
-                              className="space-y-1 rounded-lg border px-3 py-2"
+                              className="bg-card space-y-1 rounded-lg border px-3 py-2"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="text-sm font-medium">
