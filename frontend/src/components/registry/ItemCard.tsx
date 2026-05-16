@@ -2,6 +2,7 @@ import { useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useViewTransitionState } from "react-router";
 import { Gift } from "lucide-react";
+import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ClaimDialog } from "./ClaimDialog";
@@ -305,9 +306,12 @@ export function ItemCard({
         <div className="overflow-hidden">
           <div className="space-y-1.5 pt-1">
             {item.description !== null && (
-              <p className="text-muted-foreground text-sm whitespace-pre-wrap">
-                {item.description}
-              </p>
+              <div onClick={(e) => e.stopPropagation()}>
+                <MarkdownContent
+                  content={item.description}
+                  className="text-muted-foreground text-sm"
+                />
+              </div>
             )}
           </div>
         </div>
