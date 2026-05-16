@@ -5,6 +5,7 @@ import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
 import app.storkly.domain.exception.ContributionExceedsRemainingException;
+import app.storkly.domain.exception.FundContributionRequiredException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.ItemAlreadyOwnedException;
 import app.storkly.domain.exception.ItemNotFoundException;
@@ -15,6 +16,7 @@ import app.storkly.domain.item.DeliveryOption;
 import app.storkly.domain.item.DeliveryOptionRepository;
 import app.storkly.domain.item.Item;
 import app.storkly.domain.item.ItemRepository;
+import app.storkly.domain.item.ItemType;
 import app.storkly.domain.item.MyClaimView;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
@@ -70,29 +72,41 @@ public class ClaimService {
                         () -> new RegistryNotFoundException(item.registryId().toString()));
         assertReadAccess(registry, currentUserId);
 
+        // Fund items require contributions; skip the fullClaimByPercentage optimization
+        boolean isFund = item.itemType() == ItemType.FUND;
+        if (isFund && amountContributed == null && percentageContributed == null) {
+            throw new FundContributionRequiredException();
+        }
+
         // 100% contribution = full claim: covers the full cost of all desired units
-        boolean fullClaimByPercentage = percentageContributed != null && percentageContributed == 100;
+        // Skip this for fund items — they always use contribution tracking
+        boolean fullClaimByPercentage =
+                !isFund && percentageContributed != null && percentageContributed == 100;
         int effectiveQuantity = fullClaimByPercentage ? item.quantityDesired() : quantityClaimed;
         BigDecimal effectiveAmount = fullClaimByPercentage ? null : amountContributed;
         Integer effectivePercentage = fullClaimByPercentage ? null : percentageContributed;
 
-        if (effectiveAmount != null && item.priceReference() != null) {
-            List<Claim> existingClaims = claimRepository.findActiveByItemId(itemId);
-            BigDecimal alreadyClaimed = existingClaims.stream()
-                    .map(c -> c.amountContributed() != null ? c.amountContributed() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            BigDecimal remaining = item.priceReference().subtract(alreadyClaimed);
-            if (effectiveAmount.compareTo(remaining) > 0) {
-                throw new ContributionExceedsRemainingException(remaining);
-            }
-        } else if (effectivePercentage != null) {
-            List<Claim> existingClaims = claimRepository.findActiveByItemId(itemId);
-            int alreadyClaimed = existingClaims.stream()
-                    .mapToInt(c -> c.percentageContributed() != null ? c.percentageContributed() : 0)
-                    .sum();
-            int remaining = 100 - alreadyClaimed;
-            if (effectivePercentage > remaining) {
-                throw new ContributionExceedsRemainingException(remaining);
+        // For fund items with priceReference, allow over-limit (just don't enforce cap)
+        // For non-fund items, enforce the cap
+        if (!isFund) {
+            if (effectiveAmount != null && item.priceReference() != null) {
+                List<Claim> existingClaims = claimRepository.findActiveByItemId(itemId);
+                BigDecimal alreadyClaimed = existingClaims.stream()
+                        .map(c -> c.amountContributed() != null ? c.amountContributed() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal remaining = item.priceReference().subtract(alreadyClaimed);
+                if (effectiveAmount.compareTo(remaining) > 0) {
+                    throw new ContributionExceedsRemainingException(remaining);
+                }
+            } else if (effectivePercentage != null) {
+                List<Claim> existingClaims = claimRepository.findActiveByItemId(itemId);
+                int alreadyClaimed = existingClaims.stream()
+                        .mapToInt(c -> c.percentageContributed() != null ? c.percentageContributed() : 0)
+                        .sum();
+                int remaining = 100 - alreadyClaimed;
+                if (effectivePercentage > remaining) {
+                    throw new ContributionExceedsRemainingException(remaining);
+                }
             }
         }
 

@@ -1,6 +1,7 @@
 package app.storkly.item.dto;
 
 import app.storkly.domain.item.ItemFlag;
+import app.storkly.domain.item.ItemType;
 import app.storkly.domain.item.SourceSite;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -25,5 +26,6 @@ public record ItemResponse(
         @Nullable String notes,
         int sortOrder,
         boolean alreadyOwned,
+        ItemType itemType,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt) {}

@@ -1,6 +1,7 @@
 package app.storkly.item.dto;
 
 import app.storkly.domain.item.ItemFlag;
+import app.storkly.domain.item.ItemType;
 import jakarta.validation.constraints.Min;
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -18,4 +19,5 @@ public record ItemUpdateRequest(
         @Nullable @Min(1) Integer quantityDesired,
         @Nullable String notes,
         @Nullable Integer sortOrder,
-        @Nullable Boolean alreadyOwned) {}
+        @Nullable Boolean alreadyOwned,
+        @Nullable ItemType itemType) {}

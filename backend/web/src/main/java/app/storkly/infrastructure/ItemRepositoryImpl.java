@@ -6,6 +6,7 @@ import app.storkly.domain.generated.tables.records.ItemRecord;
 import app.storkly.domain.item.Item;
 import app.storkly.domain.item.ItemFlag;
 import app.storkly.domain.item.ItemRepository;
+import app.storkly.domain.item.ItemType;
 import app.storkly.domain.item.SourceSite;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                     .set(ITEM.NOTES, item.notes())
                     .set(ITEM.SORT_ORDER, item.sortOrder())
                     .set(ITEM.ALREADY_OWNED, item.alreadyOwned())
+                    .set(ITEM.ITEM_TYPE, mapItemType(item.itemType()))
                     .set(ITEM.CREATED_AT, item.createdAt())
                     .set(ITEM.UPDATED_AT, item.updatedAt())
                     .execute();
@@ -63,6 +65,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                     .notes(item.notes())
                     .sortOrder(item.sortOrder())
                     .alreadyOwned(item.alreadyOwned())
+                    .itemType(item.itemType())
                     .createdAt(item.createdAt())
                     .updatedAt(item.updatedAt())
                     .build();
@@ -80,6 +83,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                     .set(ITEM.NOTES, item.notes())
                     .set(ITEM.SORT_ORDER, item.sortOrder())
                     .set(ITEM.ALREADY_OWNED, item.alreadyOwned())
+                    .set(ITEM.ITEM_TYPE, mapItemType(item.itemType()))
                     .set(ITEM.UPDATED_AT, item.updatedAt())
                     .where(ITEM.ID.eq(item.id()))
                     .execute();
@@ -125,6 +129,7 @@ public class ItemRepositoryImpl implements ItemRepository {
                 .notes(r.getNotes())
                 .sortOrder(r.getSortOrder())
                 .alreadyOwned(r.getAlreadyOwned())
+                .itemType(mapItemType(r.getItemType()))
                 .createdAt(r.getCreatedAt())
                 .updatedAt(r.getUpdatedAt())
                 .build();
@@ -144,5 +149,13 @@ public class ItemRepositoryImpl implements ItemRepository {
 
     private ItemFlag mapFlag(app.storkly.domain.generated.enums.ItemFlag f) {
         return ItemFlag.valueOf(f.name());
+    }
+
+    private app.storkly.domain.generated.enums.ItemType mapItemType(ItemType t) {
+        return app.storkly.domain.generated.enums.ItemType.valueOf(t.name());
+    }
+
+    private ItemType mapItemType(app.storkly.domain.generated.enums.ItemType t) {
+        return ItemType.valueOf(t.name());
     }
 }

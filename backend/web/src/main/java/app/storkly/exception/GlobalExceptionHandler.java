@@ -8,6 +8,7 @@ import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
 import app.storkly.domain.exception.ContributionExceedsRemainingException;
 import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
+import app.storkly.domain.exception.FundContributionRequiredException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.InvalidTokenException;
@@ -95,8 +96,8 @@ public class GlobalExceptionHandler {
         return detail;
     }
 
-    @ExceptionHandler(ContributionExceedsRemainingException.class)
-    public ProblemDetail handleContributionExceeds(ContributionExceedsRemainingException ex) {
+    @ExceptionHandler({ContributionExceedsRemainingException.class, FundContributionRequiredException.class})
+    public ProblemDetail handleContributionValidation(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 

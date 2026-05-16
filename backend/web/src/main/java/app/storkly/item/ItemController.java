@@ -56,6 +56,7 @@ public class ItemController {
                 request.quantityDesired(),
                 request.notes(),
                 request.alreadyOwned(),
+                request.itemType(),
                 currentUser.id());
         return toResponse(item);
     }
@@ -85,6 +86,7 @@ public class ItemController {
                 request.notes(),
                 request.sortOrder(),
                 request.alreadyOwned(),
+                request.itemType(),
                 currentUser.id());
         return toResponse(item);
     }
@@ -114,6 +116,7 @@ public class ItemController {
                 item.notes(),
                 item.sortOrder(),
                 item.alreadyOwned(),
+                item.itemType(),
                 item.createdAt(),
                 item.updatedAt());
     }

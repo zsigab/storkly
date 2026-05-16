@@ -8,6 +8,7 @@ import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.item.Item;
 import app.storkly.domain.item.ItemFlag;
 import app.storkly.domain.item.ItemRepository;
+import app.storkly.domain.item.ItemType;
 import app.storkly.domain.item.SourceSite;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
@@ -62,9 +63,11 @@ public class ItemService {
             int quantityDesired,
             @Nullable String notes,
             boolean alreadyOwned,
+            ItemType itemType,
             UUID addedByUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
         assertWriteAccess(registry, addedByUserId);
+        validateFundConstraints(itemType, alreadyOwned);
         List<Item> existing = itemRepository.findByRegistryId(registry.id());
         int nextSortOrder = existing.stream().mapToInt(Item::sortOrder).max().orElse(-1) + 1;
         OffsetDateTime now = OffsetDateTime.now();
@@ -83,6 +86,7 @@ public class ItemService {
                 .flag(flag)
                 .notes(notes)
                 .alreadyOwned(alreadyOwned)
+                .itemType(itemType)
                 .sortOrder(nextSortOrder)
                 .createdAt(now)
                 .updatedAt(now)
@@ -104,6 +108,7 @@ public class ItemService {
             @Nullable String notes,
             @Nullable Integer sortOrder,
             @Nullable Boolean alreadyOwned,
+            @Nullable ItemType itemType,
             UUID currentUserId) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new ItemNotFoundException(id));
         Registry registry = registryRepository
@@ -111,6 +116,9 @@ public class ItemService {
                 .orElseThrow(
                         () -> new RegistryNotFoundException(item.registryId().toString()));
         assertWriteAccess(registry, currentUserId);
+        ItemType effectiveItemType = itemType != null ? itemType : item.itemType();
+        boolean effectiveAlreadyOwned = alreadyOwned != null ? alreadyOwned : item.alreadyOwned();
+        validateFundConstraints(effectiveItemType, effectiveAlreadyOwned);
         return itemRepository.save(Item.builder()
                 .id(item.id())
                 .registryId(item.registryId())
@@ -128,7 +136,8 @@ public class ItemService {
                 .flag(flag != null ? flag : item.flag())
                 .notes(notes != null ? notes : item.notes())
                 .sortOrder(sortOrder != null ? sortOrder : item.sortOrder())
-                .alreadyOwned(alreadyOwned != null ? alreadyOwned : item.alreadyOwned())
+                .alreadyOwned(effectiveAlreadyOwned)
+                .itemType(effectiveItemType)
                 .createdAt(item.createdAt())
                 .updatedAt(OffsetDateTime.now())
                 .build());
@@ -155,6 +164,12 @@ public class ItemService {
     private void assertWriteAccess(Registry registry, UUID currentUserId) {
         if (!registry.ownerId().equals(currentUserId) && !coOwnerRepository.isCoOwner(registry.id(), currentUserId)) {
             throw new AccessDeniedException("Only the owner or a co-owner can manage items");
+        }
+    }
+
+    private void validateFundConstraints(ItemType itemType, boolean alreadyOwned) {
+        if (itemType == ItemType.FUND && alreadyOwned) {
+            throw new AccessDeniedException("Fund items cannot be marked as already owned");
         }
     }
 }

@@ -1,6 +1,7 @@
 package app.storkly.item.dto;
 
 import app.storkly.domain.item.ItemFlag;
+import app.storkly.domain.item.ItemType;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -19,4 +20,5 @@ public record ItemCreateRequest(
         @NotNull ItemFlag flag,
         @Min(1) int quantityDesired,
         @Nullable String notes,
-        boolean alreadyOwned) {}
+        boolean alreadyOwned,
+        @NotNull ItemType itemType) {}

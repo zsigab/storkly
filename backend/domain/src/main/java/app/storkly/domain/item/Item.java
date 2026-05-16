@@ -25,5 +25,6 @@ public record Item(
         @Nullable String notes,
         int sortOrder,
         boolean alreadyOwned,
+        ItemType itemType,
         OffsetDateTime createdAt,
         OffsetDateTime updatedAt) {}

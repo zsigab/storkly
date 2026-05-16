@@ -14,6 +14,7 @@ import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.item.Item;
 import app.storkly.domain.item.ItemFlag;
 import app.storkly.domain.item.ItemRepository;
+import app.storkly.domain.item.ItemType;
 import app.storkly.domain.item.SourceSite;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
@@ -89,7 +90,20 @@ class ItemServiceTest {
         when(itemRepository.save(any(Item.class))).thenReturn(saved);
 
         Item result = itemService.create(
-                slug, "Crib", null, null, null, null, null, null, ItemFlag.EXACT_ONLY, 1, null, false, ownerId);
+                slug,
+                "Crib",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                ItemFlag.EXACT_ONLY,
+                1,
+                null,
+                false,
+                ItemType.PRODUCT,
+                ownerId);
 
         assertThat(result.title()).isEqualTo("Crib");
         verify(itemRepository).save(any(Item.class));
@@ -115,6 +129,7 @@ class ItemServiceTest {
                         1,
                         null,
                         false,
+                        ItemType.PRODUCT,
                         stranger))
                 .isInstanceOf(AccessDeniedException.class);
 
@@ -170,6 +185,7 @@ class ItemServiceTest {
                 .title(title)
                 .quantityDesired(1)
                 .flag(ItemFlag.EXACT_ONLY)
+                .itemType(ItemType.PRODUCT)
                 .sortOrder(sortOrder)
                 .createdAt(now)
                 .updatedAt(now)

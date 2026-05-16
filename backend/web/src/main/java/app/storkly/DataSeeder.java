@@ -7,6 +7,7 @@ import static app.storkly.domain.generated.Tables.REGISTRY;
 import static app.storkly.domain.generated.Tables.USER;
 
 import app.storkly.domain.generated.enums.ItemFlag;
+import app.storkly.domain.generated.enums.ItemType;
 import app.storkly.domain.generated.enums.RegistryVisibility;
 import app.storkly.domain.generated.enums.SourceSite;
 import app.storkly.domain.generated.enums.UserRole;
@@ -143,6 +144,7 @@ public class DataSeeder {
                 .set(ITEM.CURRENCY, "USD")
                 .set(ITEM.QUANTITY_DESIRED, 1)
                 .set(ITEM.FLAG, ItemFlag.EXACT_ONLY)
+                .set(ITEM.ITEM_TYPE, ItemType.PRODUCT)
                 .set(ITEM.SORT_ORDER, 0)
                 .set(ITEM.CREATED_AT, OffsetDateTime.now())
                 .set(ITEM.UPDATED_AT, OffsetDateTime.now())
@@ -163,6 +165,7 @@ public class DataSeeder {
                 .set(ITEM.QUANTITY_DESIRED, 4)
                 .set(ITEM.FLAG, ItemFlag.SIMILAR_OK)
                 .set(ITEM.NOTES, "Any newborn-size diapers are fine")
+                .set(ITEM.ITEM_TYPE, ItemType.PRODUCT)
                 .set(ITEM.SORT_ORDER, 1)
                 .set(ITEM.CREATED_AT, OffsetDateTime.now())
                 .set(ITEM.UPDATED_AT, OffsetDateTime.now())
@@ -181,6 +184,7 @@ public class DataSeeder {
                 .set(ITEM.CURRENCY, "USD")
                 .set(ITEM.QUANTITY_DESIRED, 1)
                 .set(ITEM.FLAG, ItemFlag.EXACT_ONLY)
+                .set(ITEM.ITEM_TYPE, ItemType.PRODUCT)
                 .set(ITEM.SORT_ORDER, 2)
                 .set(ITEM.CREATED_AT, OffsetDateTime.now())
                 .set(ITEM.UPDATED_AT, OffsetDateTime.now())
@@ -200,6 +204,7 @@ public class DataSeeder {
                 .set(ITEM.QUANTITY_DESIRED, 1)
                 .set(ITEM.FLAG, ItemFlag.SIMILAR_CHEAPER)
                 .set(ITEM.NOTES, "Any classic Eric Carle book welcome")
+                .set(ITEM.ITEM_TYPE, ItemType.PRODUCT)
                 .set(ITEM.SORT_ORDER, 3)
                 .set(ITEM.CREATED_AT, OffsetDateTime.now())
                 .set(ITEM.UPDATED_AT, OffsetDateTime.now())
@@ -218,6 +223,7 @@ public class DataSeeder {
                 .set(ITEM.CURRENCY, "USD")
                 .set(ITEM.QUANTITY_DESIRED, 1)
                 .set(ITEM.FLAG, ItemFlag.SIMILAR_OK)
+                .set(ITEM.ITEM_TYPE, ItemType.PRODUCT)
                 .set(ITEM.SORT_ORDER, 4)
                 .set(ITEM.CREATED_AT, OffsetDateTime.now())
                 .set(ITEM.UPDATED_AT, OffsetDateTime.now())
@@ -237,7 +243,27 @@ public class DataSeeder {
                 .set(ITEM.QUANTITY_DESIRED, 1)
                 .set(ITEM.FLAG, ItemFlag.EXACT_ONLY)
                 .set(ITEM.ALREADY_OWNED, true)
+                .set(ITEM.ITEM_TYPE, ItemType.PRODUCT)
                 .set(ITEM.SORT_ORDER, 5)
+                .set(ITEM.CREATED_AT, OffsetDateTime.now())
+                .set(ITEM.UPDATED_AT, OffsetDateTime.now())
+                .execute();
+
+        // Fund item — parents can decide what to spend the money on
+        dsl.insertInto(ITEM)
+                .set(ITEM.ID, UUID.fromString("00000000-0000-0000-0000-000000000036"))
+                .set(ITEM.REGISTRY_ID, registryId)
+                .set(ITEM.CATEGORY_ID, defaultCategoryId)
+                .set(ITEM.ADDED_BY_USER_ID, ownerId)
+                .set(ITEM.SOURCE_SITE, SourceSite.MANUAL)
+                .set(ITEM.TITLE, "Clothing Fund")
+                .set(ITEM.DESCRIPTION, "Help us get clothes and shoes as the baby grows!")
+                .set(ITEM.PRICE_REFERENCE, new BigDecimal("200.00"))
+                .set(ITEM.CURRENCY, "USD")
+                .set(ITEM.QUANTITY_DESIRED, 1)
+                .set(ITEM.FLAG, ItemFlag.EXACT_ONLY)
+                .set(ITEM.ITEM_TYPE, ItemType.FUND)
+                .set(ITEM.SORT_ORDER, 6)
                 .set(ITEM.CREATED_AT, OffsetDateTime.now())
                 .set(ITEM.UPDATED_AT, OffsetDateTime.now())
                 .execute();

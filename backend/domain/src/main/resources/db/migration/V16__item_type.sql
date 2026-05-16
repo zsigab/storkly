@@ -1,0 +1,3 @@
+CREATE TYPE item_type AS ENUM ('PRODUCT', 'FUND');
+
+ALTER TABLE item ADD COLUMN item_type item_type NOT NULL DEFAULT 'PRODUCT';
