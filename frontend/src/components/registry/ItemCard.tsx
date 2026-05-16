@@ -319,7 +319,13 @@ export function ItemCard({
 
       {isOwner && claimHistory.length > 0 && (
         <div className="border-t pt-2" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-start justify-between gap-2">
+          <div
+            className="flex cursor-pointer items-start justify-between gap-2"
+            onClick={(e) => {
+              e.stopPropagation();
+              setHistoryOpen((o) => !o);
+            }}
+          >
             <div className="space-y-0.5">
               {hasPartialContributions
                 ? claims.map((c) => {
@@ -386,16 +392,9 @@ export function ItemCard({
                     );
                   })()}
             </div>
-            <button
-              type="button"
-              className="text-muted-foreground hover:text-foreground shrink-0 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                setHistoryOpen((o) => !o);
-              }}
-            >
+            <span className="text-muted-foreground shrink-0 text-xs">
               {historyOpen ? "▲" : "▼"}
-            </button>
+            </span>
           </div>
 
           <div
