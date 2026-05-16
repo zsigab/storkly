@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
+import app.storkly.domain.exception.ContributionExceedsRemainingException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.item.Claim;
 import app.storkly.domain.item.ClaimRepository;
@@ -29,6 +30,7 @@ import app.storkly.domain.user.UserRole;
 import app.storkly.service.email.EmailService;
 import app.storkly.service.item.ClaimService;
 import app.storkly.service.registry.RegistryAccessService;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -199,6 +201,55 @@ class ClaimServiceTest {
     }
 
     @Test
+    void claim_partialAmount_exceedsRemaining_throwsException() {
+        UUID itemId = UUID.randomUUID();
+        Item item = itemWithPrice(itemId, new BigDecimal("100.00"));
+        Registry registry = publicRegistry();
+        Claim existing = claimWithAmount(UUID.randomUUID(), itemId, new BigDecimal("70.00"));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(claimRepository.findActiveByItemId(itemId)).thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> claimService.claim(itemId, null, null, 1, new BigDecimal("40.00"), 40, null, null))
+                .isInstanceOf(ContributionExceedsRemainingException.class);
+
+        verify(claimRepository, never()).save(any());
+    }
+
+    @Test
+    void claim_partialAmount_withinRemaining_succeeds() {
+        UUID itemId = UUID.randomUUID();
+        Item item = itemWithPrice(itemId, new BigDecimal("100.00"));
+        Registry registry = publicRegistry();
+        Claim existing = claimWithAmount(UUID.randomUUID(), itemId, new BigDecimal("70.00"));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(claimRepository.findActiveByItemId(itemId)).thenReturn(List.of(existing));
+        when(claimRepository.save(any()))
+                .thenReturn(claimWithAmount(UUID.randomUUID(), itemId, new BigDecimal("30.00")));
+
+        claimService.claim(itemId, null, null, 1, new BigDecimal("30.00"), 30, null, null);
+
+        verify(claimRepository).save(any());
+    }
+
+    @Test
+    void claim_partialPercentage_exceedsRemaining_throwsException() {
+        UUID itemId = UUID.randomUUID();
+        Item item = item(itemId);
+        Registry registry = publicRegistry();
+        Claim existing = claimWithPercentage(UUID.randomUUID(), itemId, 60);
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(claimRepository.findActiveByItemId(itemId)).thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> claimService.claim(itemId, null, null, 1, null, 50, null, null))
+                .isInstanceOf(ContributionExceedsRemainingException.class);
+
+        verify(claimRepository, never()).save(any());
+    }
+
+    @Test
     void findByItem_ownerIsMarkedAsOwnerOrCoOwner() {
         UUID itemId = UUID.randomUUID();
         Item item = item(itemId);
@@ -270,6 +321,49 @@ class ClaimServiceTest {
                 .sortOrder(0)
                 .createdAt(now)
                 .updatedAt(now)
+                .build();
+    }
+
+    private Item itemWithPrice(UUID itemId, BigDecimal price) {
+        OffsetDateTime now = OffsetDateTime.now();
+        return Item.builder()
+                .id(itemId)
+                .registryId(registryId)
+                .addedByUserId(ownerId)
+                .sourceSite(SourceSite.MANUAL)
+                .title("Baby Carrier")
+                .priceReference(price)
+                .quantityDesired(1)
+                .flag(ItemFlag.EXACT_ONLY)
+                .sortOrder(0)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
+    private Claim claimWithAmount(UUID id, UUID itemId, BigDecimal amount) {
+        return Claim.builder()
+                .id(id)
+                .itemId(itemId)
+                .claimerName("Alice")
+                .claimerEmail("alice@example.com")
+                .quantityClaimed(1)
+                .amountContributed(amount)
+                .claimToken("token-" + id)
+                .claimedAt(OffsetDateTime.now())
+                .build();
+    }
+
+    private Claim claimWithPercentage(UUID id, UUID itemId, int percentage) {
+        return Claim.builder()
+                .id(id)
+                .itemId(itemId)
+                .claimerName("Alice")
+                .claimerEmail("alice@example.com")
+                .quantityClaimed(1)
+                .percentageContributed(percentage)
+                .claimToken("token-" + id)
+                .claimedAt(OffsetDateTime.now())
                 .build();
     }
 

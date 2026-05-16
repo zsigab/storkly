@@ -4,6 +4,7 @@ import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
+import app.storkly.domain.exception.ContributionExceedsRemainingException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.ItemAlreadyOwnedException;
 import app.storkly.domain.exception.ItemNotFoundException;
@@ -74,6 +75,26 @@ public class ClaimService {
         int effectiveQuantity = fullClaimByPercentage ? item.quantityDesired() : quantityClaimed;
         BigDecimal effectiveAmount = fullClaimByPercentage ? null : amountContributed;
         Integer effectivePercentage = fullClaimByPercentage ? null : percentageContributed;
+
+        if (effectiveAmount != null && item.priceReference() != null) {
+            List<Claim> existingClaims = claimRepository.findActiveByItemId(itemId);
+            BigDecimal alreadyClaimed = existingClaims.stream()
+                    .map(c -> c.amountContributed() != null ? c.amountContributed() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal remaining = item.priceReference().subtract(alreadyClaimed);
+            if (effectiveAmount.compareTo(remaining) > 0) {
+                throw new ContributionExceedsRemainingException(remaining);
+            }
+        } else if (effectivePercentage != null) {
+            List<Claim> existingClaims = claimRepository.findActiveByItemId(itemId);
+            int alreadyClaimed = existingClaims.stream()
+                    .mapToInt(c -> c.percentageContributed() != null ? c.percentageContributed() : 0)
+                    .sum();
+            int remaining = 100 - alreadyClaimed;
+            if (effectivePercentage > remaining) {
+                throw new ContributionExceedsRemainingException(remaining);
+            }
+        }
 
         String deliveryType = null;
         if (deliveryOptionId != null) {

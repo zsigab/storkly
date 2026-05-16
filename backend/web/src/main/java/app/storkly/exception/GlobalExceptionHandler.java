@@ -6,6 +6,7 @@ import app.storkly.domain.exception.CategoryNotFoundException;
 import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
+import app.storkly.domain.exception.ContributionExceedsRemainingException;
 import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
@@ -92,6 +93,11 @@ public class GlobalExceptionHandler {
                         .map(e -> e.getField() + ": " + e.getDefaultMessage())
                         .toList());
         return detail;
+    }
+
+    @ExceptionHandler(ContributionExceedsRemainingException.class)
+    public ProblemDetail handleContributionExceeds(ContributionExceedsRemainingException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
     }
 
     @ExceptionHandler(ScrapingException.class)

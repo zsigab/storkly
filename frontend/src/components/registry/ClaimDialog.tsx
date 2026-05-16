@@ -1,7 +1,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -44,6 +44,7 @@ interface ClaimDialogProps {
   currency?: string | null;
   isAuthenticated?: boolean;
   viewTransitionName?: string | undefined;
+  maxAmount?: number | null;
 }
 
 export function ClaimDialog({
@@ -56,11 +57,17 @@ export function ClaimDialog({
   currency,
   isAuthenticated = false,
   viewTransitionName,
+  maxAmount,
 }: ClaimDialogProps): React.ReactElement {
   const claimItem = useClaimItem(slug);
   const deliveryOptions = useDeliveryOptions(slug);
   const [partialEnabled, setPartialEnabled] = useState(false);
   const [lastTouched, setLastTouched] = useState<"amount" | "percentage">("percentage");
+
+  const maxPercent =
+    priceReference != null && maxAmount != null
+      ? Math.min(100, Math.round((maxAmount / priceReference) * 100))
+      : 100;
 
   const {
     register,
@@ -81,6 +88,16 @@ export function ClaimDialog({
     },
   });
 
+  useEffect(() => {
+    if (open) {
+      setValue("percentage", maxPercent);
+      if (priceReference != null && maxAmount != null) {
+        setValue("amount", maxAmount.toFixed(2));
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   const percentage = watch("percentage");
   const amount = watch("amount");
 
@@ -89,15 +106,16 @@ export function ClaimDialog({
     setValue("amount", raw);
     if (priceReference != null && raw !== "" && !isNaN(parseFloat(raw))) {
       const pct = Math.round((parseFloat(raw) / priceReference) * 100);
-      setValue("percentage", Math.min(100, Math.max(0, pct)));
+      setValue("percentage", Math.min(maxPercent, Math.max(0, pct)));
     }
   };
 
   const handlePercentageChange = (pct: number): void => {
     setLastTouched("percentage");
-    setValue("percentage", pct);
+    const cappedPct = Math.min(maxPercent, pct);
+    setValue("percentage", cappedPct);
     if (priceReference != null) {
-      const amt = ((pct / 100) * priceReference).toFixed(2);
+      const amt = ((cappedPct / 100) * priceReference).toFixed(2);
       setValue("amount", amt);
     }
   };
@@ -106,11 +124,13 @@ export function ClaimDialog({
     let amountContributed: number | null = null;
     let percentageContributed: number | null = null;
     if (partialEnabled && values.percentage < 100) {
-      percentageContributed = values.percentage;
+      percentageContributed = Math.min(values.percentage, maxPercent);
       if (priceReference != null && values.amount !== "") {
-        amountContributed = parseFloat(values.amount);
+        const raw = parseFloat(values.amount);
+        amountContributed = maxAmount != null ? Math.min(raw, maxAmount) : raw;
       } else if (priceReference != null && lastTouched === "percentage") {
-        amountContributed = parseFloat(((values.percentage / 100) * priceReference).toFixed(2));
+        const computed = parseFloat(((percentageContributed / 100) * priceReference).toFixed(2));
+        amountContributed = maxAmount != null ? Math.min(computed, maxAmount) : computed;
       }
     }
 
@@ -209,13 +229,18 @@ export function ClaimDialog({
                         id="partialPercentage"
                         type="range"
                         min={1}
-                        max={100}
+                        max={maxPercent}
                         className="accent-primary w-full"
                         value={field.value}
                         onChange={(e) => handlePercentageChange(Number(e.target.value))}
                       />
                     )}
                   />
+                  {maxPercent < 100 && (
+                    <p className="text-muted-foreground text-xs">
+                      {100 - maxPercent}% already contributed by others
+                    </p>
+                  )}
                 </div>
 
                 {priceReference != null && (
@@ -228,7 +253,7 @@ export function ClaimDialog({
                       type="number"
                       step="0.01"
                       min="0.01"
-                      max={priceReference}
+                      max={maxAmount ?? priceReference}
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => handleAmountChange(e.target.value)}

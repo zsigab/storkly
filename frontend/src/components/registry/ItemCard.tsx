@@ -91,6 +91,8 @@ export function ItemCard({
   const isClaimed = hasPartialContributions
     ? claimedPercent >= 100
     : quantityClaimed >= item.quantityDesired;
+  const remainingAmount =
+    item.priceReference != null ? Math.max(0, item.priceReference - totalContributed) : null;
 
   const myAuthenticatedClaim =
     user !== null ? claims.find((c) => c.claimerUserId === user.id) : undefined;
@@ -494,6 +496,7 @@ export function ItemCard({
         priceReference={item.priceReference}
         currency={item.currency}
         isAuthenticated={user !== null}
+        maxAmount={remainingAmount}
         viewTransitionName={claimTransitioning && claimDialogOpen ? claimTransitionName : undefined}
       />
     </div>
