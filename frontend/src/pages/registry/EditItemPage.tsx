@@ -5,6 +5,7 @@ import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { useItem, useUpdateItem, useDeleteItem } from "@/hooks/useItems";
 import { useItemClaims } from "@/hooks/useClaims";
 import { useRegistryCategories } from "@/hooks/useRegistries";
+import { useRegistryTheme } from "@/hooks/useRegistryTheme";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ export function EditItemPage(): React.ReactElement {
   const { slug, id } = useParams<{ slug: string; id: string }>();
   const navigate = useNavigate();
   const safeSlug = slug ?? "";
+  useRegistryTheme(safeSlug);
   const safeId = id ?? "";
   const { data: item, isPending, isError } = useItem(safeId, safeSlug);
   const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);

@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { EditItemPage } from "./EditItemPage";
 
 vi.mock("@/api", () => ({ api: { GET: vi.fn(), PATCH: vi.fn(), DELETE: vi.fn() } }));
@@ -61,11 +62,19 @@ function renderPage() {
     value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
     writable: true,
   });
+  Object.defineProperty(window, "matchMedia", {
+    value: vi
+      .fn()
+      .mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+    writable: true,
+  });
   render(
     <QueryClientProvider client={makeClient()}>
-      <AuthProvider>
-        <EditItemPage />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <EditItemPage />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>,
   );
 }
@@ -73,14 +82,18 @@ function renderPage() {
 beforeEach(() => vi.clearAllMocks());
 
 describe("EditItemPage", () => {
+  function mockGetSuccess() {
+    return vi.fn().mockImplementation(async (path: string) => {
+      if (path === "/api/items/{id}") {
+        return { data: itemFixture, error: undefined, response: new Response() };
+      }
+      return { data: [], error: undefined, response: new Response() };
+    });
+  }
+
   it("loads and displays current item values", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: itemFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage();
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: /edit item/i })).toBeInTheDocument(),
@@ -90,12 +103,7 @@ describe("EditItemPage", () => {
 
   it("calls PATCH and navigates on success", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: itemFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     vi.mocked(api.PATCH).mockResolvedValueOnce({
       data: { ...itemFixture, title: "Updated Carrier" },
       error: undefined,
@@ -118,12 +126,7 @@ describe("EditItemPage", () => {
 
   it("calls DELETE and navigates when delete is confirmed", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: itemFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     vi.mocked(api.DELETE).mockResolvedValueOnce({ data: null, response: new Response() });
     renderPage();
     await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
@@ -145,12 +148,7 @@ describe("EditItemPage", () => {
 
   it("shows delete/discard buttons when quantity is set to 0", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: itemFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage();
     await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
     const quantityInput = screen.getByLabelText(/quantity wanted/i);
@@ -162,12 +160,7 @@ describe("EditItemPage", () => {
 
   it("restores quantity to 1 when discard button is clicked", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: itemFixture,
-      error: undefined,
-      response: new Response(),
-    });
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
     renderPage();
     await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
     const quantityInput = screen.getByLabelText(/quantity wanted/i) as HTMLInputElement;

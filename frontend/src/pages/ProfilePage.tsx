@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -39,7 +39,7 @@ export function ProfilePage(): React.ReactElement {
   const { user } = useAuth();
   const updateDisplayName = useUpdateDisplayName();
   const forgotPassword = useForgotPassword();
-  const { theme, setColor, setBackground, toggleMode } = useTheme();
+  const { theme, setColor, setBackground, setMode } = useTheme();
 
   const {
     register,
@@ -141,28 +141,28 @@ export function ProfilePage(): React.ReactElement {
 
               <div className="space-y-2">
                 <p className="text-sm font-medium">Mode</p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={toggleMode}
-                  className="gap-2"
-                  aria-label={
-                    theme.mode === "dark" ? "Switch to light mode" : "Switch to dark mode"
-                  }
-                >
-                  {theme.mode === "dark" ? (
-                    <>
-                      <Sun className="h-3.5 w-3.5" />
-                      Light
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="h-3.5 w-3.5" />
-                      Dark
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-1">
+                  {(
+                    [
+                      { value: "system", label: "System", Icon: Monitor },
+                      { value: "light", label: "Light", Icon: Sun },
+                      { value: "dark", label: "Dark", Icon: Moon },
+                    ] as const
+                  ).map(({ value, label, Icon }) => (
+                    <Button
+                      key={value}
+                      type="button"
+                      variant={theme.mode === value ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setMode(value)}
+                      aria-pressed={theme.mode === value}
+                      className="gap-1 text-xs"
+                    >
+                      <Icon className="h-3.5 w-3.5" />
+                      {label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>

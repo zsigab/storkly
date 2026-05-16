@@ -3,11 +3,13 @@ import { ItemForm } from "@/components/registry/ItemForm";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { useCreateItem } from "@/hooks/useItems";
 import { useRegistryCategories } from "@/hooks/useRegistries";
+import { useRegistryTheme } from "@/hooks/useRegistryTheme";
 
 export function AddItemPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const safeSlug = slug ?? "";
+  useRegistryTheme(safeSlug);
   const createItem = useCreateItem(safeSlug);
   const { data: categories, isPending: categoriesPending } = useRegistryCategories(safeSlug);
 

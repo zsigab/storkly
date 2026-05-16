@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { AddItemPage } from "./AddItemPage";
 
 vi.mock("@/api", () => ({ api: { GET: vi.fn(), POST: vi.fn() } }));
@@ -40,11 +41,19 @@ function renderPage() {
     value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
     writable: true,
   });
+  Object.defineProperty(window, "matchMedia", {
+    value: vi
+      .fn()
+      .mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+    writable: true,
+  });
   render(
     <QueryClientProvider client={makeClient()}>
-      <AuthProvider>
-        <AddItemPage />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AddItemPage />
+        </AuthProvider>
+      </ThemeProvider>
     </QueryClientProvider>,
   );
 }

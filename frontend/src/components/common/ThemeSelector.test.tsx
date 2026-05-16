@@ -34,7 +34,9 @@ function setup(initial: Record<string, string> = {}): void {
     writable: true,
   });
   Object.defineProperty(window, "matchMedia", {
-    value: vi.fn().mockReturnValue({ matches: false }),
+    value: vi
+      .fn()
+      .mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
     writable: true,
   });
   document.documentElement.classList.remove("dark");
@@ -86,18 +88,18 @@ describe("ThemeSelector", () => {
     expect(document.documentElement.dataset["color"]).toBe("blue");
   });
 
-  it("adds dark class when mode toggle is clicked (light to dark)", () => {
+  it("adds dark class when Dark is clicked", () => {
     renderSelector();
     openPanel();
-    fireEvent.click(screen.getByRole("button", { name: /switch to dark mode/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^dark$/i }));
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
 
-  it("removes dark class when toggled back to light", () => {
+  it("removes dark class when Light is clicked after Dark", () => {
     renderSelector();
     openPanel();
-    fireEvent.click(screen.getByRole("button", { name: /switch to dark mode/i }));
-    fireEvent.click(screen.getByRole("button", { name: /switch to light mode/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^dark$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^light$/i }));
     expect(document.documentElement.classList.contains("dark")).toBe(false);
   });
 

@@ -1,4 +1,4 @@
-import { Moon, Palette, Sun } from "lucide-react";
+import { Monitor, Moon, Palette, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useTheme, type ThemeBackground, type ThemeColor } from "@/hooks/useTheme";
@@ -31,7 +31,7 @@ const BG_OPTIONS: BgOption[] = [
 ];
 
 export function ThemeSelector(): React.ReactElement {
-  const { theme, setColor, toggleMode, setBackground } = useTheme();
+  const { theme, setColor, setMode, setBackground } = useTheme();
 
   return (
     <Popover>
@@ -90,25 +90,27 @@ export function ThemeSelector(): React.ReactElement {
             <p className="text-muted-foreground mb-2 text-xs font-medium tracking-wide uppercase">
               Mode
             </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleMode}
-              className="w-full gap-2"
-              aria-label={theme.mode === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {theme.mode === "dark" ? (
-                <>
-                  <Sun className="h-3.5 w-3.5" />
-                  Light
-                </>
-              ) : (
-                <>
-                  <Moon className="h-3.5 w-3.5" />
-                  Dark
-                </>
-              )}
-            </Button>
+            <div className="flex gap-1">
+              {(
+                [
+                  { value: "system", label: "System", Icon: Monitor },
+                  { value: "light", label: "Light", Icon: Sun },
+                  { value: "dark", label: "Dark", Icon: Moon },
+                ] as const
+              ).map(({ value, label, Icon }) => (
+                <Button
+                  key={value}
+                  variant={theme.mode === value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setMode(value)}
+                  aria-pressed={theme.mode === value}
+                  className="flex-1 gap-1 text-xs"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </Button>
+              ))}
+            </div>
           </section>
         </div>
       </PopoverContent>

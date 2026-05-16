@@ -14,6 +14,7 @@ import {
 } from "@/hooks/useClaims";
 import { useRegistryItems } from "@/hooks/useItems";
 import { useDeliveryOptions } from "@/hooks/useDeliveryOptions";
+import { useRegistryTheme } from "@/hooks/useRegistryTheme";
 import { getApiErrorMessage } from "@/api/helpers";
 import { formatDateTime, formatPrice } from "@/lib/utils";
 import type { ClaimResponse, ItemResponse } from "@/api/schema";
@@ -250,6 +251,7 @@ function ClaimRow({
 export function ClaimsDashboardPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
   const safeSlug = slug ?? "";
+  useRegistryTheme(safeSlug);
   const isClaimsTransitioning = useViewTransitionState(`/r/${safeSlug}/claims`);
   const isBackTransitioning = useViewTransitionState(`/r/${safeSlug}`);
 

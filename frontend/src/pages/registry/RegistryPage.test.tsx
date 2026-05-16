@@ -72,7 +72,9 @@ function renderPage(storedUser: object | null = null) {
     writable: true,
   });
   Object.defineProperty(window, "matchMedia", {
-    value: vi.fn().mockReturnValue({ matches: false }),
+    value: vi
+      .fn()
+      .mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
     writable: true,
   });
   render(

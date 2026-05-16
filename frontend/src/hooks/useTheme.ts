@@ -12,7 +12,7 @@ import { createElement } from "react";
 
 export type ThemeColor = "peach" | "blue" | "pink" | "green" | "purple" | "beige";
 export type ThemeStyle = "glass";
-export type ThemeMode = "light" | "dark";
+export type ThemeMode = "light" | "dark" | "system";
 export type ThemeBackground = "none" | "default" | "stars" | "both";
 
 export interface ThemeState {
@@ -27,7 +27,7 @@ interface ThemeContextValue {
   bgStyle: CSSProperties;
   setColor: (color: ThemeColor) => void;
   setStyle: (style: ThemeStyle) => void;
-  toggleMode: () => void;
+  setMode: (mode: ThemeMode) => void;
   setBackground: (bg: ThemeBackground) => void;
   setRegistryOverride: (color: ThemeColor, background: ThemeBackground) => void;
   clearRegistryOverride: () => void;
@@ -99,7 +99,14 @@ function starPath(cx: number, cy: number, r: number): string {
 const STAR_POS_SEED = 0x5a1ad1ce;
 const STAR_COL_SEED = 0xdeadbeef;
 
-function makeStarBg(color: ThemeColor, mode: ThemeMode): string {
+function resolveMode(mode: ThemeMode): "light" | "dark" {
+  if (mode === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return mode;
+}
+
+function makeStarBg(color: ThemeColor, mode: "light" | "dark"): string {
   const hsl = STAR_BASE_HSL[color][mode];
   const bh = hsl[0];
   const bs = hsl[1];
@@ -141,7 +148,7 @@ function makeStarBg(color: ThemeColor, mode: ThemeMode): string {
 
 // Corner-anchored radial blobs: centres pushed 10 % off-viewport so only the
 // soft spread shows — no hard circular edges visible.
-function makeBlobBg(color: ThemeColor, mode: ThemeMode): string {
+function makeBlobBg(color: ThemeColor, mode: "light" | "dark"): string {
   const hsl = BLOB_HSL[color][mode];
   const c = (alpha: number) => `hsl(${hsl} / ${alpha})`;
   const light = mode === "light";
@@ -179,8 +186,8 @@ function getInitialTheme(): ThemeState {
         "mode" in parsed
       ) {
         const p = parsed as Record<string, unknown>;
-        const mode = p["mode"] === "dark" ? "dark" : "light";
-        const background = isThemeBackground(p["background"]) ? p["background"] : "none";
+        const mode = p["mode"] === "dark" ? "dark" : p["mode"] === "system" ? "system" : "light";
+        const background = isThemeBackground(p["background"]) ? p["background"] : "both";
         if (isThemeColor(p["color"]) && isThemeStyle(p["style"])) {
           return { color: p["color"], style: p["style"], mode, background };
         }
@@ -189,11 +196,10 @@ function getInitialTheme(): ThemeState {
   } catch {
     // ignore parse errors
   }
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   return {
     color: "peach",
     style: "glass",
-    mode: prefersDark ? "dark" : "light",
+    mode: "system",
     background: "both",
   };
 }
@@ -203,7 +209,10 @@ function applyTheme(theme: ThemeState): void {
   el.dataset["color"] = theme.color;
   el.dataset["style"] = theme.style;
   el.dataset["background"] = theme.background;
-  el.classList.toggle("dark", theme.mode === "dark");
+  const isDark =
+    theme.mode === "dark" ||
+    (theme.mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  el.classList.toggle("dark", isDark);
 }
 
 // Chrome puts <html> inline backgrounds into a root compositor layer that
@@ -212,23 +221,24 @@ function applyTheme(theme: ThemeState): void {
 // position:fixed div in the normal compositing flow, which backdrop-filter
 // can blur in both Chrome and Firefox.
 function computeBgStyle(theme: ThemeState): CSSProperties {
+  const mode = resolveMode(theme.mode);
   if (theme.background === "default") {
     return {
-      backgroundImage: makeBlobBg(theme.color, theme.mode),
+      backgroundImage: makeBlobBg(theme.color, mode),
       backgroundSize: "auto",
       backgroundPosition: "0 0",
     };
   }
   if (theme.background === "stars") {
     return {
-      backgroundImage: makeStarBg(theme.color, theme.mode),
+      backgroundImage: makeStarBg(theme.color, mode),
       backgroundSize: "cover",
       backgroundPosition: "center",
     };
   }
   if (theme.background === "both") {
     return {
-      backgroundImage: `${makeStarBg(theme.color, theme.mode)}, ${makeBlobBg(theme.color, theme.mode)}`,
+      backgroundImage: `${makeStarBg(theme.color, mode)}, ${makeBlobBg(theme.color, mode)}`,
       backgroundSize: "cover, auto",
       backgroundPosition: "center, 0 0",
     };
@@ -251,9 +261,22 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     el.dataset["color"] = effectiveColor;
     el.dataset["style"] = theme.style;
     el.dataset["background"] = effectiveBackground;
-    el.classList.toggle("dark", theme.mode === "dark");
+    const isDark =
+      theme.mode === "dark" ||
+      (theme.mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    el.classList.toggle("dark", isDark);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(theme));
   }, [theme, effectiveColor, effectiveBackground]);
+
+  useEffect(() => {
+    if (theme.mode !== "system") return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent): void => {
+      document.documentElement.classList.toggle("dark", e.matches);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [theme.mode]);
 
   const bgStyle = useMemo(
     () => computeBgStyle({ ...theme, color: effectiveColor, background: effectiveBackground }),
@@ -268,8 +291,8 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     setTheme((t) => ({ ...t, style }));
   };
 
-  const toggleMode = (): void => {
-    setTheme((t) => ({ ...t, mode: t.mode === "dark" ? "light" : "dark" }));
+  const setMode = (mode: ThemeMode): void => {
+    setTheme((t) => ({ ...t, mode }));
   };
 
   const setBackground = (background: ThemeBackground): void => {
@@ -295,7 +318,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
         bgStyle,
         setColor,
         setStyle,
-        toggleMode,
+        setMode,
         setBackground,
         setRegistryOverride,
         clearRegistryOverride,
