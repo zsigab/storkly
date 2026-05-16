@@ -205,17 +205,6 @@ function getInitialTheme(): ThemeState {
   };
 }
 
-function applyTheme(theme: ThemeState): void {
-  const el = document.documentElement;
-  el.dataset["color"] = theme.color;
-  el.dataset["style"] = theme.style;
-  el.dataset["background"] = theme.background;
-  const isDark =
-    theme.mode === "dark" ||
-    (theme.mode === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  el.classList.toggle("dark", isDark);
-}
-
 // Chrome puts <html> inline backgrounds into a root compositor layer that
 // backdrop-filter cannot access, so the frosted-glass blur has nothing to
 // blur. Returning a CSSProperties object instead lets the caller render a

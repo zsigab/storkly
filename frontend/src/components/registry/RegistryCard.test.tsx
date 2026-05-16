@@ -31,6 +31,8 @@ const base = {
   visibility: "PUBLIC" as const,
   ownerId: "u1",
   createdAt: "2024-01-01T00:00:00Z",
+  themeColor: "peach",
+  themeBackground: "both",
 };
 
 describe("RegistryCard", () => {
