@@ -9,6 +9,7 @@ import { getApiErrorMessage } from "@/api/helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useItemClaims, useItemClaimHistory, useUnclaimItem } from "@/hooks/useClaims";
 import { useAuth } from "@/hooks/useAuth";
+import { formatDateTime } from "@/lib/utils";
 import type { ItemFlag, ItemResponse } from "@/api/schema";
 
 const FLAG_LABELS: Record<ItemFlag, string> = {
@@ -246,17 +247,19 @@ export function ItemCard({
                         : c.percentageContributed != null
                           ? `${c.percentageContributed}%`
                           : null;
-                    const prefix = amtLabel !== null ? `${amtLabel} ` : "";
+                    const amtSuffix = amtLabel !== null ? ` (${amtLabel})` : "";
                     const verb =
                       c.receivedAt !== null
                         ? "received"
                         : c.confirmedAt !== null
                           ? "confirmed"
                           : "claimed";
+                    const ts = c.receivedAt ?? c.confirmedAt ?? c.claimedAt;
                     return (
                       <p key={c.id} className="text-muted-foreground text-xs">
-                        {prefix}
-                        {verb} by <span className="font-medium">{name}</span>
+                        {formatDateTime(ts)} &ndash; {verb} by{" "}
+                        <span className="font-medium">{name}</span>
+                        {amtSuffix}
                       </p>
                     );
                   })
@@ -279,14 +282,19 @@ export function ItemCard({
                           : last.confirmedAt !== null
                             ? "confirmed"
                             : "claimed";
+                    const ts =
+                      wasReset || wasRejected
+                        ? last.claimedAt
+                        : (last.receivedAt ?? last.confirmedAt ?? last.claimedAt);
                     return (
                       <p className="text-muted-foreground text-xs">
-                        {verb} {qty} by <span className="font-medium">{name}</span>
+                        {formatDateTime(ts)} &ndash; {verb} {qty} by{" "}
+                        <span className="font-medium">{name}</span>
                         {wasReset && last.releasedAt !== null && (
-                          <>, reset {new Date(last.releasedAt).toLocaleString()}</>
+                          <>, reset {formatDateTime(last.releasedAt)}</>
                         )}
                         {wasRejected && last.releasedAt !== null && (
-                          <>, rejected {new Date(last.releasedAt).toLocaleString()}</>
+                          <>, rejected {formatDateTime(last.releasedAt)}</>
                         )}
                       </p>
                     );
@@ -320,7 +328,8 @@ export function ItemCard({
                   return (
                     <div key={c.id} className="space-y-0.5 text-xs">
                       <div className="text-muted-foreground">
-                        Claimed by <span className="font-medium">{name}</span>
+                        {formatDateTime(c.claimedAt)} &ndash; claimed {qty} by{" "}
+                        <span className="font-medium">{name}</span>
                         {email !== null && (
                           <>
                             {" "}
@@ -329,29 +338,25 @@ export function ItemCard({
                             </a>
                           </>
                         )}
-                        {" · "}
-                        {qty}
-                        {" · "}
-                        {new Date(c.claimedAt).toLocaleString()}
                       </div>
                       {c.confirmedAt !== null && (
                         <div className="text-muted-foreground/70 pl-3">
-                          Confirmed {new Date(c.confirmedAt).toLocaleString()}
+                          {formatDateTime(c.confirmedAt)} &ndash; confirmed
                         </div>
                       )}
                       {c.receivedAt !== null && (
                         <div className="text-muted-foreground/70 pl-3">
-                          Received {new Date(c.receivedAt).toLocaleString()}
+                          {formatDateTime(c.receivedAt)} &ndash; received
                         </div>
                       )}
                       {wasReset && c.releasedAt !== null && (
                         <div className="text-destructive/70 pl-3">
-                          Reset {new Date(c.releasedAt).toLocaleString()}
+                          {formatDateTime(c.releasedAt)} &ndash; reset
                         </div>
                       )}
                       {wasRejected && c.releasedAt !== null && (
                         <div className="text-destructive/70 pl-3">
-                          Rejected {new Date(c.releasedAt).toLocaleString()}
+                          {formatDateTime(c.releasedAt)} &ndash; rejected
                         </div>
                       )}
                     </div>
