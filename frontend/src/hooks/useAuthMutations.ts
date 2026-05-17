@@ -7,16 +7,17 @@ import { useTheme } from "./useTheme";
 
 type DocWithVT = typeof document & { startViewTransition?: (cb: () => void) => void };
 
-function navigateWithTransition(navigate: (path: string) => void, path: string): void {
-  const vt = (document as DocWithVT).startViewTransition;
-  if (vt !== undefined) {
-    vt(() => {
-      flushSync(() => {
-        navigate(path);
-      });
+// Wraps a DOM-mutation callback in document.startViewTransition (if available).
+// flushSync inside ensures React commits synchronously so the browser captures
+// the correct before/after snapshots for the animation.
+function startWithTransition(callback: () => void): void {
+  const doc = document as DocWithVT;
+  if (doc.startViewTransition !== undefined) {
+    doc.startViewTransition(() => {
+      flushSync(callback);
     });
   } else {
-    navigate(path);
+    callback();
   }
 }
 
@@ -44,9 +45,11 @@ export function useLogin() {
       return { user: data, from: values.from };
     },
     onSuccess: ({ user, from }) => {
-      login(user);
       void queryClient.invalidateQueries();
-      navigateWithTransition(navigate, from ?? "/dashboard");
+      startWithTransition(() => {
+        login(user);
+        navigate(from ?? "/dashboard");
+      });
     },
   });
 }
@@ -109,10 +112,12 @@ export function useLogout() {
       if (error !== undefined) throw error;
     },
     onSettled: () => {
-      logout();
-      resetTheme();
+      startWithTransition(() => {
+        logout();
+        resetTheme();
+        navigate("/");
+      });
       queryClient.clear();
-      navigateWithTransition(navigate, "/");
     },
   });
 }

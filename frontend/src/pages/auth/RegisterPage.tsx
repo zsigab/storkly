@@ -51,10 +51,7 @@ export function RegisterPage(): React.ReactElement {
 
   return (
     <div className="mx-auto max-w-md py-16">
-      <div
-        className="bg-card text-card-foreground space-y-6 rounded-xl p-8"
-        style={{ viewTransitionName: "auth-card" }}
-      >
+      <div className="bg-card text-card-foreground space-y-6 rounded-xl p-8">
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold tracking-tight">Create an account</h1>
           <p className="text-muted-foreground">Start building your gift registry</p>

@@ -11,7 +11,7 @@ export function HomePage(): React.ReactElement {
   }
 
   return (
-    <GlassCardLayout viewTransitionName="auth-card">
+    <GlassCardLayout>
       <div className="space-y-8 text-center">
         <div className="space-y-3">
           <h1 className="text-foreground text-4xl font-semibold">Welcome to Storkly</h1>
