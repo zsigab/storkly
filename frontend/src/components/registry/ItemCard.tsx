@@ -2,6 +2,7 @@ import { useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useViewTransitionState } from "react-router";
 import { Gift } from "lucide-react";
+import { Collapsible } from "@/components/common/Collapsible";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -331,23 +332,19 @@ export function ItemCard({
         </div>
       </div>
 
-      {/* Expanded content: slides in/out with grid-rows trick */}
-      <div
-        className={`grid transition-all duration-200 ease-in-out ${isExpanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-      >
-        <div className="overflow-hidden">
-          <div className="space-y-1.5 pt-1">
-            {item.description !== null && (
-              <div onClick={(e) => e.stopPropagation()}>
-                <MarkdownContent
-                  content={item.description}
-                  className="text-muted-foreground text-sm"
-                />
-              </div>
-            )}
-          </div>
+      {/* Expanded content: slides in/out */}
+      <Collapsible open={isExpanded}>
+        <div className="space-y-1.5 pt-1">
+          {item.description !== null && (
+            <div onClick={(e) => e.stopPropagation()}>
+              <MarkdownContent
+                content={item.description}
+                className="text-muted-foreground text-sm"
+              />
+            </div>
+          )}
         </div>
-      </div>
+      </Collapsible>
 
       {isOwner && claimHistory.length > 0 && (
         <div className="border-t pt-2" onClick={(e) => e.stopPropagation()}>
@@ -429,61 +426,57 @@ export function ItemCard({
             </span>
           </div>
 
-          <div
-            className={`grid transition-all duration-200 ease-in-out ${historyOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-          >
-            <div className="overflow-hidden">
-              <div className="mt-1 space-y-2">
-                {claimHistory.map((c) => {
-                  const name =
-                    c.claimerUserId !== null
-                      ? (subscriberNames[c.claimerUserId] ?? c.claimerName) || "A member"
-                      : (c.claimerName ?? "Anonymous");
-                  const email =
-                    c.claimerEmail !== null && c.claimerEmail.length > 0 ? c.claimerEmail : null;
-                  const qty = c.quantityClaimed === 1 ? "1 unit" : `${c.quantityClaimed} units`;
-                  const wasReset = c.releasedAt !== null && c.receivedAt !== null;
-                  const wasRejected = c.releasedAt !== null && c.receivedAt === null;
-                  return (
-                    <div key={c.id} className="space-y-0.5 text-xs">
-                      <div className="text-muted-foreground">
-                        {formatDateTime(c.claimedAt)} &ndash; claimed {qty} by{" "}
-                        <span className="font-medium">{name}</span>
-                        {email !== null && (
-                          <>
-                            {" "}
-                            <a href={`mailto:${email}`} className="hover:underline">
-                              ({email})
-                            </a>
-                          </>
-                        )}
-                      </div>
-                      {c.confirmedAt !== null && (
-                        <div className="text-muted-foreground/70 pl-3">
-                          {formatDateTime(c.confirmedAt)} &ndash; confirmed
-                        </div>
-                      )}
-                      {c.receivedAt !== null && (
-                        <div className="text-muted-foreground/70 pl-3">
-                          {formatDateTime(c.receivedAt)} &ndash; received
-                        </div>
-                      )}
-                      {wasReset && c.releasedAt !== null && (
-                        <div className="text-destructive/70 pl-3">
-                          {formatDateTime(c.releasedAt)} &ndash; reset
-                        </div>
-                      )}
-                      {wasRejected && c.releasedAt !== null && (
-                        <div className="text-destructive/70 pl-3">
-                          {formatDateTime(c.releasedAt)} &ndash; rejected
-                        </div>
+          <Collapsible open={historyOpen}>
+            <div className="mt-1 space-y-2">
+              {claimHistory.map((c) => {
+                const name =
+                  c.claimerUserId !== null
+                    ? (subscriberNames[c.claimerUserId] ?? c.claimerName) || "A member"
+                    : (c.claimerName ?? "Anonymous");
+                const email =
+                  c.claimerEmail !== null && c.claimerEmail.length > 0 ? c.claimerEmail : null;
+                const qty = c.quantityClaimed === 1 ? "1 unit" : `${c.quantityClaimed} units`;
+                const wasReset = c.releasedAt !== null && c.receivedAt !== null;
+                const wasRejected = c.releasedAt !== null && c.receivedAt === null;
+                return (
+                  <div key={c.id} className="space-y-0.5 text-xs">
+                    <div className="text-muted-foreground">
+                      {formatDateTime(c.claimedAt)} &ndash; claimed {qty} by{" "}
+                      <span className="font-medium">{name}</span>
+                      {email !== null && (
+                        <>
+                          {" "}
+                          <a href={`mailto:${email}`} className="hover:underline">
+                            ({email})
+                          </a>
+                        </>
                       )}
                     </div>
-                  );
-                })}
-              </div>
+                    {c.confirmedAt !== null && (
+                      <div className="text-muted-foreground/70 pl-3">
+                        {formatDateTime(c.confirmedAt)} &ndash; confirmed
+                      </div>
+                    )}
+                    {c.receivedAt !== null && (
+                      <div className="text-muted-foreground/70 pl-3">
+                        {formatDateTime(c.receivedAt)} &ndash; received
+                      </div>
+                    )}
+                    {wasReset && c.releasedAt !== null && (
+                      <div className="text-destructive/70 pl-3">
+                        {formatDateTime(c.releasedAt)} &ndash; reset
+                      </div>
+                    )}
+                    {wasRejected && c.releasedAt !== null && (
+                      <div className="text-destructive/70 pl-3">
+                        {formatDateTime(c.releasedAt)} &ndash; rejected
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          </Collapsible>
         </div>
       )}
 

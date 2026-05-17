@@ -28,6 +28,7 @@ import { useAllItemClaims } from "@/hooks/useClaims";
 import { useRegistryItems } from "@/hooks/useItems";
 import { useTheme, isThemeColor, isThemeBackground } from "@/hooks/useTheme";
 import { formatDateTime } from "@/lib/utils";
+import { Collapsible } from "@/components/common/Collapsible";
 
 export function RegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
@@ -375,39 +376,35 @@ export function RegistryPage(): React.ReactElement {
             </div>
 
             {isOwner && registry.visibility !== "HIDDEN" && (
-              <div
-                className={`grid transition-all duration-200 ease-in-out ${showGetLink ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-              >
-                <div className="overflow-hidden">
-                  <div className="space-y-2 pt-1">
-                    {inviteUrl === null ? (
-                      <div className="bg-muted h-9 animate-pulse rounded-md" />
-                    ) : (
-                      <div className="flex gap-2">
-                        <Input value={inviteUrl} readOnly className="h-9 text-xs" />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            void navigator.clipboard.writeText(inviteUrl);
-                            setCopiedLink(true);
-                            setTimeout(() => setCopiedLink(false), 2000);
-                          }}
-                        >
-                          {copiedLink ? "Copied!" : "Copy"}
-                        </Button>
-                      </div>
-                    )}
-                    {generateInvite.isError && (
-                      <Alert variant="destructive">
-                        <AlertDescription>
-                          {getApiErrorMessage(generateInvite.error)}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </div>
+              <Collapsible open={showGetLink}>
+                <div className="space-y-2 pt-1">
+                  {inviteUrl === null ? (
+                    <div className="bg-muted h-9 animate-pulse rounded-md" />
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input value={inviteUrl} readOnly className="h-9 text-xs" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(inviteUrl);
+                          setCopiedLink(true);
+                          setTimeout(() => setCopiedLink(false), 2000);
+                        }}
+                      >
+                        {copiedLink ? "Copied!" : "Copy"}
+                      </Button>
+                    </div>
+                  )}
+                  {generateInvite.isError && (
+                    <Alert variant="destructive">
+                      <AlertDescription>
+                        {getApiErrorMessage(generateInvite.error)}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
-              </div>
+              </Collapsible>
             )}
 
             {registry.description !== null &&
@@ -421,18 +418,14 @@ export function RegistryPage(): React.ReactElement {
                     Description
                     <span>{descriptionOpen ? "▲" : "▼"}</span>
                   </button>
-                  <div
-                    className={`grid transition-all duration-200 ease-in-out ${descriptionOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-                  >
-                    <div className="overflow-hidden">
-                      <div className="pt-1">
-                        <MarkdownContent
-                          content={registry.description}
-                          className="text-muted-foreground"
-                        />
-                      </div>
+                  <Collapsible open={descriptionOpen}>
+                    <div className="pt-1">
+                      <MarkdownContent
+                        content={registry.description}
+                        className="text-muted-foreground"
+                      />
                     </div>
-                  </div>
+                  </Collapsible>
                 </>
               ) : (
                 <MarkdownContent content={registry.description} className="text-muted-foreground" />
@@ -542,47 +535,41 @@ export function RegistryPage(): React.ReactElement {
                 </h2>
                 <span className="text-muted-foreground text-sm">{subscribersOpen ? "▲" : "▼"}</span>
               </button>
-              <div
-                className={`grid transition-all duration-200 ease-in-out ${subscribersOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-              >
-                <div className="overflow-hidden">
-                  <div className="pt-1">
-                    {subscribers.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">No subscribers yet.</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {subscribers.map((subscriber) => {
-                          const claimedItems = allClaims
-                            .filter((c) => c.claimerUserId === subscriber.userId)
-                            .map((c) => items.find((i) => i.id === c.itemId))
-                            .filter((i) => i !== undefined);
-                          return (
-                            <li
-                              key={subscriber.userId}
-                              className="bg-card space-y-1 rounded-lg border px-3 py-2"
-                            >
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium">
-                                  {subscriber.displayName}
-                                </span>
-                                <span className="text-muted-foreground text-xs">
-                                  {formatDateTime(subscriber.joinedAt)}
-                                </span>
-                              </div>
-                              {claimedItems.length > 0 && (
-                                <p className="text-muted-foreground text-xs">
-                                  {"Claimed: "}
-                                  {claimedItems.map((i) => i.title).join(", ")}
-                                </p>
-                              )}
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </div>
+              <Collapsible open={subscribersOpen}>
+                <div className="pt-1">
+                  {subscribers.length === 0 ? (
+                    <p className="text-muted-foreground text-sm">No subscribers yet.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {subscribers.map((subscriber) => {
+                        const claimedItems = allClaims
+                          .filter((c) => c.claimerUserId === subscriber.userId)
+                          .map((c) => items.find((i) => i.id === c.itemId))
+                          .filter((i) => i !== undefined);
+                        return (
+                          <li
+                            key={subscriber.userId}
+                            className="bg-card space-y-1 rounded-lg border px-3 py-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-medium">{subscriber.displayName}</span>
+                              <span className="text-muted-foreground text-xs">
+                                {formatDateTime(subscriber.joinedAt)}
+                              </span>
+                            </div>
+                            {claimedItems.length > 0 && (
+                              <p className="text-muted-foreground text-xs">
+                                {"Claimed: "}
+                                {claimedItems.map((i) => i.title).join(", ")}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </div>
-              </div>
+              </Collapsible>
             </div>
           )}
         </div>
