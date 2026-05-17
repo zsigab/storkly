@@ -100,7 +100,8 @@ export function useUpdateItem(slug: string) {
       if (data === undefined || data === null) throw new Error("No response from server");
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      queryClient.setQueryData(["item", variables.id], data);
       void queryClient.invalidateQueries({ queryKey: ["items", slug] });
       void navigate(`/r/${slug}`, { viewTransition: true });
     },
