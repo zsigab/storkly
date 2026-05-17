@@ -43,6 +43,7 @@ interface ThemeProviderProps {
 const STORAGE_KEY = "storkly-theme";
 const COLORS: readonly ThemeColor[] = ["peach", "blue", "pink", "green", "purple", "beige"];
 const STYLES: readonly ThemeStyle[] = ["glass"];
+const MODES: readonly ThemeMode[] = ["light", "dark", "system"];
 const BACKGROUNDS: readonly ThemeBackground[] = ["none", "default", "stars", "both"];
 
 // Concrete HSL values per colour/mode — mirrors globals.css accent overrides.
@@ -187,6 +188,10 @@ function isThemeStyle(v: unknown): v is ThemeStyle {
   return typeof v === "string" && (STYLES as readonly string[]).includes(v);
 }
 
+function isThemeMode(v: unknown): v is ThemeMode {
+  return typeof v === "string" && (MODES as readonly string[]).includes(v);
+}
+
 export function isThemeBackground(v: unknown): v is ThemeBackground {
   return typeof v === "string" && (BACKGROUNDS as readonly string[]).includes(v);
 }
@@ -204,7 +209,7 @@ function getInitialTheme(): ThemeState {
         "mode" in parsed
       ) {
         const p = parsed as Record<string, unknown>;
-        const mode = p["mode"] === "dark" ? "dark" : p["mode"] === "system" ? "system" : "light";
+        const mode = isThemeMode(p["mode"]) ? p["mode"] : "system";
         const background = isThemeBackground(p["background"]) ? p["background"] : "both";
         if (isThemeColor(p["color"]) && isThemeStyle(p["style"])) {
           return { color: p["color"], style: p["style"], mode, background };
