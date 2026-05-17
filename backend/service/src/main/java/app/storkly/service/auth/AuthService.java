@@ -83,7 +83,18 @@ public class AuthService {
     }
 
     @Transactional
-    public void forgotPassword(String email) {
+    public void forgotPassword(String email, String captchaToken) {
+        turnstileService.assertValid(captchaToken);
+        sendPasswordResetEmail(email);
+    }
+
+    @Transactional
+    public void requestPasswordReset(String email) {
+        // Called by authenticated users — CAPTCHA not required
+        sendPasswordResetEmail(email);
+    }
+
+    private void sendPasswordResetEmail(String email) {
         // No-op if email not found — avoid user enumeration
         userRepository.findByEmail(email).ifPresent(user -> {
             String token = TokenUtil.generate();

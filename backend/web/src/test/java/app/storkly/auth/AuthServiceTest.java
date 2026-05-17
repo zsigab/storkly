@@ -199,7 +199,7 @@ class AuthServiceTest {
         when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
 
         // Must not throw — avoids user enumeration
-        authService.forgotPassword("unknown@example.com");
+        authService.forgotPassword("unknown@example.com", "captcha-token");
 
         verify(passwordResetRepository, never()).save(any(), anyString(), any());
         verify(emailService, never()).sendPasswordReset(anyString(), anyString());

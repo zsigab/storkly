@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/hooks/useAuth";
-import { useForgotPassword, useUpdateDisplayName } from "@/hooks/useAuthMutations";
+import { useRequestPasswordReset, useUpdateDisplayName } from "@/hooks/useAuthMutations";
 import { useTheme, type ThemeColor, type ThemeBackground } from "@/hooks/useTheme";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ type DisplayNameFormValues = z.infer<typeof displayNameSchema>;
 export function ProfilePage(): React.ReactElement {
   const { user } = useAuth();
   const updateDisplayName = useUpdateDisplayName();
-  const forgotPassword = useForgotPassword();
+  const forgotPassword = useRequestPasswordReset();
   const { theme, setColor, setBackground, setMode } = useTheme();
 
   const {
@@ -64,7 +64,7 @@ export function ProfilePage(): React.ReactElement {
   };
 
   const onSendPasswordReset = (): void => {
-    forgotPassword.mutate(user.email);
+    forgotPassword.mutate();
   };
 
   return (

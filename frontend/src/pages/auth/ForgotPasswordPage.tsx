@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link } from "react-router";
+import { Turnstile } from "@marsidev/react-turnstile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -11,6 +12,7 @@ import { useForgotPassword } from "@/hooks/useAuthMutations";
 
 const schema = z.object({
   email: z.string().email("Enter a valid email address"),
+  captchaToken: z.string().min(1, "Please complete the CAPTCHA"),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -20,8 +22,9 @@ export function ForgotPasswordPage(): React.ReactElement {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  } = useForm<FormValues>({ resolver: zodResolver(schema), defaultValues: { captchaToken: "" } });
 
   if (forgotPassword.isSuccess) {
     return (
@@ -52,11 +55,21 @@ export function ForgotPasswordPage(): React.ReactElement {
         <form
           className="space-y-4"
           noValidate
-          onSubmit={handleSubmit(({ email }) => forgotPassword.mutate(email))}
+          onSubmit={handleSubmit((values) => forgotPassword.mutate(values))}
         >
           <FormField label="Email" htmlFor="email" error={errors.email?.message}>
             <Input id="email" type="email" autoComplete="email" {...register("email")} />
           </FormField>
+
+          <div className="flex justify-center">
+            <Turnstile
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY as string}
+              onSuccess={(token) => setValue("captchaToken", token, { shouldValidate: true })}
+            />
+          </div>
+          {errors.captchaToken !== undefined && (
+            <p className="text-destructive text-sm">{errors.captchaToken.message}</p>
+          )}
 
           {forgotPassword.isError && (
             <Alert variant="destructive">

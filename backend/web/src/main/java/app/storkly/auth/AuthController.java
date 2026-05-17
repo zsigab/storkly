@@ -88,7 +88,12 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public void forgotPassword(@RequestBody @Valid ForgotPasswordRequest request) {
-        authService.forgotPassword(request.email());
+        authService.forgotPassword(request.email(), request.captchaToken());
+    }
+
+    @PostMapping("/request-password-reset")
+    public void requestPasswordReset(@AuthenticationPrincipal User user) {
+        authService.requestPasswordReset(user.email());
     }
 
     @PostMapping("/reset-password")

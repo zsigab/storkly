@@ -12,6 +12,14 @@ vi.mock("react-router", async () => {
   return { ...actual, useNavigate: () => vi.fn() };
 });
 
+vi.mock("@marsidev/react-turnstile", () => ({
+  Turnstile: ({ onSuccess }: { onSuccess?: (token: string) => void }) => (
+    <button type="button" data-testid="turnstile" onClick={() => onSuccess?.("test-token")}>
+      Complete CAPTCHA
+    </button>
+  ),
+}));
+
 function makeClient() {
   return new QueryClient({ defaultOptions: { mutations: { retry: false } } });
 }
@@ -41,6 +49,7 @@ describe("ForgotPasswordPage", () => {
     renderPage();
     expect(screen.getByRole("heading", { name: /reset your password/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByTestId("turnstile")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /send reset link/i })).toBeInTheDocument();
   });
 
@@ -49,6 +58,15 @@ describe("ForgotPasswordPage", () => {
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "not-email" } });
     fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
     await waitFor(() => expect(screen.getByText(/enter a valid email/i)).toBeInTheDocument());
+  });
+
+  it("requires CAPTCHA completion before submitting", async () => {
+    renderPage();
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "a@b.com" } });
+    fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/please complete the captcha/i)).toBeInTheDocument(),
+    );
   });
 
   it("calls API on valid submission", async () => {
@@ -60,10 +78,11 @@ describe("ForgotPasswordPage", () => {
     });
     renderPage();
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "a@b.com" } });
+    fireEvent.click(screen.getByTestId("turnstile"));
     fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
     await waitFor(() =>
       expect(api.POST).toHaveBeenCalledWith("/api/auth/forgot-password", {
-        body: { email: "a@b.com" },
+        body: { email: "a@b.com", captchaToken: "test-token" },
       }),
     );
   });
@@ -77,6 +96,7 @@ describe("ForgotPasswordPage", () => {
     });
     renderPage();
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: "a@b.com" } });
+    fireEvent.click(screen.getByTestId("turnstile"));
     fireEvent.click(screen.getByRole("button", { name: /send reset link/i }));
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: /check your email/i })).toBeInTheDocument(),

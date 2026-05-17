@@ -186,8 +186,13 @@ export type paths = {
   };
   "/api/auth/forgot-password": {
     post: {
-      requestBody: { content: { "application/json": { email: string } } };
+      requestBody: { content: { "application/json": { email: string; captchaToken: string } } };
       responses: { 200: Empty };
+    };
+  };
+  "/api/auth/request-password-reset": {
+    post: {
+      responses: { 200: Empty; 401: Err };
     };
   };
   "/api/auth/reset-password": {

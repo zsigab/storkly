@@ -79,8 +79,17 @@ export function useVerifyEmail() {
 
 export function useForgotPassword() {
   return useMutation({
-    mutationFn: async (email: string) => {
-      const { error } = await api.POST("/api/auth/forgot-password", { body: { email } });
+    mutationFn: async (values: { email: string; captchaToken: string }) => {
+      const { error } = await api.POST("/api/auth/forgot-password", { body: values });
+      if (error !== undefined) throw error;
+    },
+  });
+}
+
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await api.POST("/api/auth/request-password-reset", {});
       if (error !== undefined) throw error;
     },
   });
