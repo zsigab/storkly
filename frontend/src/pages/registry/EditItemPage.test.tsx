@@ -83,10 +83,13 @@ function renderPage() {
 beforeEach(() => vi.clearAllMocks());
 
 describe("EditItemPage", () => {
-  function mockGetSuccess() {
+  function mockGetSuccess(claimsOverride?: unknown[]) {
     return vi.fn().mockImplementation(async (path: string) => {
       if (path === "/api/items/{id}") {
         return { data: itemFixture, error: undefined, response: new Response() };
+      }
+      if (path === "/api/items/{id}/claims") {
+        return { data: claimsOverride ?? [], error: undefined, response: new Response() };
       }
       return { data: [], error: undefined, response: new Response() };
     });
@@ -157,6 +160,30 @@ describe("EditItemPage", () => {
     expect(screen.getByRole("button", { name: /delete item/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /discard/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
+  });
+
+  it("shows inline error when price is set below already received amount", async () => {
+    const { api } = await import("@/api");
+    const claimWithReceipt = {
+      id: "c1",
+      itemId: "item-1",
+      claimerName: "Alice",
+      claimerEmail: "alice@example.com",
+      quantityClaimed: 1,
+      amountReceived: 120,
+      claimToken: "tok",
+      claimedAt: "2024-01-01T00:00:00Z",
+    };
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess([claimWithReceipt]));
+    renderPage();
+    await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
+    const priceInput = screen.getByLabelText(/^amount$/i);
+    fireEvent.change(priceInput, { target: { value: "50" } });
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/amount cannot be below 120.00 already received/i)).toBeInTheDocument(),
+    );
+    expect(api.PATCH).not.toHaveBeenCalled();
   });
 
   it("restores quantity to 1 when discard button is clicked", async () => {

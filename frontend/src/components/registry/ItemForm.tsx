@@ -81,6 +81,7 @@ interface ItemFormProps {
   onDelete?: () => void;
   isDeletePending?: boolean;
   isClaimed?: boolean;
+  minPriceReference?: number;
   onDirtyChange?: (isDirty: boolean) => void;
 }
 
@@ -220,6 +221,7 @@ export function ItemForm({
   onDelete,
   isDeletePending = false,
   isClaimed = false,
+  minPriceReference,
   onDirtyChange,
 }: ItemFormProps): React.ReactElement {
   const { mutateAsync: fetchPreview, isPending: isFetching } = useLinkPreview();
@@ -252,6 +254,7 @@ export function ItemForm({
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isDirty },
     watch,
     setValue,
@@ -565,8 +568,19 @@ export function ItemForm({
     <form
       className="space-y-4"
       noValidate
-      onSubmit={handleSubmit((values) =>
-        onSubmit({
+      onSubmit={handleSubmit((values) => {
+        if (
+          minPriceReference !== undefined &&
+          minPriceReference > 0 &&
+          values.priceReference !== "" &&
+          parseFloat(values.priceReference) < minPriceReference
+        ) {
+          setError("priceReference", {
+            message: `Amount cannot be below ${minPriceReference.toFixed(2)} already received`,
+          });
+          return;
+        }
+        return onSubmit({
           title: values.title,
           description: values.description.length > 0 ? values.description : null,
           urlOriginal: values.urlOriginal.length > 0 ? stripUrlParams(values.urlOriginal) : null,
@@ -580,8 +594,8 @@ export function ItemForm({
           notes: values.notes.length > 0 ? values.notes : null,
           alreadyOwned: values.alreadyOwned,
           itemType: values.itemType,
-        }),
-      )}
+        });
+      })}
     >
       <div className="space-y-2">
         <span className="text-sm leading-none font-medium">Type</span>
@@ -948,7 +962,7 @@ export function ItemForm({
               id="priceReference"
               type="number"
               step="0.01"
-              min="0"
+              min={minPriceReference ?? 0}
               placeholder="0.00"
               disabled={fieldSources.price === "url"}
               {...register("priceReference")}

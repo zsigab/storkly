@@ -3,6 +3,7 @@ package app.storkly.service.item;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
+import app.storkly.domain.exception.PriceReferenceBelowReceivedAmountException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.item.Item;
@@ -119,6 +120,15 @@ public class ItemService {
         ItemType effectiveItemType = itemType != null ? itemType : item.itemType();
         boolean effectiveAlreadyOwned = alreadyOwned != null ? alreadyOwned : item.alreadyOwned();
         validateFundConstraints(effectiveItemType, effectiveAlreadyOwned);
+        BigDecimal effectivePriceReference = priceReference != null ? priceReference : item.priceReference();
+        if (effectivePriceReference != null) {
+            BigDecimal totalReceived = claimRepository.findActiveByItemId(item.id()).stream()
+                    .map(c -> c.amountReceived() != null ? c.amountReceived() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            if (totalReceived.compareTo(BigDecimal.ZERO) > 0 && effectivePriceReference.compareTo(totalReceived) < 0) {
+                throw new PriceReferenceBelowReceivedAmountException(totalReceived);
+            }
+        }
         return itemRepository.save(Item.builder()
                 .id(item.id())
                 .registryId(item.registryId())
