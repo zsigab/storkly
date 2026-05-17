@@ -58,7 +58,7 @@ interface ItemCardProps {
   subscriberNames?: Record<string, string>;
   claims?: ClaimResponse[];
   claimHistory?: ClaimResponse[];
-  onOpenClaim: (maxAmount: number | null) => void;
+  onOpenClaim: (maxAmount: number | null, quantityClaimed: number) => void;
   isClaimDialogOpen: boolean;
   isClaimTransitioning: boolean;
 }
@@ -122,7 +122,7 @@ export const ItemCard = memo(function ItemCard({
   };
 
   const handleClaimOpen = (): void => {
-    onOpenClaim(remainingAmount);
+    onOpenClaim(remainingAmount, quantityClaimed);
   };
 
   const handleCardClick = (): void => {

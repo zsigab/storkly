@@ -88,6 +88,46 @@ describe("ClaimDialog", () => {
   });
 });
 
+describe("ClaimDialog — multi-quantity", () => {
+  it("shows quantity selector when quantityDesired > 1", () => {
+    renderDialog({ isAuthenticated: true, quantityDesired: 3, quantityClaimed: 1 });
+    expect(screen.getByLabelText(/quantity/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 of 2 available/i)).toBeInTheDocument();
+  });
+
+  it("hides partial contribution checkbox when quantityDesired > 1", () => {
+    renderDialog({ isAuthenticated: true, quantityDesired: 3, quantityClaimed: 0 });
+    expect(screen.queryByText(/contribute a partial amount/i)).not.toBeInTheDocument();
+  });
+
+  it("sends selected quantity to API on submit", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.POST).mockResolvedValueOnce({
+      data: {
+        id: "c1",
+        itemId: "item-1",
+        claimerUserId: "u1",
+        claimerName: null,
+        claimerEmail: null,
+        quantityClaimed: 2,
+        claimedAt: "2024-01-01T00:00:00Z",
+      },
+      error: undefined,
+      response: new Response(),
+    });
+    renderDialog({ isAuthenticated: true, quantityDesired: 3, quantityClaimed: 0 });
+    const slider = screen.getByRole("slider");
+    fireEvent.change(slider, { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: /claim item/i }));
+    await waitFor(() =>
+      expect(api.POST).toHaveBeenCalledWith(
+        "/api/items/{id}/claims",
+        expect.objectContaining({ body: expect.objectContaining({ quantityClaimed: 2 }) }),
+      ),
+    );
+  });
+});
+
 describe("ClaimDialog — partial contribution", () => {
   it("clamps amount field to maxAmount for non-fund items", async () => {
     renderDialog({

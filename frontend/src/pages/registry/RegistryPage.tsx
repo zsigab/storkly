@@ -99,6 +99,7 @@ export function RegistryPage(): React.ReactElement {
   const [claimTarget, setClaimTarget] = useState<{
     item: ItemResponse;
     maxAmount: number | null;
+    quantityClaimed: number;
   } | null>(null);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const { toggle: toggleClaimDialog, transitioning: claimTransitioning } =
@@ -134,8 +135,12 @@ export function RegistryPage(): React.ReactElement {
     if (joinRegistry.isSuccess) setHasUnsubscribed(false);
   }, [joinRegistry.isSuccess]);
 
-  const handleOpenClaim = (item: ItemResponse, maxAmount: number | null): void => {
-    setClaimTarget({ item, maxAmount });
+  const handleOpenClaim = (
+    item: ItemResponse,
+    maxAmount: number | null,
+    quantityClaimed: number,
+  ): void => {
+    setClaimTarget({ item, maxAmount, quantityClaimed });
     toggleClaimDialog(true);
   };
 
@@ -368,8 +373,8 @@ export function RegistryPage(): React.ReactElement {
                   subscriberNames={subscriberNames}
                   claims={claimsMap.get(item.id) ?? []}
                   claimHistory={historyMap.get(item.id) ?? []}
-                  onOpenClaim={(maxAmount) => {
-                    handleOpenClaim(item, maxAmount);
+                  onOpenClaim={(maxAmount, quantityClaimed) => {
+                    handleOpenClaim(item, maxAmount, quantityClaimed);
                   }}
                   isClaimDialogOpen={
                     claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
@@ -393,8 +398,8 @@ export function RegistryPage(): React.ReactElement {
                   subscriberNames={subscriberNames}
                   claims={claimsMap.get(item.id) ?? []}
                   claimHistory={historyMap.get(item.id) ?? []}
-                  onOpenClaim={(maxAmount) => {
-                    handleOpenClaim(item, maxAmount);
+                  onOpenClaim={(maxAmount, quantityClaimed) => {
+                    handleOpenClaim(item, maxAmount, quantityClaimed);
                   }}
                   isClaimDialogOpen={
                     claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
@@ -474,6 +479,8 @@ export function RegistryPage(): React.ReactElement {
           isAuthenticated={user !== null}
           maxAmount={claimTarget.maxAmount}
           isFund={claimTarget.item.itemType === "FUND"}
+          quantityDesired={claimTarget.item.quantityDesired}
+          quantityClaimed={claimTarget.quantityClaimed}
           viewTransitionName={
             claimTransitioning && claimDialogOpen ? `claim-item-${claimTarget.item.id}` : undefined
           }

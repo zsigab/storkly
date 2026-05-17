@@ -42,6 +42,7 @@ export function useClaimItem(slug: string) {
       itemId,
       claimerName,
       claimerEmail,
+      quantityClaimed,
       amountContributed,
       percentageContributed,
       deliveryOptionId,
@@ -49,6 +50,7 @@ export function useClaimItem(slug: string) {
       itemId: string;
       claimerName?: string;
       claimerEmail?: string;
+      quantityClaimed?: number;
       amountContributed?: number | null;
       percentageContributed?: number | null;
       deliveryOptionId?: string | null;
@@ -58,7 +60,7 @@ export function useClaimItem(slug: string) {
         body: {
           claimerName: claimerName ?? null,
           claimerEmail: claimerEmail ?? null,
-          quantityClaimed: 1,
+          quantityClaimed: quantityClaimed ?? 1,
           amountContributed: amountContributed ?? null,
           percentageContributed: percentageContributed ?? null,
           deliveryOptionId: deliveryOptionId ?? null,

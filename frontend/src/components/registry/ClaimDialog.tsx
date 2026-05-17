@@ -22,6 +22,7 @@ import { useDeliveryOptions } from "@/hooks/useDeliveryOptions";
 const baseSchema = z.object({
   claimerName: z.string(),
   claimerEmail: z.string(),
+  quantity: z.number().min(1),
   amount: z.string(),
   percentage: z.number().min(0).max(100),
   deliveryOptionId: z.string().optional(),
@@ -46,6 +47,8 @@ interface ClaimDialogProps {
   viewTransitionName?: string | undefined;
   maxAmount?: number | null;
   isFund?: boolean;
+  quantityDesired?: number;
+  quantityClaimed?: number;
 }
 
 export function ClaimDialog({
@@ -60,11 +63,16 @@ export function ClaimDialog({
   viewTransitionName,
   maxAmount,
   isFund = false,
+  quantityDesired = 1,
+  quantityClaimed = 0,
 }: ClaimDialogProps): React.ReactElement {
   const claimItem = useClaimItem(slug);
   const deliveryOptions = useDeliveryOptions(slug);
   const [partialEnabled, setPartialEnabled] = useState(false);
   const [lastTouched, setLastTouched] = useState<"amount" | "percentage">("percentage");
+
+  const isMultiQty = quantityDesired > 1 && !isFund;
+  const remainingQuantity = Math.max(1, quantityDesired - quantityClaimed);
 
   const maxPercent =
     priceReference != null && maxAmount != null
@@ -85,6 +93,7 @@ export function ClaimDialog({
     defaultValues: {
       claimerName: "",
       claimerEmail: "",
+      quantity: 1,
       amount: "",
       percentage: 100,
       deliveryOptionId: "",
@@ -103,6 +112,7 @@ export function ClaimDialog({
 
   const percentage = watch("percentage");
   const amount = watch("amount");
+  const quantity = watch("quantity");
   const amountFloat = parseFloat(amount);
   const overLimitBy =
     isFund &&
@@ -164,6 +174,7 @@ export function ClaimDialog({
         ...(isAuthenticated
           ? {}
           : { claimerName: values.claimerName, claimerEmail: values.claimerEmail }),
+        quantityClaimed: isMultiQty ? values.quantity : 1,
         amountContributed,
         percentageContributed,
         deliveryOptionId: values.deliveryOptionId || null,
@@ -227,7 +238,37 @@ export function ClaimDialog({
               </>
             )}
 
-            {!isFund && (
+            {isMultiQty && (
+              <div className="space-y-3 rounded-md border p-3">
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="quantitySelector" className="text-sm font-medium">
+                      Quantity
+                    </label>
+                    <span className="text-muted-foreground text-sm">
+                      {quantity} of {remainingQuantity} available
+                    </span>
+                  </div>
+                  <Controller
+                    control={control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <input
+                        id="quantitySelector"
+                        type="range"
+                        min={1}
+                        max={remainingQuantity}
+                        className="accent-primary w-full"
+                        value={field.value}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+            )}
+
+            {!isFund && !isMultiQty && (
               <label className="flex cursor-pointer items-center gap-3">
                 <input
                   type="checkbox"
