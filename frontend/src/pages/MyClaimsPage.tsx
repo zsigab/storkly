@@ -42,7 +42,16 @@ export function MyClaimsPage(): React.ReactElement {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-8">
-      <h1 className="text-3xl font-semibold tracking-tight">My claims</h1>
+      <div className="space-y-1">
+        <Link
+          to="/profile"
+          viewTransition
+          className="text-muted-foreground hover:text-foreground text-sm"
+        >
+          ← Back to profile
+        </Link>
+        <h1 className="text-3xl font-semibold tracking-tight">My claims</h1>
+      </div>
 
       {claims === undefined || claims.length === 0 ? (
         <p className="text-muted-foreground text-sm">
