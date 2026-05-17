@@ -1,26 +1,17 @@
 import { Link } from "react-router";
-import { useMyActiveClaims, useUnclaimItem } from "@/hooks/useClaims";
+import { useMyActiveClaims, useUnclaimMyClaim } from "@/hooks/useClaims";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getApiErrorMessage } from "@/api/helpers";
-import { useQueryClient } from "@tanstack/react-query";
 import { formatDateTime } from "@/lib/utils";
 
 export function MyClaimsPage(): React.ReactElement {
   const { data: claims, isLoading, isError, error } = useMyActiveClaims();
-  const queryClient = useQueryClient();
-  const unclaim = useUnclaimItem("");
+  const unclaim = useUnclaimMyClaim();
 
   const handleUnclaim = (claimId: string, itemId: string): void => {
-    unclaim.mutate(
-      { value: claimId, itemId },
-      {
-        onSuccess: () => {
-          void queryClient.invalidateQueries({ queryKey: ["myClaims"] });
-        },
-      },
-    );
+    unclaim.mutate({ value: claimId, itemId });
   };
 
   if (isLoading) {

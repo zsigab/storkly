@@ -194,6 +194,24 @@ export function useRejectClaim(slug: string) {
   });
 }
 
+export function useUnclaimMyClaim() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ value, itemId }: { value: string; itemId: string }) => {
+      const { error } = await api.DELETE("/api/claims/{value}", {
+        params: { path: { value } },
+      });
+      if (error !== undefined) throw error;
+      return itemId;
+    },
+    onSuccess: (itemId) => {
+      void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
+      void queryClient.invalidateQueries({ queryKey: ["myClaims"] });
+    },
+  });
+}
+
 export function useMyActiveClaims() {
   return useQuery({
     queryKey: ["myClaims"],
