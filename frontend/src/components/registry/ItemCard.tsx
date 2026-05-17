@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useViewTransitionState } from "react-router";
 import { Gift } from "lucide-react";
@@ -62,7 +62,7 @@ interface ItemCardProps {
   claimHistory?: ClaimResponse[];
 }
 
-export function ItemCard({
+export const ItemCard = memo(function ItemCard({
   item,
   slug,
   isOwner,
@@ -529,4 +529,4 @@ export function ItemCard({
       />
     </div>
   );
-}
+});
