@@ -83,17 +83,25 @@ export const ItemCard = memo(function ItemCard({
   const claimTransitionName = `claim-item-${item.id}`;
   const isFund = item.itemType === "FUND";
 
+  const isMultiQty = !isFund && item.quantityDesired > 1;
   const quantityClaimed = claims.reduce((sum, c) => sum + c.quantityClaimed, 0);
+  const quantityReceived = claims
+    .filter((c) => c.receivedAt !== null)
+    .reduce((sum, c) => sum + c.quantityClaimed, 0);
   const totalContributed = claims.reduce((sum, c) => sum + (c.amountContributed ?? 0), 0);
   const totalReceived = claims.reduce((sum, c) => sum + (c.amountReceived ?? 0), 0);
   const hasContributions = claims.some((c) => c.amountContributed != null);
   const hasPartialContributions = item.priceReference != null && hasContributions;
   const claimedPercent = (() => {
+    if (isMultiQty)
+      return Math.min(100, Math.round((quantityClaimed / item.quantityDesired) * 100));
     if (isFund && item.priceReference === null) return totalContributed > 0 ? 100 : 0;
     if (!hasPartialContributions) return 0;
     return Math.min(100, Math.round((totalContributed / item.priceReference!) * 100));
   })();
   const receivedPercent = (() => {
+    if (isMultiQty)
+      return Math.min(100, Math.round((quantityReceived / item.quantityDesired) * 100));
     if (isFund && item.priceReference === null) {
       return totalContributed > 0
         ? Math.min(100, Math.round((totalReceived / totalContributed) * 100))
@@ -109,7 +117,9 @@ export const ItemCard = memo(function ItemCard({
     : hasPartialContributions
       ? claimedPercent >= 100
       : quantityClaimed >= item.quantityDesired;
-  const showProgressBar = isFund ? hasContributions : hasPartialContributions;
+  const showProgressBar = isFund
+    ? hasContributions
+    : hasPartialContributions || (isMultiQty && quantityClaimed > 0);
   const remainingAmount =
     item.priceReference != null ? Math.max(0, item.priceReference - totalContributed) : null;
 
@@ -479,14 +489,25 @@ export const ItemCard = memo(function ItemCard({
       {showProgressBar && (
         <div className="space-y-1 border-t pt-2">
           <div className="text-muted-foreground flex justify-between text-xs">
-            <span>
-              {item.currency ?? ""} {formatPrice(totalReceived)} received of{" "}
-              {formatPrice(totalContributed)} {isFund ? "pledged" : "claimed"}
-            </span>
-            {item.priceReference !== null && (
-              <span>
-                {receivedPercent}% of {item.currency ?? ""} {formatPrice(item.priceReference)}
-              </span>
+            {isMultiQty ? (
+              <>
+                <span>
+                  {quantityReceived} received of {quantityClaimed} claimed
+                </span>
+                <span>of {item.quantityDesired} total</span>
+              </>
+            ) : (
+              <>
+                <span>
+                  {item.currency ?? ""} {formatPrice(totalReceived)} received of{" "}
+                  {formatPrice(totalContributed)} {isFund ? "pledged" : "claimed"}
+                </span>
+                {item.priceReference !== null && (
+                  <span>
+                    {receivedPercent}% of {item.currency ?? ""} {formatPrice(item.priceReference)}
+                  </span>
+                )}
+              </>
             )}
           </div>
           <div className="bg-muted relative h-2 w-full overflow-hidden rounded-full">
