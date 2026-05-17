@@ -199,16 +199,6 @@ export function RegistryPage(): React.ReactElement {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-10">
-      {user !== null && (
-        <Link
-          to="/dashboard"
-          viewTransition
-          className="text-muted-foreground hover:text-foreground block text-sm"
-        >
-          ← Back to dashboard
-        </Link>
-      )}
-
       {/* Header */}
       <div
         className="bg-card border-border space-y-4 rounded-xl border p-6 shadow-md"
@@ -224,6 +214,15 @@ export function RegistryPage(): React.ReactElement {
               : undefined,
         }}
       >
+        {user !== null && (
+          <Link
+            to="/dashboard"
+            viewTransition
+            className="text-muted-foreground hover:text-foreground block text-sm"
+          >
+            ← Back to dashboard
+          </Link>
+        )}
         {isPending || registry === undefined ? (
           <div className="bg-muted h-8 w-48 animate-pulse rounded" />
         ) : (
