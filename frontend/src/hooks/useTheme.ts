@@ -32,6 +32,7 @@ interface ThemeContextValue {
   setBackground: (bg: ThemeBackground) => void;
   setRegistryOverride: (color: ThemeColor, background: ThemeBackground) => void;
   clearRegistryOverride: () => void;
+  resetTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -322,6 +323,10 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     setRegistryTheme(null);
   }, []);
 
+  const resetTheme = useCallback((): void => {
+    setTheme({ color: "peach", style: "glass", mode: "system", background: "both" });
+  }, []);
+
   const value = useMemo(
     () => ({
       theme,
@@ -332,6 +337,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
       setBackground,
       setRegistryOverride,
       clearRegistryOverride,
+      resetTheme,
     }),
     [
       theme,
@@ -342,6 +348,7 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
       setBackground,
       setRegistryOverride,
       clearRegistryOverride,
+      resetTheme,
     ],
   );
 

@@ -1,7 +1,24 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
+import { flushSync } from "react-dom";
 import { api } from "@/api";
 import { useAuth } from "./useAuth";
+import { useTheme } from "./useTheme";
+
+type DocWithVT = typeof document & { startViewTransition?: (cb: () => void) => void };
+
+function navigateWithTransition(navigate: (path: string) => void, path: string): void {
+  const vt = (document as DocWithVT).startViewTransition;
+  if (vt !== undefined) {
+    vt(() => {
+      flushSync(() => {
+        navigate(path);
+      });
+    });
+  } else {
+    navigate(path);
+  }
+}
 
 export function useLogin() {
   const { login } = useAuth();
@@ -29,7 +46,7 @@ export function useLogin() {
     onSuccess: ({ user, from }) => {
       login(user);
       void queryClient.invalidateQueries();
-      void navigate(from ?? "/dashboard", { viewTransition: true });
+      navigateWithTransition(navigate, from ?? "/dashboard");
     },
   });
 }
@@ -82,6 +99,7 @@ export function useResetPassword() {
 
 export function useLogout() {
   const { logout } = useAuth();
+  const { resetTheme } = useTheme();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -92,8 +110,9 @@ export function useLogout() {
     },
     onSettled: () => {
       logout();
+      resetTheme();
       queryClient.clear();
-      void navigate("/", { viewTransition: true });
+      navigateWithTransition(navigate, "/");
     },
   });
 }
