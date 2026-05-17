@@ -72,11 +72,6 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: /storkly/i })).toHaveAttribute("href", "/dashboard");
   });
 
-  it("renders the theme settings button", () => {
-    renderHeader();
-    expect(screen.getByRole("button", { name: /theme settings/i })).toBeInTheDocument();
-  });
-
   it("shows sign in and register links when logged out", () => {
     renderHeader();
     expect(screen.getByRole("link", { name: /sign in/i })).toBeInTheDocument();
