@@ -1,8 +1,10 @@
 import {
   createContext,
   createElement,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -48,15 +50,15 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps): React.ReactElement {
   const [user, setUser] = useState<TokenResponse | null>(readStoredUser);
 
-  const login = (u: TokenResponse): void => {
+  const login = useCallback((u: TokenResponse): void => {
     setUser(u);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-  };
+  }, []);
 
-  const logout = (): void => {
+  const logout = useCallback((): void => {
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
-  };
+  }, []);
 
   useEffect(() => {
     function handleUnauthorized() {
@@ -67,7 +69,9 @@ export function AuthProvider({ children }: AuthProviderProps): React.ReactElemen
     return () => window.removeEventListener("storkly:unauthorized", handleUnauthorized);
   }, []);
 
-  return createElement(AuthContext.Provider, { value: { user, login, logout } }, children);
+  const value = useMemo(() => ({ user, login, logout }), [user, login, logout]);
+
+  return createElement(AuthContext.Provider, { value }, children);
 }
 
 export function useAuth(): AuthContextValue {

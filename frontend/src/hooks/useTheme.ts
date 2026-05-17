@@ -273,21 +273,21 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     [theme, effectiveColor, effectiveBackground],
   );
 
-  const setColor = (color: ThemeColor): void => {
+  const setColor = useCallback((color: ThemeColor): void => {
     setTheme((t) => ({ ...t, color }));
-  };
+  }, []);
 
-  const setStyle = (style: ThemeStyle): void => {
+  const setStyle = useCallback((style: ThemeStyle): void => {
     setTheme((t) => ({ ...t, style }));
-  };
+  }, []);
 
-  const setMode = (mode: ThemeMode): void => {
+  const setMode = useCallback((mode: ThemeMode): void => {
     setTheme((t) => ({ ...t, mode }));
-  };
+  }, []);
 
-  const setBackground = (background: ThemeBackground): void => {
+  const setBackground = useCallback((background: ThemeBackground): void => {
     setTheme((t) => ({ ...t, background }));
-  };
+  }, []);
 
   const setRegistryOverride = useCallback(
     (color: ThemeColor, background: ThemeBackground): void => {
@@ -300,22 +300,30 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     setRegistryTheme(null);
   }, []);
 
-  return createElement(
-    ThemeContext.Provider,
-    {
-      value: {
-        theme,
-        bgStyle,
-        setColor,
-        setStyle,
-        setMode,
-        setBackground,
-        setRegistryOverride,
-        clearRegistryOverride,
-      },
-    },
-    children,
+  const value = useMemo(
+    () => ({
+      theme,
+      bgStyle,
+      setColor,
+      setStyle,
+      setMode,
+      setBackground,
+      setRegistryOverride,
+      clearRegistryOverride,
+    }),
+    [
+      theme,
+      bgStyle,
+      setColor,
+      setStyle,
+      setMode,
+      setBackground,
+      setRegistryOverride,
+      clearRegistryOverride,
+    ],
   );
+
+  return createElement(ThemeContext.Provider, { value }, children);
 }
 
 export function useTheme(): ThemeContextValue {
