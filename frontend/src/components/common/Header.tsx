@@ -38,11 +38,17 @@ export function Header(): React.ReactElement {
             </>
           ) : (
             <>
-              <Link to="/login" className="hover:text-foreground text-muted-foreground text-sm">
+              <Link
+                to="/login"
+                viewTransition
+                className="hover:text-foreground text-muted-foreground text-sm"
+              >
                 Sign in
               </Link>
               <Button asChild size="sm">
-                <Link to="/register">Register</Link>
+                <Link to="/register" viewTransition>
+                  Register
+                </Link>
               </Button>
             </>
           )}
