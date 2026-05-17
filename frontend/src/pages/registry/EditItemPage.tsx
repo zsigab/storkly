@@ -116,8 +116,8 @@ export function EditItemPage(): React.ReactElement {
           onDelete={handleDelete}
           isDeletePending={deleteItem.isPending}
           isClaimed={isClaimed}
-          minPriceReference={totalReceived > 0 ? totalReceived : undefined}
-          minQuantityDesired={totalClaimed > 0 ? totalClaimed : undefined}
+          {...(totalReceived > 0 ? { minPriceReference: totalReceived } : {})}
+          {...(totalClaimed > 0 ? { minQuantityDesired: totalClaimed } : {})}
           onDirtyChange={setIsDirty}
         />
       </GlassCardLayout>
