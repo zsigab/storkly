@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 import type { ClaimResponse, MyClaimResponse } from "@/api/schema";
@@ -30,7 +31,7 @@ export function useAllItemClaims(itemIds: string[]) {
       enabled: id.length > 0,
     })),
   });
-  return results.flatMap((r) => r.data ?? []);
+  return useMemo(() => results.flatMap((r) => r.data ?? []), [results]);
 }
 
 export function useClaimItem(slug: string) {
