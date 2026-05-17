@@ -20,6 +20,7 @@ export function useItem(id: string, slug: string) {
       const list = queryClient.getQueryData<ItemResponse[]>(["items", slug]);
       return list?.find((i) => i.id === id);
     },
+    initialDataUpdatedAt: () => queryClient.getQueryState(["items", slug])?.dataUpdatedAt,
   });
 }
 
