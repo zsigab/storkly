@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   useParams,
   useSearchParams,
@@ -27,7 +27,7 @@ import {
 import { useRegistryItemClaims, useRegistryClaimHistory } from "@/hooks/useClaims";
 import type { ClaimResponse } from "@/api/schema";
 import { useRegistryItems } from "@/hooks/useItems";
-import { useTheme, isThemeColor, isThemeBackground } from "@/hooks/useTheme";
+import { useRegistryTheme } from "@/hooks/useRegistryTheme";
 import { formatDateTime } from "@/lib/utils";
 import { Collapsible } from "@/components/common/Collapsible";
 
@@ -37,8 +37,8 @@ export function RegistryPage(): React.ReactElement {
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
   const { user } = useAuth();
-  const { setRegistryOverride, clearRegistryOverride } = useTheme();
   const safeSlug = slug ?? "";
+  useRegistryTheme(safeSlug);
   const isEditTransitioning = useViewTransitionState(`/r/${safeSlug}/edit`);
   const isClaimsTransitioning = useViewTransitionState(`/r/${safeSlug}/claims`);
   const isAddItemTransitioning = useViewTransitionState(`/r/${safeSlug}/items/new`);
@@ -131,34 +131,28 @@ export function RegistryPage(): React.ReactElement {
   const buttonsRef = useRef<HTMLDivElement>(null);
   const [isSingleLine, setIsSingleLine] = useState(false);
 
+  const measure = useCallback(() => {
+    const container = containerRef.current;
+    const titleSpan = titleMeasureRef.current;
+    if (!container || !titleSpan) return;
+    const containerWidth = container.offsetWidth;
+    const titleNaturalWidth = titleSpan.offsetWidth;
+    const buttonsWidth = buttonsRef.current?.offsetWidth ?? 0;
+    setIsSingleLine(titleNaturalWidth + 16 + buttonsWidth <= containerWidth);
+  }, []);
+
   useLayoutEffect(() => {
-    const measure = () => {
-      const container = containerRef.current;
-      const titleSpan = titleMeasureRef.current;
-      if (!container || !titleSpan) return;
-      const containerWidth = container.offsetWidth;
-      const titleNaturalWidth = titleSpan.offsetWidth;
-      const buttonsWidth = buttonsRef.current?.offsetWidth ?? 0;
-      setIsSingleLine(titleNaturalWidth + 16 + buttonsWidth <= containerWidth);
-    };
     const observer = new ResizeObserver(measure);
     if (containerRef.current) {
       observer.observe(containerRef.current);
     }
     measure();
     return () => observer.disconnect();
-  }, [registry?.name, isOwner, isSubscriber, hasUnsubscribed]);
+  }, [measure]);
 
   useLayoutEffect(() => {
-    if (registry !== undefined) {
-      const color = isThemeColor(registry.themeColor) ? registry.themeColor : "peach";
-      const background = isThemeBackground(registry.themeBackground)
-        ? registry.themeBackground
-        : "none";
-      setRegistryOverride(color, background);
-    }
-    return () => clearRegistryOverride();
-  }, [registry, setRegistryOverride, clearRegistryOverride]);
+    measure();
+  }, [registry?.name, isOwner, isSubscriber, hasUnsubscribed, measure]);
 
   useEffect(() => {
     if (joinRegistry.isSuccess) setHasUnsubscribed(false);

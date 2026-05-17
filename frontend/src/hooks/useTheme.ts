@@ -107,7 +107,15 @@ function resolveMode(mode: ThemeMode): "light" | "dark" {
   return mode;
 }
 
+const starBgCache = new Map<string, string>();
+const blobBgCache = new Map<string, string>();
+
 function makeStarBg(color: ThemeColor, mode: "light" | "dark"): string {
+  const key = `${color}-${mode}`;
+  const cached = starBgCache.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
   const hsl = STAR_BASE_HSL[color][mode];
   const bh = hsl[0];
   const bs = hsl[1];
@@ -144,22 +152,31 @@ function makeStarBg(color: ThemeColor, mode: "light" | "dark"): string {
   }
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080">${paths.join("")}</svg>`;
-  return `url("data:image/svg+xml;base64,${btoa(svg)}")`;
+  const result = `url("data:image/svg+xml;base64,${btoa(svg)}")`;
+  starBgCache.set(key, result);
+  return result;
 }
 
 // Corner-anchored radial blobs: centres pushed 10 % off-viewport so only the
 // soft spread shows — no hard circular edges visible.
 function makeBlobBg(color: ThemeColor, mode: "light" | "dark"): string {
+  const key = `${color}-${mode}`;
+  const cached = blobBgCache.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
   const hsl = BLOB_HSL[color][mode];
   const c = (alpha: number) => `hsl(${hsl} / ${alpha})`;
   const light = mode === "light";
-  return [
+  const result = [
     `radial-gradient(ellipse 90% 75% at -10% -10%, ${c(light ? 0.55 : 0.34)} 0%, transparent 65%)`,
     `radial-gradient(ellipse 75% 90% at 110% -10%, ${c(light ? 0.45 : 0.26)} 0%, transparent 65%)`,
     `radial-gradient(ellipse 90% 75% at 110% 110%, ${c(light ? 0.5 : 0.3)} 0%, transparent 65%)`,
     `radial-gradient(ellipse 75% 90% at -10% 110%, ${c(light ? 0.4 : 0.23)} 0%, transparent 65%)`,
     `radial-gradient(ellipse 70% 60% at 50% 50%, ${c(light ? 0.06 : 0.04)} 0%, transparent 70%)`,
   ].join(", ");
+  blobBgCache.set(key, result);
+  return result;
 }
 
 export function isThemeColor(v: unknown): v is ThemeColor {

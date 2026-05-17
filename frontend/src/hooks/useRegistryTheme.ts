@@ -11,9 +11,12 @@ export function useRegistryTheme(slug: string): void {
       const color = isThemeColor(registry.themeColor) ? registry.themeColor : "peach";
       const background = isThemeBackground(registry.themeBackground)
         ? registry.themeBackground
-        : "both";
+        : "none";
       setRegistryOverride(color, background);
     }
+  }, [registry, setRegistryOverride]);
+
+  useLayoutEffect(() => {
     return () => clearRegistryOverride();
-  }, [registry, setRegistryOverride, clearRegistryOverride]);
+  }, [clearRegistryOverride]);
 }
