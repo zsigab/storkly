@@ -2,9 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import {
   useParams,
   useSearchParams,
-  useNavigate,
   useLocation,
   Link,
+  Navigate,
   useViewTransitionState,
 } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,6 @@ import { Collapsible } from "@/components/common/Collapsible";
 
 export function RegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get("invite");
   const { user } = useAuth();
@@ -167,12 +166,6 @@ export function RegistryPage(): React.ReactElement {
     if (joinRegistry.isSuccess) setHasUnsubscribed(false);
   }, [joinRegistry.isSuccess]);
 
-  useEffect(() => {
-    if (registry !== undefined && registry.slug !== safeSlug) {
-      void navigate(`/r/${registry.slug}`, { replace: true });
-    }
-  }, [registry, safeSlug, navigate]);
-
   const handleOpenClaim = (item: ItemResponse, maxAmount: number | null): void => {
     setClaimTarget({ item, maxAmount });
     toggleClaimDialog(true);
@@ -182,6 +175,10 @@ export function RegistryPage(): React.ReactElement {
     if (open) return;
     toggleClaimDialog(false);
   };
+
+  if (registry !== undefined && registry.slug !== safeSlug) {
+    return <Navigate to={`/r/${registry.slug}`} replace />;
+  }
 
   if (isError) {
     const status = getApiErrorStatus(error);
