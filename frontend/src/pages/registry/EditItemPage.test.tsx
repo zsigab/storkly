@@ -207,7 +207,9 @@ describe("EditItemPage", () => {
     fireEvent.change(priceInput, { target: { value: "50" } });
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     await waitFor(() =>
-      expect(screen.getByText(/amount cannot be below 120.00 already received/i)).toBeInTheDocument(),
+      expect(
+        screen.getByText(/amount cannot be below 120.00 already received/i),
+      ).toBeInTheDocument(),
     );
     expect(api.PATCH).not.toHaveBeenCalled();
   });
