@@ -89,10 +89,11 @@ describe("ClaimDialog", () => {
 });
 
 describe("ClaimDialog — multi-quantity", () => {
-  it("shows quantity selector when quantityDesired > 1", () => {
-    renderDialog({ isAuthenticated: true, quantityDesired: 3, quantityClaimed: 1 });
+  it("shows quantity selector with already-claimed hint when quantityDesired > 1", () => {
+    renderDialog({ isAuthenticated: true, quantityDesired: 5, quantityClaimed: 2 });
     expect(screen.getByLabelText(/quantity/i)).toBeInTheDocument();
-    expect(screen.getByText(/1 of 2 available/i)).toBeInTheDocument();
+    expect(screen.getByText(/1 of 3 available/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 of 5 already claimed/i)).toBeInTheDocument();
   });
 
   it("hides partial contribution checkbox when quantityDesired > 1", () => {

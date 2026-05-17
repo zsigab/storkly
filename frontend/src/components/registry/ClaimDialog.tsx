@@ -264,6 +264,11 @@ export function ClaimDialog({
                       />
                     )}
                   />
+                  {quantityClaimed > 0 && (
+                    <p className="text-muted-foreground text-xs">
+                      {quantityClaimed} of {quantityDesired} already claimed
+                    </p>
+                  )}
                 </div>
               </div>
             )}
