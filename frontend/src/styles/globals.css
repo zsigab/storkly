@@ -220,17 +220,39 @@
   }
 
   /* Frosted-glass cards — Cleanuparr-inspired:
-     noise texture + blur + subtle white border + depth shadow */
+     noise texture + blur + subtle white border + depth shadow.
+
+     We do NOT use backdrop-filter: it breaks during CSS view transitions on
+     Firefox and mobile Chrome (snapshot pseudo-elements lose access to the
+     page's fixed bg layer, so the blur sources transparent). Instead, each
+     glass surface paints its own blurred copy of the theme bg via a ::before
+     layer, which is captured into the view-transition snapshot. */
   [data-style="glass"] .bg-card,
   [data-style="glass"] .bg-popover {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
     background-color: hsl(var(--card) / var(--glass-card-alpha));
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
     background-size:
       auto,
       256px 256px;
-    backdrop-filter: blur(16px) saturate(180%);
     border-color: var(--glass-border-color);
     box-shadow: var(--glass-shadow);
+  }
+
+  [data-style="glass"] .bg-card::before,
+  [data-style="glass"] .bg-popover::before {
+    content: "";
+    position: absolute;
+    inset: -10%;
+    z-index: -1;
+    background-image: var(--bg-image, none);
+    background-size: var(--bg-size, auto);
+    background-position: var(--bg-position, 0 0);
+    background-attachment: fixed;
+    filter: blur(16px) saturate(180%);
+    pointer-events: none;
   }
 
   /* Stars: make body + layout div transparent so the <html> SVG background shows through. */
@@ -248,13 +270,5 @@
       animation-duration: 380ms;
       animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
-  }
-
-  /* GlassCardLayout injects an inner filter:blur layer (see GlassCardLayout.tsx)
-     that is captured correctly by Firefox's named-element view-transition snapshot.
-     Suppress backdrop-filter here to avoid double-blur — the inner layer provides it. */
-  [data-style="glass"] [data-glass-layout] .bg-card,
-  [data-style="glass"] [data-glass-layout] .bg-popover {
-    backdrop-filter: none;
   }
 }

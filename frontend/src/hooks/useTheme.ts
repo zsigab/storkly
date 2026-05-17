@@ -296,6 +296,32 @@ export function ThemeProvider({ children }: ThemeProviderProps): React.ReactElem
     [theme, effectiveColor, effectiveBackground],
   );
 
+  // Mirror bgStyle into CSS custom properties so the .bg-card ::before blur
+  // layer (globals.css) can read the same image/size/position. Avoids relying
+  // on backdrop-filter, which breaks during view transitions on Firefox and
+  // mobile Chrome (snapshot does not include the page's fixed bg layer).
+  useLayoutEffect(() => {
+    const el = document.documentElement;
+    const image = bgStyle.backgroundImage;
+    const size = bgStyle.backgroundSize;
+    const position = bgStyle.backgroundPosition;
+    if (typeof image === "string") {
+      el.style.setProperty("--bg-image", image);
+    } else {
+      el.style.removeProperty("--bg-image");
+    }
+    if (typeof size === "string") {
+      el.style.setProperty("--bg-size", size);
+    } else {
+      el.style.removeProperty("--bg-size");
+    }
+    if (typeof position === "string") {
+      el.style.setProperty("--bg-position", position);
+    } else {
+      el.style.removeProperty("--bg-position");
+    }
+  }, [bgStyle]);
+
   const setColor = useCallback((color: ThemeColor): void => {
     setTheme((t) => ({ ...t, color }));
   }, []);

@@ -19,3 +19,4 @@ This index provides a quick summary and links.
 | [012](decisions/012-drop-playwright-og-link-preview.md) | Drop Playwright — OG tags + JSON-LD for link preview | Accepted | 2026-05-03 |
 | [013](decisions/013-multi-dimension-theming.md) | Multi-dimension theming: color accent × style × mode | Accepted | 2026-05-09 |
 | [014](decisions/014-slug-redirect-by-registry-id.md) | Slug redirect via registry_id, not slug chain | Accepted | 2026-05-09 |
+| [015](decisions/015-glass-inner-blur-not-backdrop-filter.md) | Glass cards use inner `filter: blur` layer, not `backdrop-filter` | Accepted | 2026-05-17 |
