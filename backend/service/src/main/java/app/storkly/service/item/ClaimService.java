@@ -5,6 +5,7 @@ import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
 import app.storkly.domain.exception.ContributionExceedsRemainingException;
+import app.storkly.domain.exception.FullClaimBlockedByPartialException;
 import app.storkly.domain.exception.FundContributionRequiredException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.ItemAlreadyOwnedException;
@@ -76,6 +77,17 @@ public class ClaimService {
         boolean isFund = item.itemType() == ItemType.FUND;
         if (isFund && amountContributed == null && percentageContributed == null) {
             throw new FundContributionRequiredException();
+        }
+
+        // Block a pure full-quantity claim (no contribution specified) if partial contributions
+        // already exist — mixing tracking modes would make the claimed/remaining calculation wrong.
+        if (!isFund && amountContributed == null && percentageContributed == null) {
+            List<Claim> existingClaims = claimRepository.findActiveByItemId(itemId);
+            boolean hasPartials = existingClaims.stream()
+                    .anyMatch(c -> c.amountContributed() != null || c.percentageContributed() != null);
+            if (hasPartials) {
+                throw new FullClaimBlockedByPartialException();
+            }
         }
 
         // 100% contribution = full claim: covers the full cost of all desired units

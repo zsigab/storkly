@@ -12,6 +12,7 @@ import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ContributionExceedsRemainingException;
+import app.storkly.domain.exception.FullClaimBlockedByPartialException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.item.Claim;
 import app.storkly.domain.item.ClaimRepository;
@@ -198,6 +199,38 @@ class ClaimServiceTest {
         claimService.unclaimById(claimId, ownerId);
 
         verify(claimRepository).release(eq(claimId), any(OffsetDateTime.class));
+    }
+
+    @Test
+    void claim_fullClaim_whenAmountPartialExists_throwsFullClaimBlocked() {
+        UUID itemId = UUID.randomUUID();
+        Item item = itemWithPrice(itemId, new BigDecimal("100.00"));
+        Registry registry = publicRegistry();
+        Claim existing = claimWithAmount(UUID.randomUUID(), itemId, new BigDecimal("50.00"));
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(claimRepository.findActiveByItemId(itemId)).thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> claimService.claim(itemId, null, null, 1, null, null, null, null))
+                .isInstanceOf(FullClaimBlockedByPartialException.class);
+
+        verify(claimRepository, never()).save(any());
+    }
+
+    @Test
+    void claim_fullClaim_whenPercentagePartialExists_throwsFullClaimBlocked() {
+        UUID itemId = UUID.randomUUID();
+        Item item = item(itemId);
+        Registry registry = publicRegistry();
+        Claim existing = claimWithPercentage(UUID.randomUUID(), itemId, 40);
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(claimRepository.findActiveByItemId(itemId)).thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> claimService.claim(itemId, null, null, 1, null, null, null, null))
+                .isInstanceOf(FullClaimBlockedByPartialException.class);
+
+        verify(claimRepository, never()).save(any());
     }
 
     @Test
