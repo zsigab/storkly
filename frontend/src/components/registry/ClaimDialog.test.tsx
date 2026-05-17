@@ -88,6 +88,21 @@ describe("ClaimDialog", () => {
   });
 });
 
+describe("ClaimDialog — partial contribution", () => {
+  it("clamps amount field to maxAmount for non-fund items", async () => {
+    renderDialog({
+      isAuthenticated: true,
+      priceReference: 200,
+      currency: "USD",
+      maxAmount: 80,
+    });
+    fireEvent.click(screen.getByText(/contribute a partial amount/i));
+    const amountInput = screen.getByRole("spinbutton");
+    fireEvent.change(amountInput, { target: { value: "150" } });
+    expect((amountInput as HTMLInputElement).value).toBe("80.00");
+  });
+});
+
 describe("ClaimDialog — fund mode", () => {
   it("shows Contribute button and title in fund mode", () => {
     renderDialog({ isFund: true, isAuthenticated: true });

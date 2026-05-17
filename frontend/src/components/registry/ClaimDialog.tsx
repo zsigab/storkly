@@ -115,9 +115,14 @@ export function ClaimDialog({
 
   const handleAmountChange = (raw: string): void => {
     setLastTouched("amount");
-    setValue("amount", raw);
-    if (priceReference != null && raw !== "" && !isNaN(parseFloat(raw))) {
-      const pct = Math.round((parseFloat(raw) / priceReference) * 100);
+    const parsed = parseFloat(raw);
+    const effectiveRaw =
+      !isFund && maxAmount != null && !isNaN(parsed) && parsed > maxAmount
+        ? maxAmount.toFixed(2)
+        : raw;
+    setValue("amount", effectiveRaw);
+    if (priceReference != null && effectiveRaw !== "" && !isNaN(parseFloat(effectiveRaw))) {
+      const pct = Math.round((parseFloat(effectiveRaw) / priceReference) * 100);
       setValue("percentage", Math.min(maxPercent, Math.max(0, pct)));
     }
   };
