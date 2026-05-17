@@ -112,7 +112,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ScrapingException.class)
     public ProblemDetail handleScrapingException(ScrapingException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+        // Generic detail to avoid leaking internal topology (port-scan / refused vs timeout signals)
+        log.warn("Scraping failed for url={}: {}", ex.url(), ex.getMessage());
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, "Unable to fetch link preview");
     }
 
     @ExceptionHandler(ResponseStatusException.class)

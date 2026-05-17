@@ -32,4 +32,26 @@ class IkeaScraperTest {
     void supports_withNull_returnsFalse() {
         assertThat(scraper.supports(null)).isFalse();
     }
+
+    @Test
+    void supports_rejectsHostSpoofingViaPathOrQuery() {
+        // The previous url.contains("ikea.com") check was bypassable.
+        assertThat(scraper.supports("https://evil.com/?fake=ikea.com")).isFalse();
+        assertThat(scraper.supports("https://evil.com/ikea.com/p")).isFalse();
+        assertThat(scraper.supports("https://evil-ikea.com/p")).isFalse();
+        assertThat(scraper.supports("https://ikea.com.evil.com/p")).isFalse();
+    }
+
+    @Test
+    void supports_rejectsNonHttpScheme() {
+        assertThat(scraper.supports("file:///etc/passwd")).isFalse();
+        assertThat(scraper.supports("javascript:alert(1)")).isFalse();
+    }
+
+    @Test
+    void supports_acceptsApexAndSubdomain() {
+        assertThat(scraper.supports("https://ikea.com/")).isTrue();
+        assertThat(scraper.supports("https://www.ikea.com/")).isTrue();
+        assertThat(scraper.supports("https://IKEA.com/")).isTrue();
+    }
 }

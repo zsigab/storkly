@@ -2,6 +2,8 @@ package app.storkly.scraper;
 
 import app.storkly.domain.item.SourceSite;
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -28,7 +30,15 @@ public class OgLinkPreviewScraper extends JsoupScraper {
 
     @Override
     public boolean supports(@Nullable String url) {
-        return url != null;
+        if (url == null) {
+            return false;
+        }
+        try {
+            String scheme = new URI(url).getScheme();
+            return scheme != null && (scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"));
+        } catch (URISyntaxException e) {
+            return false;
+        }
     }
 
     @Override

@@ -19,15 +19,29 @@ class OgLinkPreviewScraperTest {
     }
 
     @Test
-    void supports_withAnyUrl_returnsTrue() {
+    void supports_withAnyHttpUrl_returnsTrue() {
         assertThat(scraper.supports("https://lazada.com.ph/products/item-123")).isTrue();
         assertThat(scraper.supports("https://amazon.com/dp/B123")).isTrue();
         assertThat(scraper.supports("https://some-random-shop.com")).isTrue();
+        assertThat(scraper.supports("http://example.com")).isTrue();
     }
 
     @Test
     void supports_withNull_returnsFalse() {
         assertThat(scraper.supports(null)).isFalse();
+    }
+
+    @Test
+    void supports_withNonHttpScheme_returnsFalse() {
+        assertThat(scraper.supports("file:///etc/passwd")).isFalse();
+        assertThat(scraper.supports("ftp://example.com")).isFalse();
+        assertThat(scraper.supports("javascript:alert(1)")).isFalse();
+        assertThat(scraper.supports("gopher://example.com")).isFalse();
+    }
+
+    @Test
+    void supports_withMalformedUrl_returnsFalse() {
+        assertThat(scraper.supports("not a url")).isFalse();
     }
 
     @Test
