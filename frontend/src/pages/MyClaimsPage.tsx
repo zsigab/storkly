@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useQueryClient } from "@tanstack/react-query";
+import { formatDateTime } from "@/lib/utils";
 
 export function MyClaimsPage(): React.ReactElement {
   const { data: claims, isLoading, isError, error } = useMyActiveClaims();
@@ -88,7 +89,7 @@ export function MyClaimsPage(): React.ReactElement {
                   {claim.deliveryType !== null && ` · ${claim.deliveryType}`}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  Claimed {new Date(claim.claimedAt).toLocaleDateString()}
+                  Claimed {formatDateTime(claim.claimedAt)}
                 </p>
               </div>
               <Button

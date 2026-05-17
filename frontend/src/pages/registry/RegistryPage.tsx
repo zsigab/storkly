@@ -27,6 +27,7 @@ import {
 import { useAllItemClaims } from "@/hooks/useClaims";
 import { useRegistryItems } from "@/hooks/useItems";
 import { useTheme, isThemeColor, isThemeBackground } from "@/hooks/useTheme";
+import { formatDateTime } from "@/lib/utils";
 
 export function RegistryPage(): React.ReactElement {
   const { slug } = useParams<{ slug: string }>();
@@ -565,7 +566,7 @@ export function RegistryPage(): React.ReactElement {
                                   {subscriber.displayName}
                                 </span>
                                 <span className="text-muted-foreground text-xs">
-                                  {new Date(subscriber.joinedAt).toLocaleDateString()}
+                                  {formatDateTime(subscriber.joinedAt)}
                                 </span>
                               </div>
                               {claimedItems.length > 0 && (
