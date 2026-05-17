@@ -82,6 +82,7 @@ interface ItemFormProps {
   isDeletePending?: boolean;
   isClaimed?: boolean;
   minPriceReference?: number;
+  minQuantityDesired?: number;
   onDirtyChange?: (isDirty: boolean) => void;
 }
 
@@ -222,6 +223,7 @@ export function ItemForm({
   isDeletePending = false,
   isClaimed = false,
   minPriceReference,
+  minQuantityDesired,
   onDirtyChange,
 }: ItemFormProps): React.ReactElement {
   const { mutateAsync: fetchPreview, isPending: isFetching } = useLinkPreview();
@@ -577,6 +579,16 @@ export function ItemForm({
         ) {
           setError("priceReference", {
             message: `Amount cannot be below ${minPriceReference.toFixed(2)} already received`,
+          });
+          return;
+        }
+        if (
+          minQuantityDesired !== undefined &&
+          minQuantityDesired > 0 &&
+          parseInt(values.quantityDesired, 10) < minQuantityDesired
+        ) {
+          setError("quantityDesired", {
+            message: `Quantity cannot be below the ${minQuantityDesired} already claimed`,
           });
           return;
         }
@@ -1001,7 +1013,12 @@ export function ItemForm({
           htmlFor="quantityDesired"
           error={errors.quantityDesired?.message}
         >
-          <Input id="quantityDesired" type="number" min="1" {...register("quantityDesired")} />
+          <Input
+            id="quantityDesired"
+            type="number"
+            min={minQuantityDesired ?? 1}
+            {...register("quantityDesired")}
+          />
         </FormField>
       )}
 

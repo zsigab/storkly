@@ -17,6 +17,7 @@ import app.storkly.domain.exception.ItemAlreadyOwnedException;
 import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.PriceReferenceBelowReceivedAmountException;
+import app.storkly.domain.exception.QuantityBelowClaimedAmountException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.exception.UserNotFoundException;
@@ -102,7 +103,8 @@ public class GlobalExceptionHandler {
         ContributionExceedsRemainingException.class,
         FundContributionRequiredException.class,
         FullClaimBlockedByPartialException.class,
-        PriceReferenceBelowReceivedAmountException.class
+        PriceReferenceBelowReceivedAmountException.class,
+        QuantityBelowClaimedAmountException.class
     })
     public ProblemDetail handleContributionValidation(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());

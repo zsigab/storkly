@@ -11,6 +11,7 @@ import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.PriceReferenceBelowReceivedAmountException;
+import app.storkly.domain.exception.QuantityBelowClaimedAmountException;
 import app.storkly.domain.item.Claim;
 import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.item.Item;
@@ -243,6 +244,55 @@ class ItemServiceTest {
                 null,
                 null,
                 ownerId);
+
+        verify(itemRepository).save(any());
+    }
+
+    @Test
+    void update_quantityBelowTotalClaimed_throwsException() {
+        UUID itemId = UUID.randomUUID();
+        Item existing = item(itemId, registryId, "Stroller", 0);
+        Registry registry = publicRegistry();
+        Claim claimed = Claim.builder()
+                .id(UUID.randomUUID())
+                .itemId(itemId)
+                .claimerName("Bob")
+                .claimerEmail("bob@example.com")
+                .quantityClaimed(3)
+                .claimToken("tok")
+                .claimedAt(OffsetDateTime.now())
+                .build();
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(existing));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(claimRepository.findActiveByItemId(itemId)).thenReturn(List.of(claimed));
+
+        assertThatThrownBy(() -> itemService.update(
+                        itemId, null, null, null, null, null, null, null, null, 2, null, null, null, null, ownerId))
+                .isInstanceOf(QuantityBelowClaimedAmountException.class);
+
+        verify(itemRepository, never()).save(any());
+    }
+
+    @Test
+    void update_quantityAtOrAboveTotalClaimed_succeeds() {
+        UUID itemId = UUID.randomUUID();
+        Item existing = item(itemId, registryId, "Stroller", 0);
+        Registry registry = publicRegistry();
+        Claim claimed = Claim.builder()
+                .id(UUID.randomUUID())
+                .itemId(itemId)
+                .claimerName("Bob")
+                .claimerEmail("bob@example.com")
+                .quantityClaimed(3)
+                .claimToken("tok")
+                .claimedAt(OffsetDateTime.now())
+                .build();
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(existing));
+        when(registryRepository.findById(registryId)).thenReturn(Optional.of(registry));
+        when(claimRepository.findActiveByItemId(itemId)).thenReturn(List.of(claimed));
+        when(itemRepository.save(any(Item.class))).thenReturn(existing);
+
+        itemService.update(itemId, null, null, null, null, null, null, null, null, 3, null, null, null, null, ownerId);
 
         verify(itemRepository).save(any());
     }

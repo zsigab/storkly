@@ -162,6 +162,32 @@ describe("EditItemPage", () => {
     expect(screen.queryByRole("button", { name: /save changes/i })).not.toBeInTheDocument();
   });
 
+  it("shows inline error when quantity is set below total claimed", async () => {
+    const { api } = await import("@/api");
+    const claimWithQty = {
+      id: "c2",
+      itemId: "item-1",
+      claimerName: "Carol",
+      claimerEmail: "carol@example.com",
+      quantityClaimed: 3,
+      amountReceived: null,
+      claimToken: "tok2",
+      claimedAt: "2024-01-01T00:00:00Z",
+    };
+    vi.mocked(api.GET).mockImplementation(mockGetSuccess([claimWithQty]));
+    renderPage();
+    await waitFor(() => expect(screen.getByDisplayValue("Baby Carrier")).toBeInTheDocument());
+    const quantityInput = screen.getByLabelText(/quantity wanted/i);
+    fireEvent.change(quantityInput, { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
+    await waitFor(() =>
+      expect(
+        screen.getByText(/quantity cannot be below the 3 already claimed/i),
+      ).toBeInTheDocument(),
+    );
+    expect(api.PATCH).not.toHaveBeenCalled();
+  });
+
   it("shows inline error when price is set below already received amount", async () => {
     const { api } = await import("@/api");
     const claimWithReceipt = {

@@ -27,7 +27,8 @@ export function EditItemPage(): React.ReactElement {
   const updateItem = useUpdateItem(safeSlug);
   const deleteItem = useDeleteItem(safeSlug);
 
-  const isClaimed = (claims ?? []).reduce((sum, c) => sum + c.quantityClaimed, 0) > 0;
+  const totalClaimed = (claims ?? []).reduce((sum, c) => sum + c.quantityClaimed, 0);
+  const isClaimed = totalClaimed > 0;
   const totalReceived = (claims ?? []).reduce((sum, c) => sum + (c.amountReceived ?? 0), 0);
   const [isDirty, setIsDirty] = useState(false);
   const [discardDialogOpen, setDiscardDialogOpen] = useState(false);
@@ -116,6 +117,7 @@ export function EditItemPage(): React.ReactElement {
           isDeletePending={deleteItem.isPending}
           isClaimed={isClaimed}
           minPriceReference={totalReceived > 0 ? totalReceived : undefined}
+          minQuantityDesired={totalClaimed > 0 ? totalClaimed : undefined}
           onDirtyChange={setIsDirty}
         />
       </GlassCardLayout>
