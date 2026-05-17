@@ -249,4 +249,12 @@
       animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
   }
+
+  /* GlassCardLayout injects an inner filter:blur layer (see GlassCardLayout.tsx)
+     that is captured correctly by Firefox's named-element view-transition snapshot.
+     Suppress backdrop-filter here to avoid double-blur — the inner layer provides it. */
+  [data-style="glass"] [data-glass-layout] .bg-card,
+  [data-style="glass"] [data-glass-layout] .bg-popover {
+    backdrop-filter: none;
+  }
 }
