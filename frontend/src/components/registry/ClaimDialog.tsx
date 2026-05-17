@@ -186,6 +186,7 @@ export function ClaimDialog({
             "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
           )}
           style={viewTransitionName !== undefined ? { viewTransitionName } : undefined}
+          onClick={(e) => e.stopPropagation()}
         >
           <DialogHeader>
             <DialogTitle>{isFund ? "Contribute to fund" : "Claim item"}</DialogTitle>
