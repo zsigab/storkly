@@ -1,12 +1,10 @@
 import { memo, useState } from "react";
-import { flushSync } from "react-dom";
 import { Link, useViewTransitionState } from "react-router";
 import { Gift } from "lucide-react";
 import { Collapsible } from "@/components/common/Collapsible";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ClaimDialog } from "./ClaimDialog";
 import { getApiErrorMessage } from "@/api/helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUnclaimItem } from "@/hooks/useClaims";
@@ -60,6 +58,9 @@ interface ItemCardProps {
   subscriberNames?: Record<string, string>;
   claims?: ClaimResponse[];
   claimHistory?: ClaimResponse[];
+  onOpenClaim: (maxAmount: number | null) => void;
+  isClaimDialogOpen: boolean;
+  isClaimTransitioning: boolean;
 }
 
 export const ItemCard = memo(function ItemCard({
@@ -70,12 +71,13 @@ export const ItemCard = memo(function ItemCard({
   subscriberNames = {},
   claims = [],
   claimHistory = [],
+  onOpenClaim,
+  isClaimDialogOpen,
+  isClaimTransitioning,
 }: ItemCardProps): React.ReactElement {
   const { user } = useAuth();
   const isTransitioning = useViewTransitionState(`/r/${slug}/items/${item.id}/edit`);
   const unclaimItem = useUnclaimItem(slug);
-  const [claimDialogOpen, setClaimDialogOpen] = useState(false);
-  const [claimTransitioning, setClaimTransitioning] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const claimTransitionName = `claim-item-${item.id}`;
@@ -120,28 +122,7 @@ export const ItemCard = memo(function ItemCard({
   };
 
   const handleClaimOpen = (): void => {
-    if (!document.startViewTransition) {
-      setClaimDialogOpen(true);
-      return;
-    }
-    flushSync(() => setClaimTransitioning(true));
-    const vt = document.startViewTransition(() => {
-      flushSync(() => setClaimDialogOpen(true));
-    });
-    void vt.finished.then(() => setClaimTransitioning(false));
-  };
-
-  const handleClaimOpenChange = (open: boolean): void => {
-    if (open) return;
-    if (!document.startViewTransition) {
-      setClaimDialogOpen(false);
-      return;
-    }
-    flushSync(() => setClaimTransitioning(true));
-    const vt = document.startViewTransition(() => {
-      flushSync(() => setClaimDialogOpen(false));
-    });
-    void vt.finished.then(() => setClaimTransitioning(false));
+    onOpenClaim(remainingAmount);
   };
 
   const handleCardClick = (): void => {
@@ -285,10 +266,10 @@ export const ItemCard = memo(function ItemCard({
       style={{
         viewTransitionName: isTransitioning
           ? `item-${item.id}`
-          : claimTransitioning && !claimDialogOpen
+          : isClaimTransitioning && !isClaimDialogOpen
             ? claimTransitionName
             : undefined,
-        visibility: claimDialogOpen ? "hidden" : undefined,
+        visibility: isClaimDialogOpen ? "hidden" : undefined,
       }}
     >
       {/* Always-visible top row */}
@@ -513,20 +494,6 @@ export const ItemCard = memo(function ItemCard({
           <AlertDescription>{getApiErrorMessage(unclaimItem.error)}</AlertDescription>
         </Alert>
       )}
-
-      <ClaimDialog
-        open={claimDialogOpen}
-        onOpenChange={handleClaimOpenChange}
-        itemId={item.id}
-        itemTitle={item.title}
-        slug={slug}
-        priceReference={item.priceReference}
-        currency={item.currency}
-        isAuthenticated={user !== null}
-        maxAmount={remainingAmount}
-        isFund={isFund}
-        viewTransitionName={claimTransitioning && claimDialogOpen ? claimTransitionName : undefined}
-      />
     </div>
   );
 });

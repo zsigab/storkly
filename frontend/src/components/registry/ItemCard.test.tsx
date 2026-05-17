@@ -93,7 +93,15 @@ function renderCard(
   render(
     <QueryClientProvider client={makeClient()}>
       <AuthProvider>
-        <ItemCard item={base} slug="baby-shower" isOwner={false} {...props} />
+        <ItemCard
+          item={base}
+          slug="baby-shower"
+          isOwner={false}
+          onOpenClaim={vi.fn()}
+          isClaimDialogOpen={false}
+          isClaimTransitioning={false}
+          {...props}
+        />
       </AuthProvider>
     </QueryClientProvider>,
   );
@@ -178,11 +186,11 @@ describe("ItemCard", () => {
     expect(screen.getByRole("button", { name: /claim/i })).toBeInTheDocument();
   });
 
-  it("shows claim dialog when anonymous user clicks claim", async () => {
-    renderCard();
+  it("calls onOpenClaim when anonymous user clicks claim", () => {
+    const onOpenClaim = vi.fn();
+    renderCard({ onOpenClaim });
     fireEvent.click(screen.getByRole("button", { name: /^claim$/i }));
-    expect(screen.getByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
+    expect(onOpenClaim).toHaveBeenCalled();
   });
 
   it("shows Claimed when item is fully claimed", () => {

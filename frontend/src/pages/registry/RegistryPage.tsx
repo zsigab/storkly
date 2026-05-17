@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   useParams,
   useSearchParams,
@@ -13,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { ItemCard } from "@/components/registry/ItemCard";
+import { ClaimDialog } from "@/components/registry/ClaimDialog";
 import { getApiErrorMessage, getApiErrorStatus } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -25,7 +27,7 @@ import {
   useGenerateInvite,
 } from "@/hooks/useRegistries";
 import { useRegistryItemClaims, useRegistryClaimHistory } from "@/hooks/useClaims";
-import type { ClaimResponse } from "@/api/schema";
+import type { ClaimResponse, ItemResponse } from "@/api/schema";
 import { useRegistryItems } from "@/hooks/useItems";
 import { useRegistryTheme } from "@/hooks/useRegistryTheme";
 import { formatDateTime } from "@/lib/utils";
@@ -99,6 +101,12 @@ export function RegistryPage(): React.ReactElement {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [claimTarget, setClaimTarget] = useState<{
+    item: ItemResponse;
+    maxAmount: number | null;
+  } | null>(null);
+  const [claimDialogOpen, setClaimDialogOpen] = useState(false);
+  const [claimTransitioning, setClaimTransitioning] = useState(false);
   const userHasClaims = useMemo(
     () => user !== null && allClaims.some((c) => c.claimerUserId === user.id),
     [user, allClaims],
@@ -163,6 +171,32 @@ export function RegistryPage(): React.ReactElement {
       void navigate(`/r/${registry.slug}`, { replace: true });
     }
   }, [registry, safeSlug, navigate]);
+
+  const handleOpenClaim = (item: ItemResponse, maxAmount: number | null): void => {
+    setClaimTarget({ item, maxAmount });
+    if (!document.startViewTransition) {
+      setClaimDialogOpen(true);
+      return;
+    }
+    flushSync(() => setClaimTransitioning(true));
+    const vt = document.startViewTransition(() => {
+      flushSync(() => setClaimDialogOpen(true));
+    });
+    void vt.finished.then(() => setClaimTransitioning(false));
+  };
+
+  const handleClaimOpenChange = (open: boolean): void => {
+    if (open) return;
+    if (!document.startViewTransition) {
+      setClaimDialogOpen(false);
+      return;
+    }
+    flushSync(() => setClaimTransitioning(true));
+    const vt = document.startViewTransition(() => {
+      flushSync(() => setClaimDialogOpen(false));
+    });
+    void vt.finished.then(() => setClaimTransitioning(false));
+  };
 
   if (isError) {
     const status = getApiErrorStatus(error);
@@ -535,6 +569,15 @@ export function RegistryPage(): React.ReactElement {
                   subscriberNames={subscriberNames}
                   claims={claimsMap.get(item.id) ?? []}
                   claimHistory={historyMap.get(item.id) ?? []}
+                  onOpenClaim={(maxAmount) => {
+                    handleOpenClaim(item, maxAmount);
+                  }}
+                  isClaimDialogOpen={
+                    claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
+                  }
+                  isClaimTransitioning={
+                    claimTarget !== null && claimTarget.item.id === item.id && claimTransitioning
+                  }
                 />
               ))}
             </div>
@@ -551,6 +594,15 @@ export function RegistryPage(): React.ReactElement {
                   subscriberNames={subscriberNames}
                   claims={claimsMap.get(item.id) ?? []}
                   claimHistory={historyMap.get(item.id) ?? []}
+                  onOpenClaim={(maxAmount) => {
+                    handleOpenClaim(item, maxAmount);
+                  }}
+                  isClaimDialogOpen={
+                    claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
+                  }
+                  isClaimTransitioning={
+                    claimTarget !== null && claimTarget.item.id === item.id && claimTransitioning
+                  }
                 />
               ))}
             </div>
@@ -609,6 +661,24 @@ export function RegistryPage(): React.ReactElement {
             </div>
           )}
         </div>
+      )}
+
+      {claimTarget !== null && (
+        <ClaimDialog
+          open={claimDialogOpen}
+          onOpenChange={handleClaimOpenChange}
+          itemId={claimTarget.item.id}
+          itemTitle={claimTarget.item.title}
+          slug={safeSlug}
+          priceReference={claimTarget.item.priceReference}
+          currency={claimTarget.item.currency}
+          isAuthenticated={user !== null}
+          maxAmount={claimTarget.maxAmount}
+          isFund={claimTarget.item.itemType === "FUND"}
+          viewTransitionName={
+            claimTransitioning && claimDialogOpen ? `claim-item-${claimTarget.item.id}` : undefined
+          }
+        />
       )}
     </div>
   );
