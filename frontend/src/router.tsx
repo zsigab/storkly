@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Outlet } from "react-router";
 import { Layout } from "@/components/common/Layout";
 import { RequireAuth } from "@/components/common/RequireAuth";
 import { HomePage } from "@/pages/HomePage";
@@ -34,70 +34,23 @@ export const router = createBrowserRouter([
       { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "forgot-password", element: <ForgotPasswordPage /> },
       { path: "reset-password", element: <ResetPasswordPage /> },
-      {
-        path: "profile",
-        element: (
-          <RequireAuth>
-            <ProfilePage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "my-claims",
-        element: (
-          <RequireAuth>
-            <MyClaimsPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "dashboard",
-        element: (
-          <RequireAuth>
-            <DashboardPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "registry/new",
-        element: (
-          <RequireAuth>
-            <CreateRegistryPage />
-          </RequireAuth>
-        ),
-      },
       { path: "r/:slug", element: <RegistryPage /> },
       {
-        path: "r/:slug/edit",
         element: (
           <RequireAuth>
-            <EditRegistryPage />
+            <Outlet />
           </RequireAuth>
         ),
-      },
-      {
-        path: "r/:slug/items/new",
-        element: (
-          <RequireAuth>
-            <AddItemPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "r/:slug/items/:id/edit",
-        element: (
-          <RequireAuth>
-            <EditItemPage />
-          </RequireAuth>
-        ),
-      },
-      {
-        path: "r/:slug/claims",
-        element: (
-          <RequireAuth>
-            <ClaimsDashboardPage />
-          </RequireAuth>
-        ),
+        children: [
+          { path: "profile", element: <ProfilePage /> },
+          { path: "my-claims", element: <MyClaimsPage /> },
+          { path: "dashboard", element: <DashboardPage /> },
+          { path: "registry/new", element: <CreateRegistryPage /> },
+          { path: "r/:slug/edit", element: <EditRegistryPage /> },
+          { path: "r/:slug/items/new", element: <AddItemPage /> },
+          { path: "r/:slug/items/:id/edit", element: <EditItemPage /> },
+          { path: "r/:slug/claims", element: <ClaimsDashboardPage /> },
+        ],
       },
     ],
   },
