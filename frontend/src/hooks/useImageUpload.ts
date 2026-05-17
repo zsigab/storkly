@@ -12,6 +12,9 @@ export function useImageUpload() {
         body: formData,
         credentials: "include",
       });
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent("storkly:unauthorized"));
+      }
       if (!response.ok) {
         const text = await response.text();
         throw new Error(text.length > 0 ? text : `Upload failed: ${response.status}`);
