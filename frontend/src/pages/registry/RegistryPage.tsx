@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import {
   useParams,
   useSearchParams,
@@ -30,6 +29,7 @@ import { useRegistryItemClaims, useRegistryClaimHistory } from "@/hooks/useClaim
 import type { ClaimResponse, ItemResponse } from "@/api/schema";
 import { useRegistryItems } from "@/hooks/useItems";
 import { useRegistryTheme } from "@/hooks/useRegistryTheme";
+import { useViewTransitionToggle } from "@/hooks/useViewTransitionToggle";
 import { formatDateTime } from "@/lib/utils";
 import { Collapsible } from "@/components/common/Collapsible";
 
@@ -106,7 +106,8 @@ export function RegistryPage(): React.ReactElement {
     maxAmount: number | null;
   } | null>(null);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
-  const [claimTransitioning, setClaimTransitioning] = useState(false);
+  const { toggle: toggleClaimDialog, transitioning: claimTransitioning } =
+    useViewTransitionToggle(setClaimDialogOpen);
   const userHasClaims = useMemo(
     () => user !== null && allClaims.some((c) => c.claimerUserId === user.id),
     [user, allClaims],
@@ -174,28 +175,12 @@ export function RegistryPage(): React.ReactElement {
 
   const handleOpenClaim = (item: ItemResponse, maxAmount: number | null): void => {
     setClaimTarget({ item, maxAmount });
-    if (!document.startViewTransition) {
-      setClaimDialogOpen(true);
-      return;
-    }
-    flushSync(() => setClaimTransitioning(true));
-    const vt = document.startViewTransition(() => {
-      flushSync(() => setClaimDialogOpen(true));
-    });
-    void vt.finished.then(() => setClaimTransitioning(false));
+    toggleClaimDialog(true);
   };
 
   const handleClaimOpenChange = (open: boolean): void => {
     if (open) return;
-    if (!document.startViewTransition) {
-      setClaimDialogOpen(false);
-      return;
-    }
-    flushSync(() => setClaimTransitioning(true));
-    const vt = document.startViewTransition(() => {
-      flushSync(() => setClaimDialogOpen(false));
-    });
-    void vt.finished.then(() => setClaimTransitioning(false));
+    toggleClaimDialog(false);
   };
 
   if (isError) {

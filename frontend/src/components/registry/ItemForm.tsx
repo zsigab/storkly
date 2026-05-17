@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { flushSync } from "react-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 import { useImageUpload } from "@/hooks/useImageUpload";
+import { useViewTransitionToggle } from "@/hooks/useViewTransitionToggle";
 import type { CategoryResponse, ItemFlag, ItemType } from "@/api/schema";
 
 const schema = z.object({
@@ -143,32 +143,15 @@ function DeleteConfirmButton({
   isClaimed: boolean;
 }): React.ReactElement {
   const [open, setOpen] = useState(false);
-  const [transitioning, setTransitioning] = useState(false);
+  const { toggle, transitioning } = useViewTransitionToggle(setOpen);
   const vtName = "delete-confirm";
 
   const handleOpen = (): void => {
-    if (!document.startViewTransition) {
-      setOpen(true);
-      return;
-    }
-    flushSync(() => setTransitioning(true));
-    const vt = document.startViewTransition(() => {
-      flushSync(() => setOpen(true));
-    });
-    void vt.finished.then(() => setTransitioning(false));
+    toggle(true);
   };
 
   const handleClose = (): void => {
-    if (!document.startViewTransition) {
-      setOpen(false);
-      setTransitioning(false);
-      return;
-    }
-    flushSync(() => setTransitioning(true));
-    const vt = document.startViewTransition(() => {
-      flushSync(() => setOpen(false));
-    });
-    void vt.finished.then(() => setTransitioning(false));
+    toggle(false);
   };
 
   return (
@@ -213,7 +196,6 @@ function DeleteConfirmButton({
                 variant="destructive"
                 onClick={() => {
                   setOpen(false);
-                  setTransitioning(false);
                   onDelete();
                 }}
               >
