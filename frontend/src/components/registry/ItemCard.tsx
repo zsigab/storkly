@@ -225,7 +225,7 @@ export function ItemCard({
     }
     if (isFund) {
       if (fundFullyCovered) {
-        return <span className="text-muted-foreground text-sm">Fully funded</span>;
+        return <Badge variant="secondary">Fully funded</Badge>;
       }
       return (
         <Button
@@ -260,7 +260,7 @@ export function ItemCard({
       );
     }
     if (isClaimed) {
-      return <span className="text-muted-foreground text-sm">Claimed</span>;
+      return <Badge variant="secondary">Claimed</Badge>;
     }
     return (
       <Button
