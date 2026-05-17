@@ -89,7 +89,7 @@ export function MyClaimsPage(): React.ReactElement {
                 disabled={unclaim.isPending || !!claim.receivedAt}
                 onClick={() => handleUnclaim(claim.claimId, claim.itemId)}
               >
-                Un-claim
+                Unclaim
               </Button>
             </li>
           ))}
