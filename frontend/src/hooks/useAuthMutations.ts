@@ -29,7 +29,7 @@ export function useLogin() {
     onSuccess: ({ user, from }) => {
       login(user);
       void queryClient.invalidateQueries();
-      void navigate(from ?? "/dashboard");
+      void navigate(from ?? "/dashboard", { viewTransition: true });
     },
   });
 }
@@ -93,7 +93,7 @@ export function useLogout() {
     onSettled: () => {
       logout();
       queryClient.clear();
-      void navigate("/");
+      void navigate("/", { viewTransition: true });
     },
   });
 }

@@ -35,7 +35,10 @@ export function LoginPage(): React.ReactElement {
 
   return (
     <div className="mx-auto max-w-md py-16">
-      <div className="bg-card text-card-foreground space-y-6 rounded-xl p-8">
+      <div
+        className="bg-card text-card-foreground space-y-6 rounded-xl p-8"
+        style={{ viewTransitionName: "auth-card" }}
+      >
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
           <p className="text-muted-foreground">Welcome back to Storkly</p>
@@ -102,13 +105,13 @@ export function LoginPage(): React.ReactElement {
 
         <div className="space-y-1 text-center text-sm">
           <p>
-            <Link to="/forgot-password" className="text-primary hover:underline">
+            <Link to="/forgot-password" viewTransition className="text-primary hover:underline">
               Forgot your password?
             </Link>
           </p>
           <p className="text-muted-foreground">
             {"Don't have an account? "}
-            <Link to="/register" className="text-primary hover:underline">
+            <Link to="/register" viewTransition className="text-primary hover:underline">
               Register
             </Link>
           </p>

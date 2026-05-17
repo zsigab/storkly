@@ -51,7 +51,10 @@ export function RegisterPage(): React.ReactElement {
 
   return (
     <div className="mx-auto max-w-md py-16">
-      <div className="bg-card text-card-foreground space-y-6 rounded-xl p-8">
+      <div
+        className="bg-card text-card-foreground space-y-6 rounded-xl p-8"
+        style={{ viewTransitionName: "auth-card" }}
+      >
         <div className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold tracking-tight">Create an account</h1>
           <p className="text-muted-foreground">Start building your gift registry</p>
@@ -80,12 +83,14 @@ export function RegisterPage(): React.ReactElement {
           </FormField>
 
           <div className="space-y-2">
-            <Turnstile
-              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ""}
-              onSuccess={(token) => setValue("captchaToken", token, { shouldValidate: true })}
-            />
+            <div className="flex justify-center">
+              <Turnstile
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY ?? ""}
+                onSuccess={(token) => setValue("captchaToken", token, { shouldValidate: true })}
+              />
+            </div>
             {errors.captchaToken !== undefined && (
-              <p className="text-destructive text-sm">{errors.captchaToken.message}</p>
+              <p className="text-destructive text-center text-sm">{errors.captchaToken.message}</p>
             )}
           </div>
 
@@ -121,7 +126,7 @@ export function RegisterPage(): React.ReactElement {
 
         <p className="text-muted-foreground text-center text-sm">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link to="/login" viewTransition className="text-primary hover:underline">
             Sign in
           </Link>
         </p>

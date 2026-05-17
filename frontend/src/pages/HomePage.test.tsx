@@ -2,17 +2,26 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { HomePage } from "./HomePage";
 
 function renderPage() {
+  Object.defineProperty(window, "matchMedia", {
+    value: vi
+      .fn()
+      .mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+    writable: true,
+  });
   render(
     <MemoryRouter initialEntries={["/"]}>
-      <AuthProvider>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/dashboard" element={<div>Dashboard</div>} />
-        </Routes>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/dashboard" element={<div>Dashboard</div>} />
+          </Routes>
+        </AuthProvider>
+      </ThemeProvider>
     </MemoryRouter>,
   );
 }
@@ -41,6 +50,11 @@ describe("HomePage", () => {
   it("renders a login button linking to /login", () => {
     renderPage();
     expect(screen.getByRole("link", { name: /log in/i })).toHaveAttribute("href", "/login");
+  });
+
+  it("renders a get started button linking to /register", () => {
+    renderPage();
+    expect(screen.getByRole("link", { name: /get started/i })).toHaveAttribute("href", "/register");
   });
 
   it("redirects to /dashboard when logged in", () => {

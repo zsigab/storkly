@@ -1,6 +1,7 @@
 import { Link, Navigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 
 export function HomePage(): React.ReactElement {
   const { user } = useAuth();
@@ -10,16 +11,34 @@ export function HomePage(): React.ReactElement {
   }
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 py-24 text-center">
-      <h1 className="text-foreground text-4xl font-semibold">Welcome to Storkly</h1>
-      <p className="text-muted-foreground text-lg">
-        Storkly is a self-hosted gift registry for baby showers, birthdays, and any occasion. Create
-        a registry, add items with links, and share it with friends and family — they can claim
-        gifts so nothing gets doubled up.
-      </p>
-      <Button asChild size="lg">
-        <Link to="/login">Log in</Link>
-      </Button>
-    </div>
+    <GlassCardLayout viewTransitionName="auth-card">
+      <div className="space-y-8 text-center">
+        <div className="space-y-3">
+          <h1 className="text-foreground text-4xl font-semibold">Welcome to Storkly</h1>
+          <p className="text-muted-foreground text-lg">
+            A self-hosted gift registry for baby showers, birthdays, and any occasion.
+          </p>
+        </div>
+
+        <ul className="text-muted-foreground space-y-1.5 text-sm">
+          <li>Create a registry and add items with links from any store</li>
+          <li>Share it with friends and family via a private link</li>
+          <li>Guests claim gifts so nothing gets doubled up</li>
+        </ul>
+
+        <div className="flex justify-center gap-3">
+          <Button asChild size="lg" variant="outline">
+            <Link to="/login" viewTransition>
+              Log in
+            </Link>
+          </Button>
+          <Button asChild size="lg">
+            <Link to="/register" viewTransition>
+              Get started
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </GlassCardLayout>
   );
 }
