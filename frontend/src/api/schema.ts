@@ -393,6 +393,18 @@ export type paths = {
       responses: { 200: Ok<ClaimResponse[]>; 403: Err; 404: Err };
     };
   };
+  "/api/registries/{slug}/item-claims": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<ClaimResponse[]>; 403: Err; 404: Err };
+    };
+  };
+  "/api/registries/{slug}/claim-history": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<ClaimResponse[]>; 403: Err; 404: Err };
+    };
+  };
   "/api/registries/{slug}/delivery-options": {
     get: {
       parameters: { path: { slug: string } };

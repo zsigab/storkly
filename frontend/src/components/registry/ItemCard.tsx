@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { ClaimDialog } from "./ClaimDialog";
 import { getApiErrorMessage } from "@/api/helpers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useItemClaims, useItemClaimHistory, useUnclaimItem } from "@/hooks/useClaims";
+import { useUnclaimItem } from "@/hooks/useClaims";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDateTime, formatPrice } from "@/lib/utils";
-import type { ItemFlag, ItemResponse } from "@/api/schema";
+import type { ClaimResponse, ItemFlag, ItemResponse } from "@/api/schema";
 
 const FLAG_LABELS: Record<ItemFlag, string> = {
   EXACT_ONLY: "Exact only",
@@ -58,6 +58,8 @@ interface ItemCardProps {
   isOwner: boolean;
   categoryName?: string | null;
   subscriberNames?: Record<string, string>;
+  claims?: ClaimResponse[];
+  claimHistory?: ClaimResponse[];
 }
 
 export function ItemCard({
@@ -66,11 +68,11 @@ export function ItemCard({
   isOwner,
   categoryName = null,
   subscriberNames = {},
+  claims = [],
+  claimHistory = [],
 }: ItemCardProps): React.ReactElement {
   const { user } = useAuth();
   const isTransitioning = useViewTransitionState(`/r/${slug}/items/${item.id}/edit`);
-  const { data: claims = [] } = useItemClaims(item.id);
-  const { data: claimHistory = [] } = useItemClaimHistory(item.id, isOwner);
   const unclaimItem = useUnclaimItem(slug);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const [claimTransitioning, setClaimTransitioning] = useState(false);

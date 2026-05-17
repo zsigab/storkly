@@ -70,6 +70,8 @@ export function useClaimItem(slug: string) {
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ["claims", data.itemId] });
       void queryClient.invalidateQueries({ queryKey: ["items", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registryItemClaims", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registryClaimHistory", slug] });
     },
   });
 }
@@ -88,6 +90,8 @@ export function useUnclaimItem(slug: string) {
     onSuccess: (itemId) => {
       void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
       void queryClient.invalidateQueries({ queryKey: ["items", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registryItemClaims", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registryClaimHistory", slug] });
     },
   });
 }
@@ -103,6 +107,34 @@ export function useRegistryClaims(slug: string) {
       return data ?? [];
     },
     enabled: slug.length > 0,
+  });
+}
+
+export function useRegistryItemClaims(slug: string) {
+  return useQuery({
+    queryKey: ["registryItemClaims", slug],
+    queryFn: async (): Promise<ClaimResponse[]> => {
+      const { data, error } = await api.GET("/api/registries/{slug}/item-claims", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+    enabled: slug.length > 0,
+  });
+}
+
+export function useRegistryClaimHistory(slug: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ["registryClaimHistory", slug],
+    queryFn: async (): Promise<ClaimResponse[]> => {
+      const { data, error } = await api.GET("/api/registries/{slug}/claim-history", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+    enabled: enabled && slug.length > 0,
   });
 }
 
@@ -135,6 +167,8 @@ export function useResetClaim(slug: string) {
       void queryClient.invalidateQueries({ queryKey: ["registryClaims", slug] });
       void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
       void queryClient.invalidateQueries({ queryKey: ["claimHistory", itemId] });
+      void queryClient.invalidateQueries({ queryKey: ["registryItemClaims", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registryClaimHistory", slug] });
     },
   });
 }
@@ -154,6 +188,8 @@ export function useRejectClaim(slug: string) {
       void queryClient.invalidateQueries({ queryKey: ["registryClaims", slug] });
       void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
       void queryClient.invalidateQueries({ queryKey: ["claimHistory", itemId] });
+      void queryClient.invalidateQueries({ queryKey: ["registryItemClaims", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registryClaimHistory", slug] });
     },
   });
 }
@@ -183,6 +219,7 @@ export function useReceiveClaim(slug: string) {
     onSuccess: (itemId) => {
       void queryClient.invalidateQueries({ queryKey: ["registryClaims", slug] });
       void queryClient.invalidateQueries({ queryKey: ["claims", itemId] });
+      void queryClient.invalidateQueries({ queryKey: ["registryItemClaims", slug] });
     },
   });
 }

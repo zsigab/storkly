@@ -164,6 +164,25 @@ public class ClaimService {
         return claimRepository.findActiveByRegistryId(registry.id());
     }
 
+    public ClaimListView findItemClaimsByRegistryForViewer(String slug, @Nullable UUID currentUserId) {
+        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        assertReadAccess(registry, currentUserId);
+        boolean isOwnerOrCoOwner = currentUserId != null
+                && (registry.ownerId().equals(currentUserId)
+                        || coOwnerRepository.isCoOwner(registry.id(), currentUserId));
+        return new ClaimListView(claimRepository.findActiveByRegistryId(registry.id()), isOwnerOrCoOwner);
+    }
+
+    public List<Claim> findHistoryByRegistry(String slug, UUID currentUserId) {
+        Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
+        boolean isOwnerOrCoOwner =
+                registry.ownerId().equals(currentUserId) || coOwnerRepository.isCoOwner(registry.id(), currentUserId);
+        if (!isOwnerOrCoOwner) {
+            throw new AccessDeniedException("Only the registry owner can view claim history");
+        }
+        return claimRepository.findAllByRegistryId(registry.id());
+    }
+
     public ClaimListView findByItem(UUID itemId, @Nullable UUID currentUserId) {
         Item item = itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
         Registry registry = registryRepository

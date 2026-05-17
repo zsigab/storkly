@@ -54,6 +54,25 @@ public class ClaimController {
                 .toList();
     }
 
+    @GetMapping("/api/registries/{slug}/item-claims")
+    public List<ClaimResponse> listItemClaimsByRegistry(
+            @PathVariable String slug, @AuthenticationPrincipal @Nullable User currentUser) {
+        UUID userId = currentUser != null ? currentUser.id() : null;
+        ClaimService.ClaimListView view = claimService.findItemClaimsByRegistryForViewer(slug, userId);
+        return view.claims().stream()
+                .map(c -> toResponse(
+                        c, view.viewerIsOwnerOrCoOwner() || (userId != null && userId.equals(c.claimerUserId()))))
+                .toList();
+    }
+
+    @GetMapping("/api/registries/{slug}/claim-history")
+    public List<ClaimResponse> listClaimHistoryByRegistry(
+            @PathVariable String slug, @AuthenticationPrincipal User currentUser) {
+        return claimService.findHistoryByRegistry(slug, currentUser.id()).stream()
+                .map(c -> toResponse(c, true))
+                .toList();
+    }
+
     @GetMapping("/api/items/{id}/claims")
     public List<ClaimResponse> listByItem(@PathVariable UUID id, @AuthenticationPrincipal @Nullable User currentUser) {
         UUID userId = currentUser != null ? currentUser.id() : null;

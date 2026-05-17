@@ -24,7 +24,8 @@ import {
   useUnsubscribeRegistry,
   useGenerateInvite,
 } from "@/hooks/useRegistries";
-import { useAllItemClaims } from "@/hooks/useClaims";
+import { useRegistryItemClaims, useRegistryClaimHistory } from "@/hooks/useClaims";
+import type { ClaimResponse } from "@/api/schema";
 import { useRegistryItems } from "@/hooks/useItems";
 import { useTheme, isThemeColor, isThemeBackground } from "@/hooks/useTheme";
 import { formatDateTime } from "@/lib/utils";
@@ -61,7 +62,26 @@ export function RegistryPage(): React.ReactElement {
     user !== null &&
     !isOwner &&
     myRegistries.some((r) => r.slug === safeSlug && r.ownerId !== user.id);
-  const allClaims = useAllItemClaims(items.map((i) => i.id));
+  const { data: allClaims = [] } = useRegistryItemClaims(safeSlug);
+  const { data: claimHistory = [] } = useRegistryClaimHistory(safeSlug, isOwner);
+  const claimsMap = new Map<string, ClaimResponse[]>();
+  for (const claim of allClaims) {
+    const existing = claimsMap.get(claim.itemId);
+    if (existing !== undefined) {
+      existing.push(claim);
+    } else {
+      claimsMap.set(claim.itemId, [claim]);
+    }
+  }
+  const historyMap = new Map<string, ClaimResponse[]>();
+  for (const claim of claimHistory) {
+    const existing = historyMap.get(claim.itemId);
+    if (existing !== undefined) {
+      existing.push(claim);
+    } else {
+      historyMap.set(claim.itemId, [claim]);
+    }
+  }
   const subscriberNames: Record<string, string> = Object.fromEntries(
     subscribers.map((s) => [s.userId, s.displayName]),
   );
@@ -501,6 +521,8 @@ export function RegistryPage(): React.ReactElement {
                   isOwner={isOwner}
                   categoryName={cat.name}
                   subscriberNames={subscriberNames}
+                  claims={claimsMap.get(item.id) ?? []}
+                  claimHistory={historyMap.get(item.id) ?? []}
                 />
               ))}
             </div>
@@ -515,6 +537,8 @@ export function RegistryPage(): React.ReactElement {
                   slug={safeSlug}
                   isOwner={isOwner}
                   subscriberNames={subscriberNames}
+                  claims={claimsMap.get(item.id) ?? []}
+                  claimHistory={historyMap.get(item.id) ?? []}
                 />
               ))}
             </div>

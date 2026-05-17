@@ -24,6 +24,8 @@ public interface ClaimRepository {
 
     List<Claim> findActiveByRegistryId(UUID registryId);
 
+    List<Claim> findAllByRegistryId(UUID registryId);
+
     List<MyClaimView> findActiveByUserId(UUID userId);
 
     void release(UUID id, OffsetDateTime releasedAt);

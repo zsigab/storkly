@@ -79,6 +79,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/items/{id}/claims")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/registries/{slug}/item-claims")
+                        .permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/claims/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/claims/*/confirm")

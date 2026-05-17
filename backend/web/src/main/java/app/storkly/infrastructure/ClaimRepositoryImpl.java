@@ -131,6 +131,18 @@ public class ClaimRepositoryImpl implements ClaimRepository {
     }
 
     @Override
+    public List<Claim> findAllByRegistryId(UUID registryId) {
+        return dsl.select(CLAIM.asterisk())
+                .from(CLAIM)
+                .join(ITEM)
+                .on(CLAIM.ITEM_ID.eq(ITEM.ID))
+                .where(ITEM.REGISTRY_ID.eq(registryId))
+                .orderBy(CLAIM.CLAIMED_AT.asc())
+                .fetchInto(CLAIM)
+                .map(this::toClaim);
+    }
+
+    @Override
     public List<MyClaimView> findActiveByUserId(UUID userId) {
         return dsl.select(
                         CLAIM.ID,
