@@ -375,7 +375,13 @@ export const ItemCard = memo(function ItemCard({
                         ? (subscriberNames[last.claimerUserId] ?? last.claimerName) || "A member"
                         : (last.claimerName ?? "Anonymous");
                     const qty =
-                      last.quantityClaimed === 1 ? "1 unit" : `${last.quantityClaimed} units`;
+                      last.amountContributed != null
+                        ? `${item.currency ?? ""} ${formatPrice(last.amountContributed)}`
+                        : last.percentageContributed != null
+                          ? `${last.percentageContributed}%`
+                          : last.quantityClaimed === 1
+                            ? "1 unit"
+                            : `${last.quantityClaimed} units`;
                     const wasReset = last.releasedAt !== null && last.receivedAt !== null;
                     const wasRejected = last.releasedAt !== null && last.receivedAt === null;
                     const verb =
@@ -418,7 +424,14 @@ export const ItemCard = memo(function ItemCard({
                     : (c.claimerName ?? "Anonymous");
                 const email =
                   c.claimerEmail !== null && c.claimerEmail.length > 0 ? c.claimerEmail : null;
-                const qty = c.quantityClaimed === 1 ? "1 unit" : `${c.quantityClaimed} units`;
+                const qty =
+                  c.amountContributed != null
+                    ? `${item.currency ?? ""} ${formatPrice(c.amountContributed)}`
+                    : c.percentageContributed != null
+                      ? `${c.percentageContributed}%`
+                      : c.quantityClaimed === 1
+                        ? "1 unit"
+                        : `${c.quantityClaimed} units`;
                 const wasReset = c.releasedAt !== null && c.receivedAt !== null;
                 const wasRejected = c.releasedAt !== null && c.receivedAt === null;
                 return (
