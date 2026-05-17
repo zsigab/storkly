@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   useParams,
   useSearchParams,
@@ -64,26 +64,33 @@ export function RegistryPage(): React.ReactElement {
     myRegistries.some((r) => r.slug === safeSlug && r.ownerId !== user.id);
   const { data: allClaims = [] } = useRegistryItemClaims(safeSlug);
   const { data: claimHistory = [] } = useRegistryClaimHistory(safeSlug, isOwner);
-  const claimsMap = new Map<string, ClaimResponse[]>();
-  for (const claim of allClaims) {
-    const existing = claimsMap.get(claim.itemId);
-    if (existing !== undefined) {
-      existing.push(claim);
-    } else {
-      claimsMap.set(claim.itemId, [claim]);
+  const claimsMap = useMemo(() => {
+    const map = new Map<string, ClaimResponse[]>();
+    for (const claim of allClaims) {
+      const existing = map.get(claim.itemId);
+      if (existing !== undefined) {
+        existing.push(claim);
+      } else {
+        map.set(claim.itemId, [claim]);
+      }
     }
-  }
-  const historyMap = new Map<string, ClaimResponse[]>();
-  for (const claim of claimHistory) {
-    const existing = historyMap.get(claim.itemId);
-    if (existing !== undefined) {
-      existing.push(claim);
-    } else {
-      historyMap.set(claim.itemId, [claim]);
+    return map;
+  }, [allClaims]);
+  const historyMap = useMemo(() => {
+    const map = new Map<string, ClaimResponse[]>();
+    for (const claim of claimHistory) {
+      const existing = map.get(claim.itemId);
+      if (existing !== undefined) {
+        existing.push(claim);
+      } else {
+        map.set(claim.itemId, [claim]);
+      }
     }
-  }
-  const subscriberNames: Record<string, string> = Object.fromEntries(
-    subscribers.map((s) => [s.userId, s.displayName]),
+    return map;
+  }, [claimHistory]);
+  const subscriberNames = useMemo(
+    () => Object.fromEntries(subscribers.map((s) => [s.userId, s.displayName])),
+    [subscribers],
   );
   const generateInvite = useGenerateInvite(safeSlug);
   const [hasUnsubscribed, setHasUnsubscribed] = useState(false);
@@ -92,7 +99,32 @@ export function RegistryPage(): React.ReactElement {
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
-  const userHasClaims = user !== null && allClaims.some((c) => c.claimerUserId === user.id);
+  const userHasClaims = useMemo(
+    () => user !== null && allClaims.some((c) => c.claimerUserId === user.id),
+    [user, allClaims],
+  );
+  const claimedItemIds = useMemo(() => new Set(allClaims.map((c) => c.itemId)), [allClaims]);
+  const categoriesWithItems = useMemo(
+    () =>
+      categories
+        .map((cat) => ({
+          cat,
+          catItems: items
+            .filter((i) => i.categoryId === cat.id)
+            .sort(
+              (a, b) => (claimedItemIds.has(a.id) ? 1 : 0) - (claimedItemIds.has(b.id) ? 1 : 0),
+            ),
+        }))
+        .filter(({ catItems }) => catItems.length > 0),
+    [categories, items, claimedItemIds],
+  );
+  const uncategorizedItems = useMemo(
+    () =>
+      items
+        .filter((i) => i.categoryId === null)
+        .sort((a, b) => (claimedItemIds.has(a.id) ? 1 : 0) - (claimedItemIds.has(b.id) ? 1 : 0)),
+    [items, claimedItemIds],
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const titleMeasureRef = useRef<HTMLSpanElement>(null);
@@ -204,20 +236,6 @@ export function RegistryPage(): React.ReactElement {
       </div>
     );
   }
-
-  const claimedItemIds = new Set(allClaims.map((c) => c.itemId));
-  const sortByClaimed = (a: { id: string }, b: { id: string }): number => {
-    const aClaimed = claimedItemIds.has(a.id) ? 1 : 0;
-    const bClaimed = claimedItemIds.has(b.id) ? 1 : 0;
-    return aClaimed - bClaimed;
-  };
-  const categoriesWithItems = categories
-    .map((cat) => ({
-      cat,
-      catItems: items.filter((i) => i.categoryId === cat.id).sort(sortByClaimed),
-    }))
-    .filter(({ catItems }) => catItems.length > 0);
-  const uncategorizedItems = items.filter((i) => i.categoryId === null).sort(sortByClaimed);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-10">
