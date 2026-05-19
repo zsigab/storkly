@@ -152,6 +152,12 @@ export function ClaimDialog({
       ? amountFloat - maxAmount
       : null;
 
+  const visibleDeliveryOptions = (deliveryOptions.data ?? []).filter((o) => {
+    if (!o.enabled) return false;
+    if (isFund || partialEnabled) return o.type === "MONEY_TRANSFER";
+    return true;
+  });
+
   const handleAmountChange = (raw: string): void => {
     setLastTouched("amount");
     const parsed = parseFloat(raw);
@@ -195,6 +201,11 @@ export function ClaimDialog({
         const computed = parseFloat(((percentageContributed / 100) * priceReference).toFixed(2));
         amountContributed = maxAmount != null ? Math.min(computed, maxAmount) : computed;
       }
+    }
+
+    if (visibleDeliveryOptions.length > 0 && !values.deliveryOptionId) {
+      setError("deliveryOptionId", { message: "Please select a delivery option" });
+      return;
     }
 
     claimItem.mutate(
@@ -493,52 +504,50 @@ export function ClaimDialog({
                   </div>
                 )}
 
-                {(deliveryOptions.data ?? []).filter((o) => o.enabled).length > 0 && (
+                {visibleDeliveryOptions.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium">How will you give this gift?</p>
                     <div className="space-y-2">
-                      {(deliveryOptions.data ?? [])
-                        .filter((o) => {
-                          if (!o.enabled) return false;
-                          if (partialEnabled) return o.type === "MONEY_TRANSFER";
-                          return true;
-                        })
-                        .map((option) => {
-                          const greyedOut = hasExistingPartials && option.type !== "MONEY_TRANSFER";
-                          return (
-                            <label
-                              key={option.id}
-                              className={cn(
-                                "flex cursor-pointer items-center gap-3 rounded p-2",
-                                greyedOut ? "cursor-not-allowed opacity-40" : "hover:bg-muted",
-                              )}
-                            >
-                              <input
-                                type="radio"
-                                value={option.id}
-                                disabled={greyedOut}
-                                className="h-4 w-4"
-                                {...register("deliveryOptionId")}
-                              />
-                              <div className="flex-1">
-                                <div className="text-sm font-medium">{option.label}</div>
-                                {option.description &&
-                                  option.type !== "MONEY_TRANSFER" &&
-                                  option.type !== "SHIP_TO_ADDRESS" && (
-                                    <div className="text-muted-foreground text-xs">
-                                      {option.description}
-                                    </div>
-                                  )}
-                              </div>
-                            </label>
-                          );
-                        })}
+                      {visibleDeliveryOptions.map((option) => {
+                        const greyedOut = hasExistingPartials && option.type !== "MONEY_TRANSFER";
+                        return (
+                          <label
+                            key={option.id}
+                            className={cn(
+                              "flex cursor-pointer items-center gap-3 rounded p-2",
+                              greyedOut ? "cursor-not-allowed opacity-40" : "hover:bg-muted",
+                            )}
+                          >
+                            <input
+                              type="radio"
+                              value={option.id}
+                              disabled={greyedOut}
+                              className="h-4 w-4"
+                              {...register("deliveryOptionId")}
+                            />
+                            <div className="flex-1">
+                              <div className="text-sm font-medium">{option.label}</div>
+                              {option.description &&
+                                option.type !== "MONEY_TRANSFER" &&
+                                option.type !== "SHIP_TO_ADDRESS" && (
+                                  <div className="text-muted-foreground text-xs">
+                                    {option.description}
+                                  </div>
+                                )}
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
-                    {hasExistingPartials && (
+                    {(isFund || hasExistingPartials) && (
                       <p className="text-muted-foreground text-xs">
-                        Partial contributions have already been made — only money transfer is
-                        available.
+                        {isFund
+                          ? "Fund contributions require money transfer."
+                          : "Partial contributions have already been made — only money transfer is available."}
                       </p>
+                    )}
+                    {errors.deliveryOptionId && (
+                      <p className="text-destructive text-xs">{errors.deliveryOptionId.message}</p>
                     )}
                   </div>
                 )}

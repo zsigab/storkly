@@ -221,6 +221,20 @@ export const ItemCard = memo(function ItemCard({
       if (fundFullyCovered) {
         return <Badge variant="secondary">Fully funded</Badge>;
       }
+      if (myAuthenticatedClaim !== undefined && myAuthenticatedClaim.receivedAt === null) {
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewClaim();
+            }}
+          >
+            Edit claim
+          </Button>
+        );
+      }
       return (
         <Button
           size="sm"
@@ -522,7 +536,6 @@ export const ItemCard = memo(function ItemCard({
           </div>
         </div>
       )}
-
     </div>
   );
 });

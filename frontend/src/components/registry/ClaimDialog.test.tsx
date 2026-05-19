@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ClaimDialog } from "./ClaimDialog";
 
-vi.mock("@/api", () => ({ api: { POST: vi.fn() } }));
+vi.mock("@/api", () => ({ api: { POST: vi.fn(), GET: vi.fn() } }));
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return { ...actual, useNavigate: () => vi.fn() };
@@ -182,6 +182,50 @@ describe("ClaimDialog — fund mode", () => {
     expect(screen.getByText(/25\.00 over the target/i)).toBeInTheDocument();
   });
 
+  it("only shows MONEY_TRANSFER delivery options in fund mode", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({
+      data: [
+        {
+          id: "opt-1",
+          registryId: "r1",
+          type: "MONEY_TRANSFER",
+          label: "Bank Transfer",
+          enabled: true,
+          sortOrder: 1,
+        },
+        {
+          id: "opt-2",
+          registryId: "r1",
+          type: "SHIP_TO_ADDRESS",
+          label: "Ship to address",
+          enabled: true,
+          sortOrder: 2,
+        },
+        {
+          id: "opt-3",
+          registryId: "r1",
+          type: "BRING_IN_PERSON",
+          label: "Bring in person",
+          enabled: true,
+          sortOrder: 3,
+        },
+      ],
+      error: undefined,
+      response: new Response(),
+    });
+    renderDialog({ isFund: true, isAuthenticated: true });
+    // Wait for delivery options to load (text appears in both form and collapsed view sections)
+    await screen.findAllByText("Bank Transfer");
+    // View mode section renders all options in DOM (collapsed), but only the form section
+    // has enabled radios — verify only MONEY_TRANSFER has an enabled radio in the form.
+    const allRadios = screen.getAllByRole("radio") as HTMLInputElement[];
+    const enabledRadios = allRadios.filter((r) => !r.disabled);
+    expect(enabledRadios).toHaveLength(1);
+    expect(enabledRadios[0]?.value).toBe("opt-1");
+    expect(screen.getByText(/fund contributions require money transfer/i)).toBeInTheDocument();
+  });
+
   it("calls API with amountContributed on valid fund submit", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.POST).mockResolvedValueOnce({
@@ -199,6 +243,7 @@ describe("ClaimDialog — fund mode", () => {
       response: new Response(),
     });
     renderDialog({ isFund: true, isAuthenticated: true, priceReference: 200, currency: "USD" });
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
     fireEvent.change(screen.getByLabelText(/amount/i), { target: { value: "50" } });
     fireEvent.click(screen.getByRole("button", { name: /^contribute$/i }));
     await waitFor(() =>
@@ -214,5 +259,54 @@ describe("ClaimDialog — fund mode", () => {
         },
       }),
     );
+  });
+});
+
+describe("ClaimDialog — delivery option required", () => {
+  it("shows error when submitting without selecting a delivery option", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({
+      data: [
+        {
+          id: "opt-1",
+          registryId: "r1",
+          type: "BRING_IN_PERSON",
+          label: "Bring in person",
+          enabled: true,
+          sortOrder: 1,
+        },
+      ],
+      error: undefined,
+      response: new Response(),
+    });
+    renderDialog({ isAuthenticated: true });
+    await screen.findAllByText("Bring in person");
+    fireEvent.click(screen.getByRole("button", { name: /claim item/i }));
+    await waitFor(() =>
+      expect(screen.getByText(/please select a delivery option/i)).toBeInTheDocument(),
+    );
+    expect(api.POST).not.toHaveBeenCalled();
+  });
+
+  it("does not require delivery option when none exist", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({ data: [], error: undefined, response: new Response() });
+    vi.mocked(api.POST).mockResolvedValueOnce({
+      data: {
+        id: "c1",
+        itemId: "item-1",
+        claimerUserId: "u1",
+        claimerName: null,
+        claimerEmail: null,
+        quantityClaimed: 1,
+        claimedAt: "2024-01-01T00:00:00Z",
+      },
+      error: undefined,
+      response: new Response(),
+    });
+    renderDialog({ isAuthenticated: true });
+    fireEvent.click(screen.getByRole("button", { name: /claim item/i }));
+    await waitFor(() => expect(api.POST).toHaveBeenCalled());
+    expect(screen.queryByText(/please select a delivery option/i)).not.toBeInTheDocument();
   });
 });

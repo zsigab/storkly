@@ -230,4 +230,47 @@ describe("ItemCard", () => {
     renderCard({ item: { ...base, itemType: "FUND" } });
     await waitFor(() => expect(screen.queryByText("Exact only")).not.toBeInTheDocument());
   });
+
+  it("fund item shows Edit claim when authenticated user has pending claim", () => {
+    renderCard(
+      {
+        item: { ...base, itemType: "FUND", priceReference: 200, currency: "USD" },
+        claims: [makeClaim({ claimerUserId: "user-1", amountContributed: 50 })],
+      },
+      { id: "user-1", email: "a@b.com", displayName: "Alice" },
+    );
+    expect(screen.getByRole("button", { name: /edit claim/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /contribute/i })).not.toBeInTheDocument();
+  });
+
+  it("fund item shows Contribute when authenticated user's fund claim is received", () => {
+    renderCard(
+      {
+        item: { ...base, itemType: "FUND", priceReference: 200, currency: "USD" },
+        claims: [
+          makeClaim({
+            claimerUserId: "user-1",
+            amountContributed: 50,
+            receivedAt: "2024-02-01T00:00:00Z",
+          }),
+        ],
+      },
+      { id: "user-1", email: "a@b.com", displayName: "Alice" },
+    );
+    expect(screen.getByRole("button", { name: /contribute/i })).toBeInTheDocument();
+  });
+
+  it("fund item calls onViewClaim when Edit claim is clicked", () => {
+    const onViewClaim = vi.fn();
+    renderCard(
+      {
+        item: { ...base, itemType: "FUND", priceReference: 200, currency: "USD" },
+        claims: [makeClaim({ claimerUserId: "user-1", amountContributed: 50 })],
+        onViewClaim,
+      },
+      { id: "user-1", email: "a@b.com", displayName: "Alice" },
+    );
+    fireEvent.click(screen.getByRole("button", { name: /edit claim/i }));
+    expect(onViewClaim).toHaveBeenCalledWith(expect.objectContaining({ claimerUserId: "user-1" }));
+  });
 });
