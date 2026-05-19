@@ -276,7 +276,11 @@ Item
   price_captured_at,
   quantity_desired (default: 1),
   flag (enum: EXACT_ONLY | SIMILAR_OK | SIMILAR_CHEAPER),
+  item_type (enum: PRODUCT | FUND | EVENT),
   notes, sort_order, created_at, updated_at
+
+  -- EVENT items are only visible to users with a confirmed RSVP for at least one linked event.
+  -- Unauthenticated users never see EVENT items. EVENT items cannot be claimed directly.
 
 ItemMarketplaceHit  -- Phase 2: cross-marketplace search results
   id, item_id → Item, site (enum), url, price, currency, found_at
@@ -288,6 +292,42 @@ Claim
   quantity_claimed (default: 1),
   claim_token (unique; for anonymous un-claim via email link),
   claimed_at, released_at (nullable)
+
+Event
+  id (UUID), owner_id → User,
+  title TEXT NOT NULL,
+  event_date TIMESTAMPTZ NOT NULL,
+  location TEXT (nullable),
+  rsvp_token VARCHAR UNIQUE NOT NULL,  -- random token; forms the URL /rsvp/<rsvp_token>
+  created_at TIMESTAMPTZ
+
+  -- Events are standalone: they can exist without any registry link.
+  -- The rsvp_token never changes after creation (no token rotation).
+
+EventRegistryItem  -- N:N join: links an EVENT-type item in a registry to an Event
+  event_id → Event  ON DELETE CASCADE,
+  item_id  → Item   ON DELETE CASCADE,
+  PRIMARY KEY (event_id, item_id)
+
+  -- When an item is created/updated with itemType=EVENT and an eventId is provided,
+  -- the existing link for that item is replaced (delete-then-insert pattern: one item →
+  -- one event at a time via the UI, but the table is N:N for future flexibility).
+
+Rsvp
+  id (UUID), event_id → Event ON DELETE CASCADE,
+  user_id → User ON DELETE SET NULL (nullable — for anonymous RSVPs),
+  email VARCHAR NOT NULL,
+  display_name TEXT NOT NULL,
+  attending BOOLEAN NOT NULL,
+  confirmation_token VARCHAR UNIQUE NOT NULL,  -- per-RSVP email-confirm token
+  confirmed_at TIMESTAMPTZ (nullable — null means unconfirmed),
+  created_at TIMESTAMPTZ
+  UNIQUE(event_id, email)  -- one RSVP per email per event; re-submission upserts
+
+  -- Authenticated users: user_id is set; confirmed_at is set immediately (no email).
+  -- Anonymous users: confirmation email sent; confirmed_at set on email-link click.
+  -- Re-submitting (same email, same event) replaces the row and re-sends confirmation
+  --   if previously unconfirmed, or updates the attending flag if already confirmed.
 ```
 
 ---
@@ -345,6 +385,26 @@ DELETE /api/categories/{id}
 PUT    /api/registries/{slug}/categories/order
 ```
 
+### Events (Phase 1V)
+```
+GET    /api/events                       -- list caller's owned events (auth required)
+POST   /api/events                       -- create event (auth required)
+GET    /api/events/{id}                  -- owner detail: includes full attendees list (auth, owner only)
+PATCH  /api/events/{id}                  -- update event (auth, owner only)
+DELETE /api/events/{id}                  -- delete event (auth, owner only)
+GET    /api/events/{id}/public           -- public event info: title, date, location only (permitAll)
+```
+
+### RSVP (Phase 1V)
+```
+GET    /api/rsvp/{rsvpToken}             -- event info for the RSVP form page (permitAll)
+POST   /api/rsvp/{rsvpToken}             -- submit RSVP; Turnstile required (permitAll)
+GET    /api/rsvp/confirm/{confirmToken}  -- confirm RSVP via email link; returns { eventId } (permitAll)
+```
+
+Note: Spring MVC resolves `/api/rsvp/confirm/{confirmToken}` before `/api/rsvp/{rsvpToken}`
+because the literal path segment "confirm" matches more specifically than the variable.
+
 ---
 
 ## 9. Database & Test Strategy
@@ -370,6 +430,9 @@ A `DataSeeder` component runs on startup when `SEED_DATA=true` (env var). Insert
 - 1 sample registry with varied visibility
 - 5+ items across 3 categories with all flag types and claim states
 - Sample custom category
+- 1 sample Event with rsvp_token
+- 2 sample RSVPs (1 attending + confirmed, 1 not attending + confirmed)
+- 1 EVENT-type item in the sample registry linked to the sample event
 
 ### Integration Tests
 - **Testcontainers** (PostgreSQL) for integration tests
@@ -631,6 +694,268 @@ services:
 
 **1U: Registry Subscribers**
 - Show subscriber list on registry page (visible to owner)
+
+---
+
+### Phase 1V — Events & RSVP
+
+> **Prerequisite knowledge for implementors:** read sections 7 (Data Model), 8 (API Design → Events + RSVP), and this section in full before starting any sub-task.
+
+#### Overview
+
+Events are first-class entities owned by a user (independent of registries). They appear on the dashboard alongside registries. An event can optionally be linked to registry items of type `EVENT` via a join table; those items are only visible to confirmed attendees. The RSVP flow uses email confirmation (Turnstile-protected submission), with authenticated users auto-confirmed.
+
+#### URL structure
+
+| Path | Visibility | Description |
+|---|---|---|
+| `/dashboard` | auth | My Dashboard — Registries + Events |
+| `/event/new` | auth | Create event |
+| `/e/:id/edit` | auth (owner only) | Edit event + attendees list + RSVP link |
+| `/e/:id` | public | Public event page (title, date, location; no attendees) |
+| `/rsvp/:token` | public | RSVP form (loaded via `rsvp_token` on the event) |
+| `/rsvp/confirm` | public | RSVP confirmation callback (reads `?token=` query param) |
+
+React Router: define `/rsvp/confirm` **before** `/rsvp/:token` to prevent "confirm" matching as a token.
+
+#### Database migrations (V17–V20)
+
+**V17** — `ALTER TYPE item_type ADD VALUE IF NOT EXISTS 'EVENT';`
+
+PostgreSQL 16 allows this inside a transaction. After running V17, re-run JOOQ DDL codegen (`./gradlew :domain:jooqGenerate`) before building other modules — the generated `ItemType` enum must include `EVENT`.
+
+**V18** — `event` table (see Data Model section 7).
+
+**V19** — `rsvp` table (see Data Model section 7). Unique constraint on `(event_id, email)` — use `INSERT ... ON CONFLICT (event_id, email) DO UPDATE` (JOOQ `.onConflict(...).doUpdate()`) so re-submissions upsert cleanly.
+
+**V20** — `event_registry_item` join table (see Data Model section 7).
+
+#### Backend module layout
+
+Follow the existing `util ← domain ← service ← web` dependency rule.
+
+**`domain/event/`**
+- `Event.java` — record + `@Builder`
+- `EventRepository.java` — interface: `save`, `findByOwnerId`, `findById`, `deleteById`
+- `Rsvp.java` — record + `@Builder`
+- `RsvpRepository.java` — interface: `upsert` (by event_id + email), `findByEventId`, `findByConfirmToken`, `confirm(id, confirmedAt)`
+- `EventRegistryItemRepository.java` — interface: `saveLink(eventId, itemId)`, `findEventIdsByItemId(itemId)`, `deleteByItemId(itemId)`
+
+**`domain/exception/`**
+- `EventNotFoundException.java` — extends `DomainException`
+
+**`service/event/`**
+- `EventService.java` — CRUD + `findPublic(id)` (returns limited view without attendees)
+- `RsvpService.java`:
+  - `submitRsvp(rsvpToken, displayName, email, attending, captchaToken, @Nullable userId)` — verifies Turnstile (skip if `userId != null`? No — still verify Turnstile for anonymous; authenticated users also go through Turnstile on the RSVP page), resolves event by `rsvp_token`, upserts RSVP row, sends confirmation email if anonymous, auto-confirms if `userId != null`
+  - `confirmRsvp(confirmToken) → UUID eventId` — sets `confirmed_at`, returns the event's UUID for the frontend redirect
+
+**`EmailService.java`** — add method:
+```java
+sendRsvpConfirmation(String to, String name, String eventTitle, String confirmToken)
+// body: links to {frontendUrl}/rsvp/confirm?token={confirmToken}
+// subject: "Confirm your RSVP for {eventTitle}"
+```
+
+**`web/event/`**
+- `EventController.java`
+- `dto/EventCreateRequest.java` — `@NotBlank String title`, `@NotNull OffsetDateTime eventDate`, `@Nullable String location`
+- `dto/EventUpdateRequest.java` — all nullable fields
+- `dto/EventResponse.java` — `id, title, eventDate, location, rsvpToken, List<RsvpResponse> attendees, createdAt`
+- `dto/EventPublicResponse.java` — `id, title, eventDate, location` (no token, no attendees)
+- `dto/RsvpResponse.java` — `id, displayName, email, attending, confirmedAt` (owner-only DTO embedded in EventResponse)
+
+**`web/rsvp/`**
+- `RsvpController.java`
+- `dto/RsvpSubmitRequest.java` — `@NotBlank String displayName`, `@NotBlank String email` (ignored for authenticated users — filled from principal), `@NotNull Boolean attending`, `@NotBlank String captchaToken`
+- `dto/RsvpPublicEventResponse.java` — `eventId, eventTitle, eventDate, location`
+- `dto/RsvpConfirmResponse.java` — `String eventId`
+
+**`web/infrastructure/`**
+- `EventRepositoryImpl.java` — JOOQ impl
+- `RsvpRepositoryImpl.java` — JOOQ impl; `upsert` uses `dsl.insertInto(RSVP)...onConflict(RSVP.EVENT_ID, RSVP.EMAIL).doUpdate()...`
+- `EventRegistryItemRepositoryImpl.java` — JOOQ impl
+
+**`SecurityConfig.java`** — add permitAll matchers:
+```java
+.requestMatchers(HttpMethod.GET,  "/api/events/{id}/public").permitAll()
+.requestMatchers(HttpMethod.GET,  "/api/rsvp/{rsvpToken}").permitAll()
+.requestMatchers(HttpMethod.POST, "/api/rsvp/{rsvpToken}").permitAll()
+.requestMatchers(HttpMethod.GET,  "/api/rsvp/confirm/{confirmToken}").permitAll()
+```
+
+#### Changes to existing backend classes
+
+**`ItemType.java`** (domain enum) — add `EVENT`
+
+**`ItemService.java`**:
+- `create(...)` — add `@Nullable UUID eventId` param. After saving, if `itemType == EVENT && eventId != null`: verify `eventRepository.findById(eventId)` exists and `event.ownerId().equals(addedByUserId)`, then call `eventRegistryItemRepository.deleteByItemId(item.id())` + `saveLink(eventId, item.id())`.
+- `update(...)` — add `@Nullable UUID eventId` param; same logic as create; if `eventId == null` and `itemType` is being changed away from EVENT, call `deleteByItemId`.
+- `findByRegistry(slug, currentUserId)` — after fetching all items for the registry, filter EVENT items: for authenticated users, keep EVENT item only if `eventRegistryItemRepository.findEventIdsByItemId(item.id())` has at least one event where the user has a confirmed RSVP; for unauthenticated users, remove all EVENT items. Implement with a single set-based check: `rsvpRepository.findConfirmedEventIdsByUserEmail(email)` or `findConfirmedEventIdsByUserId(userId)` to avoid N+1 queries.
+- `validateItemTypeConstraints(ItemType, boolean alreadyOwned)` — also disallow `alreadyOwned=true` for EVENT items.
+
+**`ClaimService.java`** — in `claim()`, add guard after loading the item:
+```java
+if (item.itemType() == ItemType.EVENT) {
+    throw new AccessDeniedException("Event items cannot be claimed directly");
+}
+```
+
+**`ItemCreateRequest.java`** — add `@Nullable UUID eventId` field (used only when `itemType=EVENT`)
+
+**`ItemUpdateRequest.java`** — add `@Nullable UUID eventId` field
+
+**`ItemResponse.java`** — add `List<UUID> linkedEventIds` field
+
+**`ItemController.java`** — pass `request.eventId()` through to both service calls
+
+**`ItemRepositoryImpl.java`** — no change; the event join is managed by `EventRegistryItemRepositoryImpl`
+
+**Note on N+1 for `linkedEventIds` in item responses:** `ItemController.listByRegistry` must populate `linkedEventIds` on each item. Do this in the service: after `itemRepository.findByRegistryId(registry.id())`, call `eventRegistryItemRepository.findAllByRegistryId(registry.id())` (new method returning `Map<UUID itemId, List<UUID> eventIds>`) in one query, then attach. Do not make per-item calls.
+
+#### Frontend
+
+**`schema.ts`** changes:
+```typescript
+// Update existing:
+export type ItemType = "PRODUCT" | "FUND" | "EVENT";
+
+// Update item request bodies to include:
+// POST /api/registries/{slug}/items — add: itemType?: ItemType; eventId?: string | null
+// PATCH /api/items/{id}            — add: itemType?: ItemType | null; eventId?: string | null
+// Note: itemType was always in the backend DTOs but was missing from schema.ts
+
+// Update ItemResponse — add:
+linkedEventIds: string[];
+
+// New interfaces:
+export interface EventResponse {
+  id: string;
+  title: string;
+  eventDate: string;        // ISO-8601 with timezone
+  location: string | null;
+  rsvpToken: string;
+  attendees: RsvpResponse[];
+  createdAt: string;
+}
+
+export interface EventPublicResponse {
+  id: string;
+  title: string;
+  eventDate: string;
+  location: string | null;
+}
+
+export interface RsvpResponse {
+  id: string;
+  displayName: string;
+  email: string;
+  attending: boolean;
+  confirmedAt: string | null;
+}
+
+export interface RsvpPublicEventResponse {
+  eventId: string;
+  eventTitle: string;
+  eventDate: string;
+  location: string | null;
+}
+
+export interface RsvpConfirmResponse {
+  eventId: string;
+}
+
+// New paths to add to the `paths` type:
+// /api/events, /api/events/{id}, /api/events/{id}/public,
+// /api/rsvp/{rsvpToken}, /api/rsvp/confirm/{confirmToken}
+```
+
+**`hooks/useEvents.ts`** — TanStack Query hooks:
+- `useMyEvents()` — GET /api/events
+- `useEvent(id)` — GET /api/events/{id} (owner; includes attendees)
+- `usePublicEvent(id)` — GET /api/events/{id}/public
+- `useCreateEvent` — mutation POST /api/events; invalidates `useMyEvents`
+- `useUpdateEvent(id)` — mutation PATCH /api/events/{id}; invalidates event + list
+- `useDeleteEvent(id)` — mutation DELETE; invalidates list
+
+**`hooks/useRsvp.ts`**:
+- `useRsvpEventInfo(rsvpToken)` — GET /api/rsvp/{rsvpToken}
+- `useSubmitRsvp(rsvpToken)` — mutation POST /api/rsvp/{rsvpToken}
+- `useConfirmRsvp` — mutation GET /api/rsvp/confirm/{confirmToken} (called on page mount)
+
+**`components/event/EventCard.tsx`** — dashboard card: title, formatted date, location (if set), attendee count badge. Links to `/e/:id/edit` for owner.
+
+**`components/event/EventForm.tsx`** — controlled form using React Hook Form + Zod: title (text input), eventDate (datetime-local input — use `z.string()` and parse to ISO; follow existing `z.string().refine()` pattern from the codebase for date fields), location (optional text). On submit calls `onSubmit(data)` prop.
+
+**`components/event/EventAttendeesTable.tsx`** — table showing `displayName`, `email`, attending badge (Yes/No), confirmed badge. Displayed only on `/e/:id/edit` (owner).
+
+**`components/rsvp/RsvpForm.tsx`** — Yes/No toggle buttons, `displayName` + `email` fields (hidden and pre-filled from auth context when user is authenticated), Turnstile widget (reuse existing Turnstile component pattern from RegisterPage), submit button. Shows "Check your email to confirm your RSVP" success state after submit.
+
+**`pages/event/CreateEventPage.tsx`** — renders `EventForm`; on success redirects to `/e/:id/edit`.
+
+**`pages/event/EditEventPage.tsx`** — loads `useEvent(id)`; renders `EventForm` (pre-filled) + RSVP link copy button (copies `{baseUrl}/rsvp/{rsvpToken}` to clipboard) + `EventAttendeesTable`. Shows 403 for non-owners.
+
+**`pages/PublicEventPage.tsx`** — loads `usePublicEvent(id)`; shows title, formatted date/time, location. Does not show attendees. This page is the destination after RSVP confirmation.
+
+**`pages/RsvpPage.tsx`** — loads `useRsvpEventInfo(rsvpToken)`; renders event details + `RsvpForm`. After form submit, shows confirmation message ("Check your email…") and link to create account in a new tab (`/register`).
+
+**`pages/RsvpConfirmPage.tsx`** — on mount reads `?token=` from query string, calls `useConfirmRsvp` mutation, on success redirects to `/e/:id` using the returned `eventId`. Shows loading spinner while in flight, error state if token invalid/expired.
+
+**`pages/DashboardPage.tsx`** changes:
+- Rename top-level `<h1>My registries</h1>` → `<h1>My Dashboard</h1>`
+- Add `<h2>Registries</h2>` section header above the owned registries block
+- Add `<Button asChild><Link to="/event/new">New event</Link></Button>` next to "New registry" button
+- Add `<h2>Events</h2>` section below registries, rendering `<EventCard>` for each event from `useMyEvents()`
+
+**`components/registry/ItemForm.tsx`** changes:
+- Add `"EVENT"` to the item type selector (alongside PRODUCT and FUND)
+- When `watch("itemType") === "EVENT"`: replace the title text input with a `<Select>` dropdown populated from `useMyEvents()`; each option shows event title; selecting an option sets both `title` (to the event title) and `eventId` hidden field
+- On type change away from EVENT, clear `eventId`
+
+**`components/registry/ItemCard.tsx`** changes:
+- Add `"Event"` badge (alongside existing `"Fund"` badge) when `item.itemType === "EVENT"`
+
+**`router.tsx`** — add 5 new routes. CRITICAL ordering:
+```tsx
+{ path: "rsvp/confirm", element: <RsvpConfirmPage /> },  // BEFORE rsvp/:token
+{ path: "rsvp/:token",  element: <RsvpPage /> },
+{ path: "e/:id",        element: <PublicEventPage /> },
+{
+  element: <RequireAuth><Outlet /></RequireAuth>,
+  children: [
+    // existing children...
+    { path: "event/new",  element: <CreateEventPage /> },
+    { path: "e/:id/edit", element: <EditEventPage /> },
+  ]
+}
+```
+
+#### Sub-task sequence (11 commits)
+
+| Sub-task | What | Commit label |
+|---|---|---|
+| **1V-A** | V17–V20 migrations + JOOQ regen | `1V-A - DB: events, rsvp, event_registry_item schema` |
+| **1V-B** | Domain + service: Event CRUD; unit tests | `1V-B - Event: domain, EventRepository, EventService` |
+| **1V-C** | Web: EventController + DTOs + security; integration tests | `1V-C - Event: REST API, DTOs, security allowlist` |
+| **1V-D** | Domain + service: Rsvp + email; unit tests | `1V-D - RSVP: domain, RsvpRepository, RsvpService, email` |
+| **1V-E** | Web: RsvpController + DTOs; integration tests | `1V-E - RSVP: REST API` |
+| **1V-F** | Item: EVENT type + event linkage + visibility + schema.ts gaps; tests | `1V-F - Item: EVENT type, event linking, visibility filter` |
+| **1V-G** | Frontend: schema.ts, hooks (useEvents, useRsvp) | `1V-G - Frontend: schema types, event and rsvp hooks` |
+| **1V-H** | Frontend: Dashboard + EventCard; tests | `1V-H - Frontend: My Dashboard with Events section` |
+| **1V-I** | Frontend: EventForm, CreateEventPage, EditEventPage, PublicEventPage; tests | `1V-I - Frontend: event create/edit/public pages` |
+| **1V-J** | Frontend: RsvpForm, RsvpPage, RsvpConfirmPage; tests | `1V-J - Frontend: RSVP form and confirmation pages` |
+| **1V-K** | Frontend: ItemForm EVENT mode + ItemCard badge + router; tests | `1V-K - Frontend: EVENT item form and routing` |
+| **1V-L** | DataSeeder update + e2e smoke test notes | `1V-L - DataSeeder: sample event and RSVPs` |
+
+Each sub-task must follow the existing commit format from section 13. Backend sub-tasks: run `./gradlew spotlessApply` before committing. Frontend sub-tasks: run `npx prettier --write src/` and `npm test` before committing.
+
+#### Edge cases to handle
+
+- **Duplicate RSVP submission** (same email, different `attending` value): upsert replaces the row. If `confirmed_at` was already set, keep it (user is just updating their response); if `confirmed_at` was null, reset the confirmation token and re-send email.
+- **EVENT item with deleted event**: if the linked event is deleted, `event_registry_item` rows cascade. The item remains but `linkedEventIds` is empty. `findByRegistry` will exclude it for all users (no linked event = no RSVP to check against). The registry owner will still see it when editing (owner write access bypasses the RSVP filter — actually confirm this is the right UX: owner should probably see EVENT items regardless of RSVP status so they can manage them).
+- **Registry owner sees all items**: `ItemService.findByRegistry` should skip the EVENT visibility filter for the registry owner and co-owners — they need to see and manage EVENT items even if not RSVP'd.
+- **`itemType` missing from schema.ts POST/PATCH bodies** (pre-existing gap): fix in 1V-F alongside the EVENT changes so the body is consistent for all item types.
+- **Turnstile on authenticated RSVP**: keep Turnstile on the RSVP form even for authenticated users — it protects against bot-spamming event RSVPs.
 
 ---
 
