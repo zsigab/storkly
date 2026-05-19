@@ -5,8 +5,8 @@ import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
 public record RsvpResponse(
-    UUID id,
-    String displayName,
-    String email,
-    boolean attending,
-    @Nullable OffsetDateTime confirmedAt) {}
+        UUID id,
+        String displayName,
+        String email,
+        boolean attending,
+        @Nullable OffsetDateTime confirmedAt) {}

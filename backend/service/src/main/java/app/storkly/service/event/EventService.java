@@ -19,71 +19,67 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class EventService {
 
-  private final EventRepository eventRepository;
+    private final EventRepository eventRepository;
 
-  @Transactional
-  public Event create(
-      String title,
-      OffsetDateTime eventDate,
-      @Nullable String location,
-      UUID ownerId) {
-    String rsvpToken = TokenUtil.generate();
-    Event event = Event.builder()
-        .ownerId(ownerId)
-        .title(title)
-        .eventDate(eventDate)
-        .location(location)
-        .rsvpToken(rsvpToken)
-        .createdAt(OffsetDateTime.now())
-        .build();
-    return eventRepository.save(event);
-  }
-
-  public List<Event> findByOwner(UUID ownerId) {
-    return eventRepository.findByOwnerId(ownerId);
-  }
-
-  public Event findById(UUID id, UUID currentUserId) {
-    Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
-    if (!event.ownerId().equals(currentUserId)) {
-      throw new AccessDeniedException("Only the owner can access this event");
+    @Transactional
+    public Event create(String title, OffsetDateTime eventDate, @Nullable String location, UUID ownerId) {
+        String rsvpToken = TokenUtil.generate();
+        Event event = Event.builder()
+                .ownerId(ownerId)
+                .title(title)
+                .eventDate(eventDate)
+                .location(location)
+                .rsvpToken(rsvpToken)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        return eventRepository.save(event);
     }
-    return event;
-  }
 
-  public Event findPublicById(UUID id) {
-    return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
-  }
-
-  @Transactional
-  public Event update(
-      UUID id,
-      @Nullable String title,
-      @Nullable OffsetDateTime eventDate,
-      @Nullable String location,
-      UUID currentUserId) {
-    Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
-    if (!event.ownerId().equals(currentUserId)) {
-      throw new AccessDeniedException("Only the owner can update this event");
+    public List<Event> findByOwner(UUID ownerId) {
+        return eventRepository.findByOwnerId(ownerId);
     }
-    Event updated = Event.builder()
-        .id(event.id())
-        .ownerId(event.ownerId())
-        .title(title != null ? title : event.title())
-        .eventDate(eventDate != null ? eventDate : event.eventDate())
-        .location(location != null ? location : event.location())
-        .rsvpToken(event.rsvpToken())
-        .createdAt(event.createdAt())
-        .build();
-    return eventRepository.save(updated);
-  }
 
-  @Transactional
-  public void delete(UUID id, UUID currentUserId) {
-    Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
-    if (!event.ownerId().equals(currentUserId)) {
-      throw new AccessDeniedException("Only the owner can delete this event");
+    public Event findById(UUID id, UUID currentUserId) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can access this event");
+        }
+        return event;
     }
-    eventRepository.deleteById(id);
-  }
+
+    public Event findPublicById(UUID id) {
+        return eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
+    }
+
+    @Transactional
+    public Event update(
+            UUID id,
+            @Nullable String title,
+            @Nullable OffsetDateTime eventDate,
+            @Nullable String location,
+            UUID currentUserId) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can update this event");
+        }
+        Event updated = Event.builder()
+                .id(event.id())
+                .ownerId(event.ownerId())
+                .title(title != null ? title : event.title())
+                .eventDate(eventDate != null ? eventDate : event.eventDate())
+                .location(location != null ? location : event.location())
+                .rsvpToken(event.rsvpToken())
+                .createdAt(event.createdAt())
+                .build();
+        return eventRepository.save(updated);
+    }
+
+    @Transactional
+    public void delete(UUID id, UUID currentUserId) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can delete this event");
+        }
+        eventRepository.deleteById(id);
+    }
 }

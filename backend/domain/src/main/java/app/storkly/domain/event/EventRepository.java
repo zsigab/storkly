@@ -5,11 +5,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface EventRepository {
-  Event save(Event event);
+    Event save(Event event);
 
-  Optional<Event> findById(UUID id);
+    Optional<Event> findById(UUID id);
 
-  List<Event> findByOwnerId(UUID ownerId);
+    Optional<Event> findByRsvpToken(String rsvpToken);
 
-  void deleteById(UUID id);
+    List<Event> findByOwnerId(UUID ownerId);
+
+    void deleteById(UUID id);
 }

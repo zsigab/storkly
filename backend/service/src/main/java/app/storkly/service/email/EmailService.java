@@ -58,6 +58,16 @@ public class EmailService {
         send(to, subject, body);
     }
 
+    @Async
+    public void sendRsvpConfirmation(String to, String name, String eventTitle, String confirmToken) {
+        String subject = "Confirm your RSVP for " + eventTitle;
+        String body = "Hi " + name + ",\n\n"
+                + "Click the link below to confirm your RSVP:\n\n"
+                + emailProperties.frontendUrl() + "/rsvp/confirm?token=" + confirmToken + "\n\n"
+                + "If you did not request this, you can ignore this email.";
+        send(to, subject, body);
+    }
+
     private void send(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();

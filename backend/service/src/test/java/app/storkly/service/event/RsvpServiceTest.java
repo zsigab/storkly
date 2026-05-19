@@ -1,0 +1,349 @@
+package app.storkly.service.event;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import app.storkly.domain.event.Event;
+import app.storkly.domain.event.EventRepository;
+import app.storkly.domain.event.Rsvp;
+import app.storkly.domain.event.RsvpRepository;
+import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.service.auth.TurnstileService;
+import app.storkly.service.email.EmailService;
+import java.time.OffsetDateTime;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@ExtendWith(MockitoExtension.class)
+class RsvpServiceTest {
+
+    @Mock
+    private RsvpRepository rsvpRepository;
+
+    @Mock
+    private EventRepository eventRepository;
+
+    @Mock
+    private TurnstileService turnstileService;
+
+    @Mock
+    private EmailService emailService;
+
+    @InjectMocks
+    private RsvpService rsvpService;
+
+    @Test
+    void submitRsvp_anonymousNewRsvp_emailSent() {
+        String rsvpToken = "valid-token";
+        String displayName = "John Doe";
+        String email = "john@example.com";
+        boolean attending = true;
+        String captchaToken = "captcha-token";
+        UUID eventId = UUID.randomUUID();
+
+        Event event = Event.builder()
+                .id(eventId)
+                .ownerId(UUID.randomUUID())
+                .title("Birthday Party")
+                .eventDate(OffsetDateTime.now().plusDays(1))
+                .rsvpToken(rsvpToken)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        doNothing().when(turnstileService).assertValid(captchaToken);
+        when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.empty());
+        when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
+            Rsvp rsvp = invocation.getArgument(0);
+            return Rsvp.builder()
+                    .id(UUID.randomUUID())
+                    .eventId(rsvp.eventId())
+                    .userId(rsvp.userId())
+                    .email(rsvp.email())
+                    .displayName(rsvp.displayName())
+                    .attending(rsvp.attending())
+                    .confirmationToken(rsvp.confirmationToken())
+                    .confirmedAt(rsvp.confirmedAt())
+                    .createdAt(rsvp.createdAt())
+                    .build();
+        });
+
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null);
+
+        assertThat(result).isNotNull();
+        assertThat(result.id()).isNotNull();
+        assertThat(result.confirmedAt()).isNull();
+        assertThat(result.userId()).isNull();
+        verify(turnstileService).assertValid(captchaToken);
+        verify(emailService).sendRsvpConfirmation(eq(email), eq(displayName), eq("Birthday Party"), anyString());
+    }
+
+    @Test
+    void submitRsvp_authenticatedNewRsvp_noEmailSent() {
+        String rsvpToken = "valid-token";
+        String displayName = "Jane Doe";
+        String email = "jane@example.com";
+        boolean attending = true;
+        String captchaToken = "captcha-token";
+        UUID eventId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+
+        Event event = Event.builder()
+                .id(eventId)
+                .ownerId(UUID.randomUUID())
+                .title("Birthday Party")
+                .eventDate(OffsetDateTime.now().plusDays(1))
+                .rsvpToken(rsvpToken)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        doNothing().when(turnstileService).assertValid(captchaToken);
+        when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.empty());
+        when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
+            Rsvp rsvp = invocation.getArgument(0);
+            return Rsvp.builder()
+                    .id(UUID.randomUUID())
+                    .eventId(rsvp.eventId())
+                    .userId(rsvp.userId())
+                    .email(rsvp.email())
+                    .displayName(rsvp.displayName())
+                    .attending(rsvp.attending())
+                    .confirmationToken(rsvp.confirmationToken())
+                    .confirmedAt(rsvp.confirmedAt())
+                    .createdAt(rsvp.createdAt())
+                    .build();
+        });
+
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, userId);
+
+        assertThat(result).isNotNull();
+        assertThat(result.confirmedAt()).isNotNull();
+        assertThat(result.userId()).isEqualTo(userId);
+        verify(turnstileService).assertValid(captchaToken);
+        verify(emailService, never()).sendRsvpConfirmation(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void submitRsvp_resubmitUnconfirmed_newTokenGenerated() {
+        String rsvpToken = "valid-token";
+        String displayName = "John Doe";
+        String email = "john@example.com";
+        boolean attending = false;
+        String captchaToken = "captcha-token";
+        UUID eventId = UUID.randomUUID();
+        UUID rsvpId = UUID.randomUUID();
+
+        Event event = Event.builder()
+                .id(eventId)
+                .ownerId(UUID.randomUUID())
+                .title("Birthday Party")
+                .eventDate(OffsetDateTime.now().plusDays(1))
+                .rsvpToken(rsvpToken)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        Rsvp existing = Rsvp.builder()
+                .id(rsvpId)
+                .eventId(eventId)
+                .email(email)
+                .displayName("Old Name")
+                .attending(true)
+                .confirmationToken("old-token")
+                .confirmedAt(null)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        doNothing().when(turnstileService).assertValid(captchaToken);
+        when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.of(existing));
+        when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
+            Rsvp rsvp = invocation.getArgument(0);
+            return Rsvp.builder()
+                    .id(rsvpId)
+                    .eventId(rsvp.eventId())
+                    .userId(rsvp.userId())
+                    .email(rsvp.email())
+                    .displayName(rsvp.displayName())
+                    .attending(rsvp.attending())
+                    .confirmationToken(rsvp.confirmationToken())
+                    .confirmedAt(rsvp.confirmedAt())
+                    .createdAt(rsvp.createdAt())
+                    .build();
+        });
+
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null);
+
+        assertThat(result.confirmationToken()).isNotEqualTo(existing.confirmationToken());
+        assertThat(result.attending()).isEqualTo(attending);
+        verify(emailService).sendRsvpConfirmation(eq(email), eq(displayName), eq("Birthday Party"), anyString());
+    }
+
+    @Test
+    void submitRsvp_resubmitConfirmed_attendingUpdatedNoEmail() {
+        String rsvpToken = "valid-token";
+        String displayName = "John Doe";
+        String email = "john@example.com";
+        boolean attending = false;
+        String captchaToken = "captcha-token";
+        UUID eventId = UUID.randomUUID();
+        UUID rsvpId = UUID.randomUUID();
+        String oldToken = "old-token";
+
+        Event event = Event.builder()
+                .id(eventId)
+                .ownerId(UUID.randomUUID())
+                .title("Birthday Party")
+                .eventDate(OffsetDateTime.now().plusDays(1))
+                .rsvpToken(rsvpToken)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        OffsetDateTime confirmedAt = OffsetDateTime.now().minusHours(1);
+        Rsvp existing = Rsvp.builder()
+                .id(rsvpId)
+                .eventId(eventId)
+                .email(email)
+                .displayName("Old Name")
+                .attending(true)
+                .confirmationToken(oldToken)
+                .confirmedAt(confirmedAt)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        doNothing().when(turnstileService).assertValid(captchaToken);
+        when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.of(existing));
+        when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
+            Rsvp rsvp = invocation.getArgument(0);
+            return Rsvp.builder()
+                    .id(rsvpId)
+                    .eventId(rsvp.eventId())
+                    .userId(rsvp.userId())
+                    .email(rsvp.email())
+                    .displayName(rsvp.displayName())
+                    .attending(rsvp.attending())
+                    .confirmationToken(oldToken)
+                    .confirmedAt(confirmedAt)
+                    .createdAt(rsvp.createdAt())
+                    .build();
+        });
+
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null);
+
+        assertThat(result.confirmationToken()).isEqualTo(oldToken);
+        assertThat(result.confirmedAt()).isEqualTo(confirmedAt);
+        assertThat(result.attending()).isEqualTo(attending);
+        verify(emailService, never()).sendRsvpConfirmation(anyString(), anyString(), anyString(), anyString());
+    }
+
+    @Test
+    void submitRsvp_invalidRsvpToken_throwsInvalidToken() {
+        String rsvpToken = "invalid-token";
+        String captchaToken = "captcha-token";
+
+        doNothing().when(turnstileService).assertValid(captchaToken);
+        when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(
+                        () -> rsvpService.submitRsvp(rsvpToken, "John", "john@example.com", true, captchaToken, null))
+                .isInstanceOf(InvalidTokenException.class);
+    }
+
+    @Test
+    void submitRsvp_invalidCaptcha_throwsInvalidToken() {
+        String rsvpToken = "valid-token";
+        String captchaToken = "invalid-captcha";
+
+        doThrow(new InvalidTokenException("CAPTCHA verification failed"))
+                .when(turnstileService)
+                .assertValid(captchaToken);
+
+        assertThatThrownBy(
+                        () -> rsvpService.submitRsvp(rsvpToken, "John", "john@example.com", true, captchaToken, null))
+                .isInstanceOf(InvalidTokenException.class);
+    }
+
+    @Test
+    void confirmRsvp_validToken_setsConfirmedAtAndReturnsEventId() {
+        String confirmToken = "confirm-token";
+        UUID eventId = UUID.randomUUID();
+        UUID rsvpId = UUID.randomUUID();
+
+        Rsvp rsvp = Rsvp.builder()
+                .id(rsvpId)
+                .eventId(eventId)
+                .email("john@example.com")
+                .displayName("John")
+                .attending(true)
+                .confirmationToken(confirmToken)
+                .confirmedAt(null)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(rsvpRepository.findByConfirmToken(confirmToken)).thenReturn(Optional.of(rsvp));
+        when(rsvpRepository.confirm(eq(rsvpId), any(OffsetDateTime.class)))
+                .thenReturn(Rsvp.builder()
+                        .id(rsvpId)
+                        .eventId(eventId)
+                        .email("john@example.com")
+                        .displayName("John")
+                        .attending(true)
+                        .confirmationToken(confirmToken)
+                        .confirmedAt(OffsetDateTime.now())
+                        .createdAt(rsvp.createdAt())
+                        .build());
+
+        UUID result = rsvpService.confirmRsvp(confirmToken);
+
+        assertThat(result).isEqualTo(eventId);
+        verify(rsvpRepository).confirm(eq(rsvpId), any(OffsetDateTime.class));
+    }
+
+    @Test
+    void confirmRsvp_alreadyConfirmed_idempotent() {
+        String confirmToken = "confirm-token";
+        UUID eventId = UUID.randomUUID();
+        UUID rsvpId = UUID.randomUUID();
+
+        Rsvp rsvp = Rsvp.builder()
+                .id(rsvpId)
+                .eventId(eventId)
+                .email("john@example.com")
+                .displayName("John")
+                .attending(true)
+                .confirmationToken(confirmToken)
+                .confirmedAt(OffsetDateTime.now().minusHours(1))
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(rsvpRepository.findByConfirmToken(confirmToken)).thenReturn(Optional.of(rsvp));
+
+        UUID result = rsvpService.confirmRsvp(confirmToken);
+
+        assertThat(result).isEqualTo(eventId);
+        verify(rsvpRepository, never()).confirm(any(), any());
+    }
+
+    @Test
+    void confirmRsvp_invalidToken_throwsInvalidToken() {
+        String confirmToken = "invalid-token";
+
+        when(rsvpRepository.findByConfirmToken(confirmToken)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> rsvpService.confirmRsvp(confirmToken)).isInstanceOf(InvalidTokenException.class);
+    }
+}

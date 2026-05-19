@@ -6,11 +6,13 @@ import lombok.Builder;
 import org.jspecify.annotations.Nullable;
 
 @Builder
-public record Event(
+public record Rsvp(
         @Nullable UUID id,
-        UUID ownerId,
-        String title,
-        OffsetDateTime eventDate,
-        @Nullable String location,
-        String rsvpToken,
+        UUID eventId,
+        @Nullable UUID userId,
+        String email,
+        String displayName,
+        boolean attending,
+        String confirmationToken,
+        @Nullable OffsetDateTime confirmedAt,
         OffsetDateTime createdAt) {}

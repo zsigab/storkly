@@ -6,6 +6,6 @@ import java.time.OffsetDateTime;
 import org.jspecify.annotations.Nullable;
 
 public record EventCreateRequest(
-    @NotBlank String title,
-    @NotNull OffsetDateTime eventDate,
-    @Nullable String location) {}
+        @NotBlank String title,
+        @NotNull OffsetDateTime eventDate,
+        @Nullable String location) {}

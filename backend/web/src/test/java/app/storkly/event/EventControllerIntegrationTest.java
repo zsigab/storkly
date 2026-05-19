@@ -24,332 +24,308 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @TestPropertySource(properties = {"storkly.captcha.enabled=false", "storkly.seed-data=true"})
 class EventControllerIntegrationTest {
 
-  @Container
-  @ServiceConnection
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
-  @LocalServerPort
-  int port;
+    @LocalServerPort
+    int port;
 
-  RestTestClient restTestClient;
+    RestTestClient restTestClient;
 
-  @BeforeEach
-  void setUp() {
-    restTestClient = RestTestClient.bindToServer()
-        .baseUrl("http://localhost:" + port)
-        .build();
-  }
+    @BeforeEach
+    void setUp() {
+        restTestClient = RestTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+    }
 
-  @Test
-  void listEvents_unauthenticated_returnsUnauthorized() {
-    restTestClient
-        .get()
-        .uri("/api/events")
-        .exchange()
-        .expectStatus()
-        .isUnauthorized();
-  }
+    @Test
+    void listEvents_unauthenticated_returnsUnauthorized() {
+        restTestClient.get().uri("/api/events").exchange().expectStatus().isUnauthorized();
+    }
 
-  @Test
-  void createEvent_unauthenticated_returnsUnauthorized() {
-    restTestClient
-        .post()
-        .uri("/api/events")
-        .exchange()
-        .expectStatus()
-        .isUnauthorized();
-  }
+    @Test
+    void createEvent_unauthenticated_returnsUnauthorized() {
+        restTestClient.post().uri("/api/events").exchange().expectStatus().isUnauthorized();
+    }
 
-  @Test
-  void getEvent_unauthenticated_returnsUnauthorized() {
-    restTestClient
-        .get()
-        .uri("/api/events/00000000-0000-0000-0000-000000000001")
-        .exchange()
-        .expectStatus()
-        .isUnauthorized();
-  }
+    @Test
+    void getEvent_unauthenticated_returnsUnauthorized() {
+        restTestClient
+                .get()
+                .uri("/api/events/00000000-0000-0000-0000-000000000001")
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+    }
 
-  @Test
-  void patchEvent_unauthenticated_returnsUnauthorized() {
-    restTestClient
-        .patch()
-        .uri("/api/events/00000000-0000-0000-0000-000000000001")
-        .exchange()
-        .expectStatus()
-        .isUnauthorized();
-  }
+    @Test
+    void patchEvent_unauthenticated_returnsUnauthorized() {
+        restTestClient
+                .patch()
+                .uri("/api/events/00000000-0000-0000-0000-000000000001")
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+    }
 
-  @Test
-  void deleteEvent_unauthenticated_returnsUnauthorized() {
-    restTestClient
-        .delete()
-        .uri("/api/events/00000000-0000-0000-0000-000000000001")
-        .exchange()
-        .expectStatus()
-        .isUnauthorized();
-  }
+    @Test
+    void deleteEvent_unauthenticated_returnsUnauthorized() {
+        restTestClient
+                .delete()
+                .uri("/api/events/00000000-0000-0000-0000-000000000001")
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+    }
 
-  @Test
-  void getPublicEvent_unknownId_returnsNotFound() {
-    restTestClient
-        .get()
-        .uri("/api/events/00000000-0000-0000-0000-000000000001/public")
-        .exchange()
-        .expectStatus()
-        .isNotFound();
-  }
+    @Test
+    void getPublicEvent_unknownId_returnsNotFound() {
+        restTestClient
+                .get()
+                .uri("/api/events/00000000-0000-0000-0000-000000000001/public")
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+    }
 
-  @Test
-  void createEvent_authenticated_returnsCreated() {
-    String authCookie = loginAndGetCookie("owner@example.com", "password");
+    @Test
+    void createEvent_authenticated_returnsCreated() {
+        String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-    EventCreateRequest request = new EventCreateRequest(
-        "New Event",
-        OffsetDateTime.now().plusDays(1),
-        "Test Location");
+        EventCreateRequest request =
+                new EventCreateRequest("New Event", OffsetDateTime.now().plusDays(1), "Test Location");
 
-    restTestClient
-        .post()
-        .uri("/api/events")
-        .cookie("access_token", authCookie)
-        .body(request)
-        .exchange()
-        .expectStatus()
-        .isCreated()
-        .expectBody()
-        .jsonPath("$.title")
-        .isEqualTo("New Event")
-        .jsonPath("$.location")
-        .isEqualTo("Test Location")
-        .jsonPath("$.rsvpToken")
-        .isNotEmpty();
-  }
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", authCookie)
+                .body(request)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.title")
+                .isEqualTo("New Event")
+                .jsonPath("$.location")
+                .isEqualTo("Test Location")
+                .jsonPath("$.rsvpToken")
+                .isNotEmpty();
+    }
 
-  @Test
-  void getEvent_authenticated_owner_returnsEvent() {
-    String authCookie = loginAndGetCookie("owner@example.com", "password");
+    @Test
+    void getEvent_authenticated_owner_returnsEvent() {
+        String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-    EventCreateRequest request = new EventCreateRequest(
-        "Test Event",
-        OffsetDateTime.now().plusDays(1),
-        "Test Location");
+        EventCreateRequest request =
+                new EventCreateRequest("Test Event", OffsetDateTime.now().plusDays(1), "Test Location");
 
-    AtomicReference<String> eventIdRef = new AtomicReference<>();
+        AtomicReference<String> eventIdRef = new AtomicReference<>();
 
-    restTestClient
-        .post()
-        .uri("/api/events")
-        .cookie("access_token", authCookie)
-        .body(request)
-        .exchange()
-        .expectStatus()
-        .isCreated()
-        .expectBody()
-        .jsonPath("$.id")
-        .value(id -> eventIdRef.set((String) id));
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", authCookie)
+                .body(request)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.id")
+                .value(id -> eventIdRef.set((String) id));
 
-    restTestClient
-        .get()
-        .uri("/api/events/" + eventIdRef.get())
-        .cookie("access_token", authCookie)
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectBody()
-        .jsonPath("$.title")
-        .isEqualTo("Test Event");
-  }
+        restTestClient
+                .get()
+                .uri("/api/events/" + eventIdRef.get())
+                .cookie("access_token", authCookie)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.title")
+                .isEqualTo("Test Event");
+    }
 
-  @Test
-  void getEvent_authenticated_nonOwner_returnsForbidden() {
-    String ownerCookie = loginAndGetCookie("owner@example.com", "password");
+    @Test
+    void getEvent_authenticated_nonOwner_returnsForbidden() {
+        String ownerCookie = loginAndGetCookie("owner@example.com", "password");
 
-    EventCreateRequest request = new EventCreateRequest(
-        "Secret Event",
-        OffsetDateTime.now().plusDays(1),
-        null);
+        EventCreateRequest request =
+                new EventCreateRequest("Secret Event", OffsetDateTime.now().plusDays(1), null);
 
-    AtomicReference<String> eventIdRef = new AtomicReference<>();
+        AtomicReference<String> eventIdRef = new AtomicReference<>();
 
-    restTestClient
-        .post()
-        .uri("/api/events")
-        .cookie("access_token", ownerCookie)
-        .body(request)
-        .exchange()
-        .expectStatus()
-        .isCreated()
-        .expectBody()
-        .jsonPath("$.id")
-        .value(id -> eventIdRef.set((String) id));
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", ownerCookie)
+                .body(request)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.id")
+                .value(id -> eventIdRef.set((String) id));
 
-    String otherUserCookie = loginAndGetCookie("gifter@example.com", "password");
+        String otherUserCookie = loginAndGetCookie("gifter@example.com", "password");
 
-    restTestClient
-        .get()
-        .uri("/api/events/" + eventIdRef.get())
-        .cookie("access_token", otherUserCookie)
-        .exchange()
-        .expectStatus()
-        .isForbidden();
-  }
+        restTestClient
+                .get()
+                .uri("/api/events/" + eventIdRef.get())
+                .cookie("access_token", otherUserCookie)
+                .exchange()
+                .expectStatus()
+                .isForbidden();
+    }
 
-  @Test
-  void patchEvent_authenticated_owner_returnsUpdated() {
-    String authCookie = loginAndGetCookie("owner@example.com", "password");
+    @Test
+    void patchEvent_authenticated_owner_returnsUpdated() {
+        String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-    EventCreateRequest createRequest = new EventCreateRequest(
-        "Original Title",
-        OffsetDateTime.now().plusDays(1),
-        "Original Location");
+        EventCreateRequest createRequest =
+                new EventCreateRequest("Original Title", OffsetDateTime.now().plusDays(1), "Original Location");
 
-    AtomicReference<String> eventIdRef = new AtomicReference<>();
+        AtomicReference<String> eventIdRef = new AtomicReference<>();
 
-    restTestClient
-        .post()
-        .uri("/api/events")
-        .cookie("access_token", authCookie)
-        .body(createRequest)
-        .exchange()
-        .expectStatus()
-        .isCreated()
-        .expectBody()
-        .jsonPath("$.id")
-        .value(id -> eventIdRef.set((String) id));
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", authCookie)
+                .body(createRequest)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.id")
+                .value(id -> eventIdRef.set((String) id));
 
-    OffsetDateTime newDate = OffsetDateTime.now().plusDays(5);
-    app.storkly.event.dto.EventUpdateRequest updateRequest = new app.storkly.event.dto.EventUpdateRequest(
-        "Updated Title",
-        newDate,
-        "Updated Location");
+        OffsetDateTime newDate = OffsetDateTime.now().plusDays(5);
+        app.storkly.event.dto.EventUpdateRequest updateRequest =
+                new app.storkly.event.dto.EventUpdateRequest("Updated Title", newDate, "Updated Location");
 
-    restTestClient
-        .patch()
-        .uri("/api/events/" + eventIdRef.get())
-        .cookie("access_token", authCookie)
-        .body(updateRequest)
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectBody()
-        .jsonPath("$.title")
-        .isEqualTo("Updated Title")
-        .jsonPath("$.location")
-        .isEqualTo("Updated Location");
-  }
+        restTestClient
+                .patch()
+                .uri("/api/events/" + eventIdRef.get())
+                .cookie("access_token", authCookie)
+                .body(updateRequest)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.title")
+                .isEqualTo("Updated Title")
+                .jsonPath("$.location")
+                .isEqualTo("Updated Location");
+    }
 
-  @Test
-  void deleteEvent_authenticated_owner_returnsNoContent() {
-    String authCookie = loginAndGetCookie("owner@example.com", "password");
+    @Test
+    void deleteEvent_authenticated_owner_returnsNoContent() {
+        String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-    EventCreateRequest request = new EventCreateRequest(
-        "To Delete",
-        OffsetDateTime.now().plusDays(1),
-        null);
+        EventCreateRequest request =
+                new EventCreateRequest("To Delete", OffsetDateTime.now().plusDays(1), null);
 
-    AtomicReference<String> eventIdRef = new AtomicReference<>();
+        AtomicReference<String> eventIdRef = new AtomicReference<>();
 
-    restTestClient
-        .post()
-        .uri("/api/events")
-        .cookie("access_token", authCookie)
-        .body(request)
-        .exchange()
-        .expectStatus()
-        .isCreated()
-        .expectBody()
-        .jsonPath("$.id")
-        .value(id -> eventIdRef.set((String) id));
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", authCookie)
+                .body(request)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.id")
+                .value(id -> eventIdRef.set((String) id));
 
-    restTestClient
-        .delete()
-        .uri("/api/events/" + eventIdRef.get())
-        .cookie("access_token", authCookie)
-        .exchange()
-        .expectStatus()
-        .isNoContent();
+        restTestClient
+                .delete()
+                .uri("/api/events/" + eventIdRef.get())
+                .cookie("access_token", authCookie)
+                .exchange()
+                .expectStatus()
+                .isNoContent();
 
-    restTestClient
-        .get()
-        .uri("/api/events/" + eventIdRef.get())
-        .cookie("access_token", authCookie)
-        .exchange()
-        .expectStatus()
-        .isNotFound();
-  }
+        restTestClient
+                .get()
+                .uri("/api/events/" + eventIdRef.get())
+                .cookie("access_token", authCookie)
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+    }
 
-  @Test
-  void getPublicEvent_authenticated_returnsPublicInfo() {
-    String authCookie = loginAndGetCookie("owner@example.com", "password");
+    @Test
+    void getPublicEvent_authenticated_returnsPublicInfo() {
+        String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-    EventCreateRequest request = new EventCreateRequest(
-        "Public Event",
-        OffsetDateTime.now().plusDays(1),
-        "Public Location");
+        EventCreateRequest request =
+                new EventCreateRequest("Public Event", OffsetDateTime.now().plusDays(1), "Public Location");
 
-    AtomicReference<String> eventIdRef = new AtomicReference<>();
+        AtomicReference<String> eventIdRef = new AtomicReference<>();
 
-    restTestClient
-        .post()
-        .uri("/api/events")
-        .cookie("access_token", authCookie)
-        .body(request)
-        .exchange()
-        .expectStatus()
-        .isCreated()
-        .expectBody()
-        .jsonPath("$.id")
-        .value(id -> eventIdRef.set((String) id));
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", authCookie)
+                .body(request)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.id")
+                .value(id -> eventIdRef.set((String) id));
 
-    restTestClient
-        .get()
-        .uri("/api/events/" + eventIdRef.get() + "/public")
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectBody()
-        .jsonPath("$.title")
-        .isEqualTo("Public Event")
-        .jsonPath("$.location")
-        .isEqualTo("Public Location")
-        .jsonPath("$.rsvpToken")
-        .doesNotExist();
-  }
+        restTestClient
+                .get()
+                .uri("/api/events/" + eventIdRef.get() + "/public")
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.title")
+                .isEqualTo("Public Event")
+                .jsonPath("$.location")
+                .isEqualTo("Public Location")
+                .jsonPath("$.rsvpToken")
+                .doesNotExist();
+    }
 
-  @Test
-  void getEvent_unknownId_returnsNotFound() {
-    String authCookie = loginAndGetCookie("owner@example.com", "password");
+    @Test
+    void getEvent_unknownId_returnsNotFound() {
+        String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-    restTestClient
-        .get()
-        .uri("/api/events/00000000-0000-0000-0000-000000000099")
-        .cookie("access_token", authCookie)
-        .exchange()
-        .expectStatus()
-        .isNotFound();
-  }
+        restTestClient
+                .get()
+                .uri("/api/events/00000000-0000-0000-0000-000000000099")
+                .cookie("access_token", authCookie)
+                .exchange()
+                .expectStatus()
+                .isNotFound();
+    }
 
-  private String loginAndGetCookie(String email, String password) {
-    AtomicReference<String> cookieRef = new AtomicReference<>();
+    private String loginAndGetCookie(String email, String password) {
+        AtomicReference<String> cookieRef = new AtomicReference<>();
 
-    restTestClient
-        .post()
-        .uri("/api/auth/login")
-        .body(new LoginRequest(email, password, false))
-        .exchange()
-        .expectStatus()
-        .isOk()
-        .expectHeader()
-        .value(HttpHeaders.SET_COOKIE, setCookie -> {
-          for (String part : setCookie.split(";")) {
-            if (part.trim().startsWith("access_token=")) {
-              cookieRef.set(part.trim().substring("access_token=".length()));
-              break;
-            }
-          }
-        });
+        restTestClient
+                .post()
+                .uri("/api/auth/login")
+                .body(new LoginRequest(email, password, false))
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectHeader()
+                .value(HttpHeaders.SET_COOKIE, setCookie -> {
+                    for (String part : setCookie.split(";")) {
+                        if (part.trim().startsWith("access_token=")) {
+                            cookieRef.set(part.trim().substring("access_token=".length()));
+                            break;
+                        }
+                    }
+                });
 
-    return cookieRef.get();
-  }
+        return cookieRef.get();
+    }
 }
