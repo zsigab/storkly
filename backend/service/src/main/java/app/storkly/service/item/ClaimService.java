@@ -222,6 +222,26 @@ public class ClaimService {
             return;
         }
         claimRepository.confirm(claim.id(), OffsetDateTime.now());
+
+        if (claim.deliveryOptionId() != null) {
+            DeliveryOption option =
+                    deliveryOptionRepository.findById(claim.deliveryOptionId()).orElse(null);
+            if (option != null
+                    && option.description() != null
+                    && !option.description().isBlank()
+                    && ("MONEY_TRANSFER".equals(option.type())
+                            || "SHIP_TO_ADDRESS".equals(option.type()))) {
+                Item item = itemRepository
+                        .findById(claim.itemId())
+                        .orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
+                emailService.sendDeliveryInstructions(
+                        claim.claimerEmail(),
+                        claim.claimerName(),
+                        item.title(),
+                        option.label(),
+                        option.description());
+            }
+        }
     }
 
     @Transactional
@@ -318,6 +338,34 @@ public class ClaimService {
         }
 
         claimRepository.receive(claimId, OffsetDateTime.now());
+    }
+
+    @Transactional
+    public void updateDeliveryOption(UUID claimId, UUID currentUserId, @Nullable UUID deliveryOptionId) {
+        Claim claim = claimRepository.findById(claimId).orElseThrow(ClaimNotFoundException::new);
+        if (claim.claimerUserId() == null || !claim.claimerUserId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the claimer can update their delivery option");
+        }
+
+        String deliveryType = null;
+        if (deliveryOptionId != null) {
+            DeliveryOption option = deliveryOptionRepository
+                    .findById(deliveryOptionId)
+                    .orElseThrow(() -> new ItemNotFoundException(deliveryOptionId));
+            Item item = itemRepository
+                    .findById(claim.itemId())
+                    .orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
+            Registry registry = registryRepository
+                    .findById(item.registryId())
+                    .orElseThrow(
+                            () -> new RegistryNotFoundException(item.registryId().toString()));
+            if (!option.registryId().equals(registry.id())) {
+                throw new AccessDeniedException("Delivery option does not belong to this registry");
+            }
+            deliveryType = option.type();
+        }
+
+        claimRepository.updateDeliveryOption(claimId, deliveryOptionId, deliveryType);
     }
 
     private void assertReadAccess(Registry registry, @Nullable UUID currentUserId) {

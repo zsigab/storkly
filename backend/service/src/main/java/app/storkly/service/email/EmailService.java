@@ -46,6 +46,17 @@ public class EmailService {
         send(to, subject, body);
     }
 
+    @Async
+    public void sendDeliveryInstructions(String to, String name, String itemTitle, String deliveryLabel, String instructions) {
+        String subject = "Delivery instructions for \"" + itemTitle + "\"";
+        String body = "Hi " + name + ",\n\n"
+                + "Here are the delivery instructions for your claim on \"" + itemTitle + "\" ("
+                + deliveryLabel + "):\n\n"
+                + instructions + "\n\n"
+                + "If you have any questions or need to make changes, you can view your claim on Storkly.";
+        send(to, subject, body);
+    }
+
     private void send(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();

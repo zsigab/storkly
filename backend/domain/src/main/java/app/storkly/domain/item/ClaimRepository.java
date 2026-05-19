@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 public interface ClaimRepository {
     Claim save(Claim claim);
@@ -33,4 +34,6 @@ public interface ClaimRepository {
     void receive(UUID id, OffsetDateTime receivedAt);
 
     void confirm(UUID id, OffsetDateTime confirmedAt);
+
+    void updateDeliveryOption(UUID id, @Nullable UUID deliveryOptionId, @Nullable String deliveryType);
 }

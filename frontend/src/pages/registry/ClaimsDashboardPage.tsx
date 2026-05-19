@@ -14,6 +14,7 @@ import {
 } from "@/hooks/useClaims";
 import { useRegistryItems } from "@/hooks/useItems";
 import { useDeliveryOptions } from "@/hooks/useDeliveryOptions";
+import { useRegistry } from "@/hooks/useRegistries";
 import { useRegistryTheme } from "@/hooks/useRegistryTheme";
 import { getApiErrorMessage } from "@/api/helpers";
 import { formatDateTime, formatPrice } from "@/lib/utils";
@@ -260,6 +261,7 @@ export function ClaimsDashboardPage(): React.ReactElement {
     isPending: claimsPending,
     isError: claimsError,
   } = useRegistryClaims(safeSlug);
+  const { data: registry } = useRegistry(safeSlug);
   const { data: items = [] } = useRegistryItems(safeSlug);
   const { data: deliveryOptions = [] } = useDeliveryOptions(safeSlug);
 
@@ -288,7 +290,7 @@ export function ClaimsDashboardPage(): React.ReactElement {
         </h1>
       </div>
 
-      <DeliveryOptionsConfig slug={safeSlug} />
+      <DeliveryOptionsConfig slug={safeSlug} isPublic={registry?.visibility === "PUBLIC"} />
 
       <div className="border-border border-t pt-6">
         <h2 className="mb-4 text-lg font-medium">

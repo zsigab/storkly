@@ -14,6 +14,7 @@ public record MyClaimResponse(
         int quantityClaimed,
         @Nullable BigDecimal amountContributed,
         @Nullable Integer percentageContributed,
+        @Nullable UUID deliveryOptionId,
         @Nullable String deliveryType,
         OffsetDateTime claimedAt,
         @Nullable OffsetDateTime receivedAt) {}

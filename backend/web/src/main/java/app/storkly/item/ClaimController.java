@@ -5,6 +5,7 @@ import app.storkly.domain.user.User;
 import app.storkly.item.dto.ClaimRequest;
 import app.storkly.item.dto.ClaimResponse;
 import app.storkly.item.dto.MyClaimResponse;
+import app.storkly.item.dto.UpdateDeliveryOptionRequest;
 import app.storkly.service.item.ClaimService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -110,6 +111,7 @@ public class ClaimController {
                         v.quantityClaimed(),
                         v.amountContributed(),
                         v.percentageContributed(),
+                        v.deliveryOptionId(),
                         v.deliveryType(),
                         v.claimedAt(),
                         v.receivedAt()))
@@ -139,6 +141,15 @@ public class ClaimController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void reset(@PathVariable UUID id, @AuthenticationPrincipal User currentUser) {
         claimService.resetById(id, currentUser.id());
+    }
+
+    @PatchMapping("/api/claims/{id}/delivery-option")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateDeliveryOption(
+            @PathVariable UUID id,
+            @RequestBody @Valid UpdateDeliveryOptionRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        claimService.updateDeliveryOption(id, currentUser.id(), request.deliveryOptionId());
     }
 
     private ClaimResponse toResponse(Claim claim, boolean showClaimerDetails) {

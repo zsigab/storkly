@@ -226,6 +226,24 @@ export function useMyActiveClaims() {
   });
 }
 
+export function useUpdateClaimDeliveryOption() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ claimId, deliveryOptionId }: { claimId: string; deliveryOptionId: string | null }) => {
+      const { error } = await api.PATCH("/api/claims/{id}/delivery-option", {
+        params: { path: { id: claimId } },
+        body: { deliveryOptionId: deliveryOptionId ?? null },
+      });
+      if (error !== undefined) throw error;
+      return claimId;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["myClaims"] });
+    },
+  });
+}
+
 export function useReceiveClaim(slug: string) {
   const queryClient = useQueryClient();
 

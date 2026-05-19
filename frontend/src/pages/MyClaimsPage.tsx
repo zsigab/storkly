@@ -1,18 +1,18 @@
 import { Link } from "react-router";
-import { useMyActiveClaims, useUnclaimMyClaim } from "@/hooks/useClaims";
+import { useState } from "react";
+import { useMyActiveClaims } from "@/hooks/useClaims";
+import { ClaimDialog } from "@/components/registry/ClaimDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getApiErrorMessage } from "@/api/helpers";
 import { formatDateTime } from "@/lib/utils";
+import type { MyClaimResponse } from "@/api/schema";
 
 export function MyClaimsPage(): React.ReactElement {
   const { data: claims, isLoading, isError, error } = useMyActiveClaims();
-  const unclaim = useUnclaimMyClaim();
+  const [viewingClaim, setViewingClaim] = useState<MyClaimResponse | null>(null);
 
-  const handleUnclaim = (claimId: string, itemId: string): void => {
-    unclaim.mutate({ value: claimId, itemId });
-  };
 
   if (isLoading) {
     return (
@@ -86,15 +86,32 @@ export function MyClaimsPage(): React.ReactElement {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-destructive hover:text-destructive ml-4 shrink-0"
-                disabled={unclaim.isPending || !!claim.receivedAt}
-                onClick={() => handleUnclaim(claim.claimId, claim.itemId)}
+                className="ml-4 shrink-0"
+                disabled={!!claim.receivedAt}
+                onClick={() => setViewingClaim(claim)}
               >
-                Unclaim
+                View claim
               </Button>
             </li>
           ))}
         </ul>
+      )}
+
+      {viewingClaim && (
+        <ClaimDialog
+          open={viewingClaim !== null}
+          onOpenChange={(open) => {
+            if (!open) setViewingClaim(null);
+          }}
+          itemId={viewingClaim.itemId}
+          itemTitle={viewingClaim.itemTitle}
+          slug={viewingClaim.registrySlug}
+          isAuthenticated
+          existingClaim={{
+            id: viewingClaim.claimId,
+            deliveryOptionId: viewingClaim.deliveryOptionId,
+          }}
+        />
       )}
     </div>
   );

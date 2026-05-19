@@ -198,12 +198,12 @@ describe("ItemCard", () => {
     expect(screen.getByText("Claimed")).toBeInTheDocument();
   });
 
-  it("shows unclaim button when logged-in user has claimed", () => {
+  it("shows view claim button when logged-in user has claimed", () => {
     renderCard(
       { claims: [makeClaim({ claimerUserId: "user-1" })] },
       { id: "user-1", email: "a@b.com", displayName: "Alice" },
     );
-    expect(screen.getByRole("button", { name: /unclaim/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /view claim/i })).toBeInTheDocument();
   });
 
   it("fund item shows Contribute button instead of Claim", () => {

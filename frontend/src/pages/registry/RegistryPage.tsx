@@ -100,6 +100,7 @@ export function RegistryPage(): React.ReactElement {
     item: ItemResponse;
     maxAmount: number | null;
     quantityClaimed: number;
+    existingClaim?: { id: string; deliveryOptionId: string | null };
   } | null>(null);
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const { toggle: toggleClaimDialog, transitioning: claimTransitioning } =
@@ -109,6 +110,13 @@ export function RegistryPage(): React.ReactElement {
     [user, allClaims],
   );
   const claimedItemIds = useMemo(() => new Set(allClaims.map((c) => c.itemId)), [allClaims]);
+  // Frozen while dialog is open so a successful claim doesn't re-sort the list mid-interaction.
+  const [sortClaimedIds, setSortClaimedIds] = useState<Set<string>>(claimedItemIds);
+  useEffect(() => {
+    if (!claimDialogOpen) {
+      setSortClaimedIds(claimedItemIds);
+    }
+  }, [claimDialogOpen, claimedItemIds]);
   const categoriesWithItems = useMemo(
     () =>
       categories
@@ -117,18 +125,18 @@ export function RegistryPage(): React.ReactElement {
           catItems: items
             .filter((i) => i.categoryId === cat.id)
             .sort(
-              (a, b) => (claimedItemIds.has(a.id) ? 1 : 0) - (claimedItemIds.has(b.id) ? 1 : 0),
+              (a, b) => (sortClaimedIds.has(a.id) ? 1 : 0) - (sortClaimedIds.has(b.id) ? 1 : 0),
             ),
         }))
         .filter(({ catItems }) => catItems.length > 0),
-    [categories, items, claimedItemIds],
+    [categories, items, sortClaimedIds],
   );
   const uncategorizedItems = useMemo(
     () =>
       items
         .filter((i) => i.categoryId === null)
-        .sort((a, b) => (claimedItemIds.has(a.id) ? 1 : 0) - (claimedItemIds.has(b.id) ? 1 : 0)),
-    [items, claimedItemIds],
+        .sort((a, b) => (sortClaimedIds.has(a.id) ? 1 : 0) - (sortClaimedIds.has(b.id) ? 1 : 0)),
+    [items, sortClaimedIds],
   );
 
   useEffect(() => {
@@ -141,6 +149,16 @@ export function RegistryPage(): React.ReactElement {
     quantityClaimed: number,
   ): void => {
     setClaimTarget({ item, maxAmount, quantityClaimed });
+    toggleClaimDialog(true);
+  };
+
+  const handleViewClaim = (item: ItemResponse, claim: ClaimResponse): void => {
+    setClaimTarget({
+      item,
+      maxAmount: null,
+      quantityClaimed: 0,
+      existingClaim: { id: claim.id, deliveryOptionId: claim.deliveryOptionId },
+    });
     toggleClaimDialog(true);
   };
 
@@ -376,6 +394,7 @@ export function RegistryPage(): React.ReactElement {
                   onOpenClaim={(maxAmount, quantityClaimed) => {
                     handleOpenClaim(item, maxAmount, quantityClaimed);
                   }}
+                  onViewClaim={(claim) => handleViewClaim(item, claim)}
                   isClaimDialogOpen={
                     claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
                   }
@@ -401,6 +420,7 @@ export function RegistryPage(): React.ReactElement {
                   onOpenClaim={(maxAmount, quantityClaimed) => {
                     handleOpenClaim(item, maxAmount, quantityClaimed);
                   }}
+                  onViewClaim={(claim) => handleViewClaim(item, claim)}
                   isClaimDialogOpen={
                     claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
                   }
@@ -481,6 +501,9 @@ export function RegistryPage(): React.ReactElement {
           isFund={claimTarget.item.itemType === "FUND"}
           quantityDesired={claimTarget.item.quantityDesired}
           quantityClaimed={claimTarget.quantityClaimed}
+          {...(claimTarget.existingClaim !== undefined
+            ? { existingClaim: claimTarget.existingClaim }
+            : {})}
           viewTransitionName={
             claimTransitioning && claimDialogOpen ? `claim-item-${claimTarget.item.id}` : undefined
           }

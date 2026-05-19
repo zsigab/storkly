@@ -13,9 +13,17 @@ import {
 } from "@/hooks/useDeliveryOptions";
 
 const DELIVERY_TYPES = [
-  { type: "IN_PERSON", label: "Give in person", description: "" },
-  { type: "SHIP_TO_ADDRESS", label: "Ship to address", description: "Address sent by email" },
-  { type: "MONEY_TRANSFER", label: "Send money", description: "Payment details sent by email" },
+  { type: "IN_PERSON", label: "Give in person", instructions: "" },
+  {
+    type: "SHIP_TO_ADDRESS",
+    label: "Ship to address",
+    instructions: "Enter the address here that claimers should send the gift to.",
+  },
+  {
+    type: "MONEY_TRANSFER",
+    label: "Send money",
+    instructions: "Enter payment info that claimers should send their contribution to.",
+  },
 ] as const;
 
 type DeliveryType = (typeof DELIVERY_TYPES)[number]["type"];
@@ -34,8 +42,8 @@ function defaultLabelFor(type: string): string {
   return DELIVERY_TYPES.find((p) => p.type === type)?.label ?? "";
 }
 
-function defaultDescFor(type: string): string {
-  return DELIVERY_TYPES.find((p) => p.type === type)?.description ?? "";
+function defaultInstructionsFor(type: string): string {
+  return DELIVERY_TYPES.find((p) => p.type === type)?.instructions ?? "";
 }
 
 // ─── Option row ───────────────────────────────────────────────────────────────
@@ -44,14 +52,17 @@ function OptionRow({
   option,
   slug,
   sortOrder,
+  isPublic,
 }: {
   option: DeliveryOption;
   slug: string;
   sortOrder: number;
+  isPublic: boolean;
 }): React.ReactElement {
   const save = useSaveDeliveryOption(slug);
   const del = useDeleteDeliveryOption(slug);
 
+  const isMarkdownType = option.type === "MONEY_TRANSFER" || option.type === "SHIP_TO_ADDRESS";
   const [editing, setEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(option.label);
   const [editDesc, setEditDesc] = useState(option.description ?? "");
@@ -178,15 +189,34 @@ function OptionRow({
             </div>
 
             <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor={`edit-desc-${option.id}`}>
-                Description <span className="text-muted-foreground font-normal">(optional)</span>
-              </label>
-              <Input
-                id={`edit-desc-${option.id}`}
-                value={editDesc}
-                onChange={(e) => setEditDesc(e.target.value)}
-                placeholder="Short note shown to visitors"
-              />
+              <div className="flex flex-wrap items-baseline gap-1">
+                <label className="text-sm font-medium" htmlFor={`edit-desc-${option.id}`}>
+                  {isMarkdownType ? "Instructions" : "Description"}{" "}
+                  <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                {isMarkdownType && (
+                  <span className="text-muted-foreground text-xs">
+                    — shown to the claimer after they claim
+                    {isPublic && "; for guests, sent by email after confirmation"}
+                  </span>
+                )}
+              </div>
+              {isMarkdownType ? (
+                <textarea
+                  id={`edit-desc-${option.id}`}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  placeholder="e.g. Bank: ACME Bank, Account: 1234-5678, Name: Jane Doe"
+                  className="border-input bg-background w-full min-h-32 rounded-md border px-3 py-2 text-sm"
+                />
+              ) : (
+                <Input
+                  id={`edit-desc-${option.id}`}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  placeholder="Short note shown to visitors"
+                />
+              )}
             </div>
 
             {save.isError && (
@@ -235,21 +265,25 @@ function AddOptionForm({
   slug,
   nextSortOrder,
   onDone,
+  isPublic,
 }: {
   slug: string;
   nextSortOrder: number;
   onDone: () => void;
+  isPublic: boolean;
 }): React.ReactElement {
   const save = useSaveDeliveryOption(slug);
   const [type, setType] = useState<DeliveryType>("IN_PERSON");
   const [label, setLabel] = useState(defaultLabelFor("IN_PERSON"));
-  const [description, setDescription] = useState(defaultDescFor("IN_PERSON"));
+  const [description, setDescription] = useState(defaultInstructionsFor("IN_PERSON"));
   const [labelError, setLabelError] = useState("");
+
+  const isMarkdownType = type === "MONEY_TRANSFER" || type === "SHIP_TO_ADDRESS";
 
   const handleTypeChange = (next: DeliveryType): void => {
     setType(next);
     setLabel(defaultLabelFor(next));
-    setDescription(defaultDescFor(next));
+    setDescription(defaultInstructionsFor(next));
     setLabelError("");
   };
 
@@ -310,15 +344,34 @@ function AddOptionForm({
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium" htmlFor="add-desc">
-          Description <span className="text-muted-foreground font-normal">(optional)</span>
-        </label>
-        <Input
-          id="add-desc"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Short note shown to visitors"
-        />
+        <div className="flex flex-wrap items-baseline gap-1">
+          <label className="text-sm font-medium" htmlFor="add-desc">
+            {isMarkdownType ? "Instructions" : "Description"}{" "}
+            <span className="text-muted-foreground font-normal">(optional)</span>
+          </label>
+          {isMarkdownType && (
+            <span className="text-muted-foreground text-xs">
+              — shown to the claimer after they claim
+              {isPublic && "; for guests, sent by email after confirmation"}
+            </span>
+          )}
+        </div>
+        {isMarkdownType ? (
+          <textarea
+            id="add-desc"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="e.g. Bank: ACME Bank, Account: 1234-5678, Name: Jane Doe"
+            className="border-input bg-background w-full min-h-32 rounded-md border px-3 py-2 text-sm"
+          />
+        ) : (
+          <Input
+            id="add-desc"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Short note shown to visitors"
+          />
+        )}
       </div>
 
       {save.isError && (
@@ -343,9 +396,10 @@ function AddOptionForm({
 
 interface DeliveryOptionsConfigProps {
   slug: string;
+  isPublic: boolean;
 }
 
-export function DeliveryOptionsConfig({ slug }: DeliveryOptionsConfigProps): React.ReactElement {
+export function DeliveryOptionsConfig({ slug, isPublic }: DeliveryOptionsConfigProps): React.ReactElement {
   const { data: options = [], isPending } = useDeliveryOptions(slug);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -374,7 +428,7 @@ export function DeliveryOptionsConfig({ slug }: DeliveryOptionsConfigProps): Rea
       {options.length > 0 && (
         <div className="space-y-2">
           {options.map((option, idx) => (
-            <OptionRow key={option.id} option={option} slug={slug} sortOrder={idx} />
+            <OptionRow key={option.id} option={option} slug={slug} sortOrder={idx} isPublic={isPublic} />
           ))}
         </div>
       )}
@@ -391,6 +445,7 @@ export function DeliveryOptionsConfig({ slug }: DeliveryOptionsConfigProps): Rea
               slug={slug}
               nextSortOrder={options.length}
               onDone={() => setShowAdd(false)}
+              isPublic={isPublic}
             />
           </div>
         </div>

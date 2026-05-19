@@ -117,6 +117,7 @@ export interface MyClaimResponse {
   quantityClaimed: number;
   amountContributed: number | null;
   percentageContributed: number | null;
+  deliveryOptionId: string | null;
   deliveryType: string | null;
   claimedAt: string;
   receivedAt: string | null;
@@ -383,6 +384,15 @@ export type paths = {
   "/api/claims/{id}/receive": {
     patch: {
       parameters: { path: { id: string } };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
+  "/api/claims/{id}/delivery-option": {
+    patch: {
+      parameters: { path: { id: string } };
+      requestBody: {
+        content: { "application/json": { deliveryOptionId?: string | null } };
+      };
       responses: { 204: Empty; 403: Err; 404: Err };
     };
   };

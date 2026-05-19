@@ -154,6 +154,7 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                         CLAIM.QUANTITY_CLAIMED,
                         CLAIM.AMOUNT_CONTRIBUTED,
                         CLAIM.PERCENTAGE_CONTRIBUTED,
+                        CLAIM.DELIVERY_OPTION_ID,
                         CLAIM.DELIVERY_TYPE,
                         CLAIM.CLAIMED_AT,
                         CLAIM.RECEIVED_AT)
@@ -177,6 +178,7 @@ public class ClaimRepositoryImpl implements ClaimRepository {
                         .quantityClaimed(r.get(CLAIM.QUANTITY_CLAIMED))
                         .amountContributed(r.get(CLAIM.AMOUNT_CONTRIBUTED))
                         .percentageContributed(r.get(CLAIM.PERCENTAGE_CONTRIBUTED))
+                        .deliveryOptionId(r.get(CLAIM.DELIVERY_OPTION_ID))
                         .deliveryType(r.get(CLAIM.DELIVERY_TYPE))
                         .claimedAt(r.get(CLAIM.CLAIMED_AT))
                         .receivedAt(r.get(CLAIM.RECEIVED_AT))
@@ -204,6 +206,15 @@ public class ClaimRepositoryImpl implements ClaimRepository {
         dsl.update(CLAIM)
                 .set(CLAIM.RECEIVED_AT, receivedAt)
                 .set(CLAIM.AMOUNT_RECEIVED, CLAIM.AMOUNT_CONTRIBUTED)
+                .where(CLAIM.ID.eq(id))
+                .execute();
+    }
+
+    @Override
+    public void updateDeliveryOption(UUID id, java.util.UUID deliveryOptionId, String deliveryType) {
+        dsl.update(CLAIM)
+                .set(CLAIM.DELIVERY_OPTION_ID, deliveryOptionId)
+                .set(CLAIM.DELIVERY_TYPE, deliveryType)
                 .where(CLAIM.ID.eq(id))
                 .execute();
     }

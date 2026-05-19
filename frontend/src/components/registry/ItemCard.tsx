@@ -5,9 +5,6 @@ import { Collapsible } from "@/components/common/Collapsible";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getApiErrorMessage } from "@/api/helpers";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useUnclaimItem } from "@/hooks/useClaims";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDateTime, formatPrice } from "@/lib/utils";
 import type { ClaimResponse, ItemFlag, ItemResponse } from "@/api/schema";
@@ -59,6 +56,7 @@ interface ItemCardProps {
   claims?: ClaimResponse[];
   claimHistory?: ClaimResponse[];
   onOpenClaim: (maxAmount: number | null, quantityClaimed: number) => void;
+  onViewClaim?: (claim: ClaimResponse) => void;
   isClaimDialogOpen: boolean;
   isClaimTransitioning: boolean;
 }
@@ -72,12 +70,12 @@ export const ItemCard = memo(function ItemCard({
   claims = [],
   claimHistory = [],
   onOpenClaim,
+  onViewClaim,
   isClaimDialogOpen,
   isClaimTransitioning,
 }: ItemCardProps): React.ReactElement {
   const { user } = useAuth();
   const isTransitioning = useViewTransitionState(`/r/${slug}/items/${item.id}/edit`);
-  const unclaimItem = useUnclaimItem(slug);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const claimTransitionName = `claim-item-${item.id}`;
@@ -126,9 +124,11 @@ export const ItemCard = memo(function ItemCard({
   const myAuthenticatedClaim =
     user !== null ? claims.find((c) => c.claimerUserId === user.id) : undefined;
 
-  const handleUnclaim = (): void => {
+  const handleViewClaim = (): void => {
     if (myAuthenticatedClaim === undefined) return;
-    unclaimItem.mutate({ value: myAuthenticatedClaim.id, itemId: item.id });
+    if (onViewClaim !== undefined) {
+      onViewClaim(myAuthenticatedClaim);
+    }
   };
 
   const handleClaimOpen = (): void => {
@@ -240,16 +240,16 @@ export const ItemCard = memo(function ItemCard({
           size="sm"
           onClick={(e) => {
             e.stopPropagation();
-            handleUnclaim();
+            handleViewClaim();
           }}
-          disabled={unclaimItem.isPending || myAuthenticatedClaim.receivedAt !== null}
+          disabled={myAuthenticatedClaim.receivedAt !== null}
           title={
             myAuthenticatedClaim.receivedAt !== null
               ? "This gift has already been received"
               : undefined
           }
         >
-          {unclaimItem.isPending ? "Releasing…" : "Unclaim"}
+          View claim
         </Button>
       );
     }
@@ -523,11 +523,6 @@ export const ItemCard = memo(function ItemCard({
         </div>
       )}
 
-      {unclaimItem.isError && (
-        <Alert variant="destructive">
-          <AlertDescription>{getApiErrorMessage(unclaimItem.error)}</AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 });
