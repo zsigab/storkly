@@ -66,8 +66,11 @@
     --input: 30 20% 88%;
     --ring: 15 85% 68%;
     --radius: 0.75rem;
-    /* Glass tokens */
-    --glass-card-alpha: 0.15;
+    /* Glass tokens.
+       --glass-card-alpha was 0.15 with backdrop-filter, which mixed in live
+       page content for visual density. The inner-blur layer (ADR-015) only
+       blurs the theme bg, so we need a higher alpha to read as frosted. */
+    --glass-card-alpha: 0.95;
     --glass-border-color: rgba(255, 255, 255, 0.5);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   }
@@ -100,7 +103,7 @@
     --border: 220 12% 28%;
     --input: 220 12% 28%;
     --ring: 15 75% 65%;
-    --glass-card-alpha: 0.25;
+    --glass-card-alpha: 0.98;
     --glass-border-color: rgba(255, 255, 255, 0.18);
     --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   }
@@ -251,7 +254,7 @@
     background-size: var(--bg-size, auto);
     background-position: var(--bg-position, 0 0);
     background-attachment: fixed;
-    filter: blur(16px) saturate(180%);
+    filter: blur(8px) saturate(130%);
     pointer-events: none;
   }
 
