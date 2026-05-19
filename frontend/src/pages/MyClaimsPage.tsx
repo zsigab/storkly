@@ -13,7 +13,6 @@ export function MyClaimsPage(): React.ReactElement {
   const { data: claims, isLoading, isError, error } = useMyActiveClaims();
   const [viewingClaim, setViewingClaim] = useState<MyClaimResponse | null>(null);
 
-
   if (isLoading) {
     return (
       <div className="mx-auto max-w-2xl py-8">

@@ -47,7 +47,8 @@ public class EmailService {
     }
 
     @Async
-    public void sendDeliveryInstructions(String to, String name, String itemTitle, String deliveryLabel, String instructions) {
+    public void sendDeliveryInstructions(
+            String to, String name, String itemTitle, String deliveryLabel, String instructions) {
         String subject = "Delivery instructions for \"" + itemTitle + "\"";
         String body = "Hi " + name + ",\n\n"
                 + "Here are the delivery instructions for your claim on \"" + itemTitle + "\" ("

@@ -229,17 +229,12 @@ public class ClaimService {
             if (option != null
                     && option.description() != null
                     && !option.description().isBlank()
-                    && ("MONEY_TRANSFER".equals(option.type())
-                            || "SHIP_TO_ADDRESS".equals(option.type()))) {
+                    && ("MONEY_TRANSFER".equals(option.type()) || "SHIP_TO_ADDRESS".equals(option.type()))) {
                 Item item = itemRepository
                         .findById(claim.itemId())
                         .orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
                 emailService.sendDeliveryInstructions(
-                        claim.claimerEmail(),
-                        claim.claimerName(),
-                        item.title(),
-                        option.label(),
-                        option.description());
+                        claim.claimerEmail(), claim.claimerName(), item.title(), option.label(), option.description());
             }
         }
     }
@@ -357,8 +352,8 @@ public class ClaimService {
                     .orElseThrow(() -> new ItemNotFoundException(claim.itemId()));
             Registry registry = registryRepository
                     .findById(item.registryId())
-                    .orElseThrow(
-                            () -> new RegistryNotFoundException(item.registryId().toString()));
+                    .orElseThrow(() ->
+                            new RegistryNotFoundException(item.registryId().toString()));
             if (!option.registryId().equals(registry.id())) {
                 throw new AccessDeniedException("Delivery option does not belong to this registry");
             }

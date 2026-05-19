@@ -207,7 +207,7 @@ function OptionRow({
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
                   placeholder="e.g. Bank: ACME Bank, Account: 1234-5678, Name: Jane Doe"
-                  className="border-input bg-background w-full min-h-32 rounded-md border px-3 py-2 text-sm"
+                  className="border-input bg-background min-h-32 w-full rounded-md border px-3 py-2 text-sm"
                 />
               ) : (
                 <Input
@@ -362,7 +362,7 @@ function AddOptionForm({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g. Bank: ACME Bank, Account: 1234-5678, Name: Jane Doe"
-            className="border-input bg-background w-full min-h-32 rounded-md border px-3 py-2 text-sm"
+            className="border-input bg-background min-h-32 w-full rounded-md border px-3 py-2 text-sm"
           />
         ) : (
           <Input
@@ -399,7 +399,10 @@ interface DeliveryOptionsConfigProps {
   isPublic: boolean;
 }
 
-export function DeliveryOptionsConfig({ slug, isPublic }: DeliveryOptionsConfigProps): React.ReactElement {
+export function DeliveryOptionsConfig({
+  slug,
+  isPublic,
+}: DeliveryOptionsConfigProps): React.ReactElement {
   const { data: options = [], isPending } = useDeliveryOptions(slug);
   const [showAdd, setShowAdd] = useState(false);
 
@@ -428,7 +431,13 @@ export function DeliveryOptionsConfig({ slug, isPublic }: DeliveryOptionsConfigP
       {options.length > 0 && (
         <div className="space-y-2">
           {options.map((option, idx) => (
-            <OptionRow key={option.id} option={option} slug={slug} sortOrder={idx} isPublic={isPublic} />
+            <OptionRow
+              key={option.id}
+              option={option}
+              slug={slug}
+              sortOrder={idx}
+              isPublic={isPublic}
+            />
           ))}
         </div>
       )}
