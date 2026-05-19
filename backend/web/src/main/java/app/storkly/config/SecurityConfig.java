@@ -91,6 +91,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/events/{id}/public")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.authorizationRequestRepository(

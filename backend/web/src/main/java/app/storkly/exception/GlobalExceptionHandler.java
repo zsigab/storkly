@@ -9,6 +9,7 @@ import app.storkly.domain.exception.ClaimNotReceivedException;
 import app.storkly.domain.exception.ContributionExceedsRemainingException;
 import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
+import app.storkly.domain.exception.EventNotFoundException;
 import app.storkly.domain.exception.FullClaimBlockedByPartialException;
 import app.storkly.domain.exception.FundContributionRequiredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
@@ -43,7 +44,8 @@ public class GlobalExceptionHandler {
         RegistryNotFoundException.class,
         CategoryNotFoundException.class,
         ItemNotFoundException.class,
-        ClaimNotFoundException.class
+        ClaimNotFoundException.class,
+        EventNotFoundException.class
     })
     public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
