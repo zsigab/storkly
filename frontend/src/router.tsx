@@ -19,6 +19,9 @@ import { OAuthCallbackPage } from "@/pages/auth/OAuthCallbackPage";
 import { UnclaimPage } from "@/pages/UnclaimPage";
 import { ConfirmClaimPage } from "@/pages/ConfirmClaimPage";
 import { MyClaimsPage } from "@/pages/MyClaimsPage";
+import { PublicEventPage } from "@/pages/PublicEventPage";
+import { CreateEventPage } from "@/pages/event/CreateEventPage";
+import { EditEventPage } from "@/pages/event/EditEventPage";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +38,7 @@ export const router = createBrowserRouter([
       { path: "forgot-password", element: <ForgotPasswordPage /> },
       { path: "reset-password", element: <ResetPasswordPage /> },
       { path: "r/:slug", element: <RegistryPage /> },
+      { path: "e/:id", element: <PublicEventPage /> },
       {
         element: (
           <RequireAuth>
@@ -50,6 +54,8 @@ export const router = createBrowserRouter([
           { path: "r/:slug/items/new", element: <AddItemPage /> },
           { path: "r/:slug/items/:id/edit", element: <EditItemPage /> },
           { path: "r/:slug/claims", element: <ClaimsDashboardPage /> },
+          { path: "event/new", element: <CreateEventPage /> },
+          { path: "e/:id/edit", element: <EditEventPage /> },
         ],
       },
     ],

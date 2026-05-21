@@ -83,7 +83,7 @@ export function useUpdateEvent(id: string) {
       if (data === undefined || data === null) throw new Error("No response from server");
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["event", id] });
       void queryClient.invalidateQueries({ queryKey: ["events"] });
     },
@@ -96,10 +96,10 @@ export function useDeleteEvent() {
 
   return useMutation({
     mutationFn: async (eventId: string) => {
-      const { error } = await api.DELETE("/api/events/{id}", {
+      const { error: deleteError } = await api.DELETE("/api/events/{id}", {
         params: { path: { id: eventId } },
       });
-      if (error !== undefined) throw error;
+      if (deleteError !== undefined) throw deleteError;
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["events"] });
