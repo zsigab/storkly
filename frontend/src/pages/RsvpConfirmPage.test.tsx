@@ -87,5 +87,4 @@ describe("RsvpConfirmPage", () => {
       expect(screen.getByText(/confirmation link is invalid/i)).toBeInTheDocument();
     });
   });
-
 });
