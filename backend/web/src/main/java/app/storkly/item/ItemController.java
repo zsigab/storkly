@@ -6,6 +6,7 @@ import app.storkly.item.dto.ItemCreateRequest;
 import app.storkly.item.dto.ItemResponse;
 import app.storkly.item.dto.ItemUpdateRequest;
 import app.storkly.service.item.ItemService;
+import app.storkly.service.item.ItemWithEvents;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -43,7 +44,7 @@ public class ItemController {
             @PathVariable String slug,
             @RequestBody @Valid ItemCreateRequest request,
             @AuthenticationPrincipal User currentUser) {
-        Item item = itemService.create(
+        ItemWithEvents result = itemService.create(
                 slug,
                 request.title(),
                 request.description(),
@@ -57,8 +58,9 @@ public class ItemController {
                 request.notes(),
                 request.alreadyOwned(),
                 request.itemType(),
+                request.eventId(),
                 currentUser.id());
-        return toResponse(item);
+        return toResponse(result);
     }
 
     @GetMapping("/api/items/{id}")
@@ -72,7 +74,7 @@ public class ItemController {
             @PathVariable UUID id,
             @RequestBody @Valid ItemUpdateRequest request,
             @AuthenticationPrincipal User currentUser) {
-        Item item = itemService.update(
+        ItemWithEvents result = itemService.update(
                 id,
                 request.title(),
                 request.description(),
@@ -87,8 +89,9 @@ public class ItemController {
                 request.sortOrder(),
                 request.alreadyOwned(),
                 request.itemType(),
+                request.eventId(),
                 currentUser.id());
-        return toResponse(item);
+        return toResponse(result);
     }
 
     @DeleteMapping("/api/items/{id}")
@@ -97,7 +100,8 @@ public class ItemController {
         itemService.delete(id, currentUser.id());
     }
 
-    private ItemResponse toResponse(Item item) {
+    private ItemResponse toResponse(ItemWithEvents result) {
+        Item item = result.item();
         return new ItemResponse(
                 item.id(),
                 item.registryId(),
@@ -118,6 +122,7 @@ public class ItemController {
                 item.alreadyOwned(),
                 item.itemType(),
                 item.createdAt(),
-                item.updatedAt());
+                item.updatedAt(),
+                result.linkedEventIds());
     }
 }

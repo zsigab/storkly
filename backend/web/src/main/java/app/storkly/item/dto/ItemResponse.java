@@ -5,6 +5,7 @@ import app.storkly.domain.item.ItemType;
 import app.storkly.domain.item.SourceSite;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
@@ -28,4 +29,5 @@ public record ItemResponse(
         boolean alreadyOwned,
         ItemType itemType,
         OffsetDateTime createdAt,
-        OffsetDateTime updatedAt) {}
+        OffsetDateTime updatedAt,
+        List<UUID> linkedEventIds) {}

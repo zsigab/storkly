@@ -20,6 +20,7 @@ import app.storkly.domain.item.DeliveryOptionRepository;
 import app.storkly.domain.item.Item;
 import app.storkly.domain.item.ItemFlag;
 import app.storkly.domain.item.ItemRepository;
+import app.storkly.domain.item.ItemType;
 import app.storkly.domain.item.SourceSite;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
@@ -328,6 +329,30 @@ class ClaimServiceTest {
                 .isInstanceOf(ClaimAlreadyReceivedException.class);
 
         verify(claimRepository, never()).release(any(), any());
+    }
+
+    @Test
+    void claim_eventItem_throwsAccessDenied() {
+        UUID itemId = UUID.randomUUID();
+        Item eventItem = Item.builder()
+                .id(itemId)
+                .registryId(registryId)
+                .addedByUserId(ownerId)
+                .sourceSite(SourceSite.MANUAL)
+                .title("Baby Shower")
+                .quantityDesired(1)
+                .flag(ItemFlag.EXACT_ONLY)
+                .itemType(ItemType.EVENT)
+                .sortOrder(0)
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now())
+                .build();
+        when(itemRepository.findById(itemId)).thenReturn(Optional.of(eventItem));
+
+        assertThatThrownBy(() -> claimService.claim(itemId, "Alice", "alice@example.com", 1, null, null, null, null))
+                .isInstanceOf(AccessDeniedException.class);
+
+        verify(claimRepository, never()).save(any());
     }
 
     private Registry publicRegistry() {

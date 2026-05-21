@@ -20,4 +20,5 @@ public record ItemUpdateRequest(
         @Nullable String notes,
         @Nullable Integer sortOrder,
         @Nullable Boolean alreadyOwned,
-        @Nullable ItemType itemType) {}
+        @Nullable ItemType itemType,
+        @Nullable UUID eventId) {}

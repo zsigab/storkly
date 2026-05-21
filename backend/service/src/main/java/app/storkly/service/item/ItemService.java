@@ -1,6 +1,10 @@
 package app.storkly.service.item;
 
+import app.storkly.domain.event.EventRegistryItemRepository;
+import app.storkly.domain.event.EventRepository;
+import app.storkly.domain.event.RsvpRepository;
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.EventNotFoundException;
 import app.storkly.domain.exception.ItemHasClaimsException;
 import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.PriceReferenceBelowReceivedAmountException;
@@ -20,6 +24,8 @@ import app.storkly.service.registry.RegistryAccessService;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
@@ -35,25 +41,62 @@ public class ItemService {
     private final RegistryRepository registryRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
     private final RegistryAccessService registryAccessService;
+    private final EventRepository eventRepository;
+    private final EventRegistryItemRepository eventRegistryItemRepository;
+    private final RsvpRepository rsvpRepository;
 
-    public List<Item> findByRegistry(String slug, @Nullable UUID currentUserId) {
+    public List<ItemWithEvents> findByRegistry(String slug, @Nullable UUID currentUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
         assertReadAccess(registry, currentUserId);
-        return itemRepository.findByRegistryId(registry.id());
+
+        List<Item> items = itemRepository.findByRegistryId(registry.id());
+        Map<UUID, List<UUID>> linkedEventIds = eventRegistryItemRepository.findAllByRegistryId(registry.id());
+
+        boolean isOwnerOrCoOwner = currentUserId != null
+                && (registry.ownerId().equals(currentUserId)
+                        || coOwnerRepository.isCoOwner(registry.id(), currentUserId));
+
+        Set<UUID> confirmedEventIds = Set.of();
+        if (!isOwnerOrCoOwner && currentUserId != null) {
+            confirmedEventIds = rsvpRepository.findConfirmedEventIdsByUserId(currentUserId);
+        }
+
+        final Set<UUID> confirmedEventIdsFinal = confirmedEventIds;
+
+        return items.stream()
+                .filter(item -> {
+                    if (item.itemType() != ItemType.EVENT) {
+                        return true;
+                    }
+                    if (isOwnerOrCoOwner) {
+                        return true;
+                    }
+                    List<UUID> eventIds = linkedEventIds.getOrDefault(item.id(), List.of());
+                    if (eventIds.isEmpty()) {
+                        return false;
+                    }
+                    if (currentUserId == null) {
+                        return false;
+                    }
+                    return eventIds.stream().anyMatch(confirmedEventIdsFinal::contains);
+                })
+                .map(item -> new ItemWithEvents(item, linkedEventIds.getOrDefault(item.id(), List.of())))
+                .toList();
     }
 
-    public Item findById(UUID id, @Nullable UUID currentUserId) {
+    public ItemWithEvents findById(UUID id, @Nullable UUID currentUserId) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new ItemNotFoundException(id));
         Registry registry = registryRepository
                 .findById(item.registryId())
                 .orElseThrow(
                         () -> new RegistryNotFoundException(item.registryId().toString()));
         assertReadAccess(registry, currentUserId);
-        return item;
+        List<UUID> linkedEventIds = eventRegistryItemRepository.findEventIdsByItemId(item.id());
+        return new ItemWithEvents(item, linkedEventIds);
     }
 
     @Transactional
-    public Item create(
+    public ItemWithEvents create(
             String slug,
             String title,
             @Nullable String description,
@@ -67,14 +110,15 @@ public class ItemService {
             @Nullable String notes,
             boolean alreadyOwned,
             ItemType itemType,
+            @Nullable UUID eventId,
             UUID addedByUserId) {
         Registry registry = registryRepository.findBySlug(slug).orElseThrow(() -> new RegistryNotFoundException(slug));
         assertWriteAccess(registry, addedByUserId);
-        validateFundConstraints(itemType, alreadyOwned);
+        validateItemTypeConstraints(itemType, alreadyOwned);
         List<Item> existing = itemRepository.findByRegistryId(registry.id());
         int nextSortOrder = existing.stream().mapToInt(Item::sortOrder).max().orElse(-1) + 1;
         OffsetDateTime now = OffsetDateTime.now();
-        return itemRepository.save(Item.builder()
+        Item saved = itemRepository.save(Item.builder()
                 .registryId(registry.id())
                 .categoryId(categoryId)
                 .addedByUserId(addedByUserId)
@@ -94,10 +138,14 @@ public class ItemService {
                 .createdAt(now)
                 .updatedAt(now)
                 .build());
+        if (itemType == ItemType.EVENT && eventId != null) {
+            linkEvent(eventId, saved.id(), addedByUserId);
+        }
+        return new ItemWithEvents(saved, eventRegistryItemRepository.findEventIdsByItemId(saved.id()));
     }
 
     @Transactional
-    public Item update(
+    public ItemWithEvents update(
             UUID id,
             @Nullable String title,
             @Nullable String description,
@@ -112,6 +160,7 @@ public class ItemService {
             @Nullable Integer sortOrder,
             @Nullable Boolean alreadyOwned,
             @Nullable ItemType itemType,
+            @Nullable UUID eventId,
             UUID currentUserId) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new ItemNotFoundException(id));
         Registry registry = registryRepository
@@ -121,7 +170,7 @@ public class ItemService {
         assertWriteAccess(registry, currentUserId);
         ItemType effectiveItemType = itemType != null ? itemType : item.itemType();
         boolean effectiveAlreadyOwned = alreadyOwned != null ? alreadyOwned : item.alreadyOwned();
-        validateFundConstraints(effectiveItemType, effectiveAlreadyOwned);
+        validateItemTypeConstraints(effectiveItemType, effectiveAlreadyOwned);
         List<Claim> activeClaims = claimRepository.findActiveByItemId(item.id());
         if (quantityDesired != null) {
             int totalClaimed =
@@ -139,7 +188,7 @@ public class ItemService {
                 throw new PriceReferenceBelowReceivedAmountException(totalReceived);
             }
         }
-        return itemRepository.save(Item.builder()
+        Item saved = itemRepository.save(Item.builder()
                 .id(item.id())
                 .registryId(item.registryId())
                 .categoryId(categoryId != null ? categoryId : item.categoryId())
@@ -161,6 +210,12 @@ public class ItemService {
                 .createdAt(item.createdAt())
                 .updatedAt(OffsetDateTime.now())
                 .build());
+        if (effectiveItemType != ItemType.EVENT) {
+            eventRegistryItemRepository.deleteByItemId(saved.id());
+        } else if (eventId != null) {
+            linkEvent(eventId, saved.id(), currentUserId);
+        }
+        return new ItemWithEvents(saved, eventRegistryItemRepository.findEventIdsByItemId(saved.id()));
     }
 
     @Transactional
@@ -177,6 +232,16 @@ public class ItemService {
         itemRepository.deleteById(id);
     }
 
+    private void linkEvent(UUID eventId, UUID itemId, UUID callerUserId) {
+        app.storkly.domain.event.Event event =
+                eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
+        if (!event.ownerId().equals(callerUserId)) {
+            throw new AccessDeniedException("You can only link items to your own events");
+        }
+        eventRegistryItemRepository.deleteByItemId(itemId);
+        eventRegistryItemRepository.saveLink(eventId, itemId);
+    }
+
     private void assertReadAccess(Registry registry, @Nullable UUID currentUserId) {
         registryAccessService.assertReadAccess(registry, currentUserId);
     }
@@ -187,9 +252,12 @@ public class ItemService {
         }
     }
 
-    private void validateFundConstraints(ItemType itemType, boolean alreadyOwned) {
+    private void validateItemTypeConstraints(ItemType itemType, boolean alreadyOwned) {
         if (itemType == ItemType.FUND && alreadyOwned) {
             throw new AccessDeniedException("Fund items cannot be marked as already owned");
+        }
+        if (itemType == ItemType.EVENT && alreadyOwned) {
+            throw new AccessDeniedException("Event items cannot be marked as already owned");
         }
     }
 }

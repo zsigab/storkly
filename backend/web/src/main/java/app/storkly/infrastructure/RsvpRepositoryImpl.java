@@ -8,6 +8,7 @@ import app.storkly.domain.generated.tables.records.RsvpRecord;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.DSLContext;
@@ -119,6 +120,14 @@ public class RsvpRepositoryImpl implements RsvpRepository {
                 .confirmedAt(record.getConfirmedAt())
                 .createdAt(record.getCreatedAt())
                 .build();
+    }
+
+    @Override
+    public Set<UUID> findConfirmedEventIdsByUserId(UUID userId) {
+        return dsl.select(RSVP.EVENT_ID)
+                .from(RSVP)
+                .where(RSVP.USER_ID.eq(userId).and(RSVP.CONFIRMED_AT.isNotNull()))
+                .fetchSet(RSVP.EVENT_ID);
     }
 
     private RsvpRecord toRecord(Rsvp rsvp) {
