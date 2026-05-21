@@ -43,11 +43,17 @@ function renderPage() {
   );
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   vi.clearAllMocks();
   Object.defineProperty(window, "localStorage", {
     value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
     writable: true,
+  });
+  const { api } = await import("@/api");
+  vi.mocked(api.GET).mockResolvedValue({
+    data: [],
+    error: undefined,
+    response: new Response(),
   });
 });
 
@@ -161,5 +167,99 @@ describe("DashboardPage", () => {
     });
     renderPage();
     await waitFor(() => expect(screen.getByText(/unauthorized/i)).toBeInTheDocument());
+  });
+
+  it("renders 'My Dashboard' heading", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: [],
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("My Dashboard")).toBeInTheDocument());
+  });
+
+  it("has link to create a new event", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: [],
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() =>
+      expect(screen.getByRole("link", { name: /new event/i })).toHaveAttribute(
+        "href",
+        "/event/new",
+      ),
+    );
+  });
+
+  it("shows Events section when events exist", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(async (path: string) => {
+      if (path === "/api/registries") {
+        return {
+          data: [],
+          error: undefined,
+          response: new Response(),
+        };
+      }
+      if (path === "/api/events") {
+        return {
+          data: [
+            {
+              id: "event-1",
+              title: "Baby Shower",
+              eventDate: "2024-06-15T14:00:00Z",
+              location: "123 Main St",
+              rsvpToken: "token-abc",
+              attendees: [
+                {
+                  id: "rsvp-1",
+                  displayName: "Alice",
+                  email: "alice@example.com",
+                  attending: true,
+                  confirmedAt: "2024-01-01T00:00:00Z",
+                },
+              ],
+              createdAt: "2024-01-01T00:00:00Z",
+            },
+          ],
+          error: undefined,
+          response: new Response(),
+        };
+      }
+      return { data: null, error: undefined, response: new Response() };
+    });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText("Events")).toBeInTheDocument();
+      expect(screen.getByText("Baby Shower")).toBeInTheDocument();
+    });
+  });
+
+  it("shows events error message when events API fails", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(async (path: string) => {
+      if (path === "/api/registries") {
+        return {
+          data: [],
+          error: undefined,
+          response: new Response(),
+        };
+      }
+      if (path === "/api/events") {
+        return {
+          data: undefined,
+          error: { status: 500, detail: "Server error" },
+          response: new Response(),
+        };
+      }
+      return { data: null, error: undefined, response: new Response() };
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText(/server error/i)).toBeInTheDocument());
   });
 });
