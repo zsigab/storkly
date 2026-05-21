@@ -22,6 +22,8 @@ import { MyClaimsPage } from "@/pages/MyClaimsPage";
 import { PublicEventPage } from "@/pages/PublicEventPage";
 import { CreateEventPage } from "@/pages/event/CreateEventPage";
 import { EditEventPage } from "@/pages/event/EditEventPage";
+import { RsvpPage } from "@/pages/RsvpPage";
+import { RsvpConfirmPage } from "@/pages/RsvpConfirmPage";
 
 export const router = createBrowserRouter([
   {
@@ -39,6 +41,8 @@ export const router = createBrowserRouter([
       { path: "reset-password", element: <ResetPasswordPage /> },
       { path: "r/:slug", element: <RegistryPage /> },
       { path: "e/:id", element: <PublicEventPage /> },
+      { path: "rsvp/confirm", element: <RsvpConfirmPage /> },
+      { path: "rsvp/:token", element: <RsvpPage /> },
       {
         element: (
           <RequireAuth>
