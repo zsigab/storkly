@@ -91,7 +91,7 @@ export function DashboardPage(): React.ReactElement {
         <div className="space-y-4">
           <h2 className="text-xl font-semibold tracking-tight">Events</h2>
           <div className="space-y-3">
-            {events.map((event) => (
+            {(events ?? []).map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>

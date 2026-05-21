@@ -47,6 +47,7 @@ const base: ItemResponse = {
   sortOrder: 0,
   alreadyOwned: false,
   itemType: "PRODUCT",
+  linkedEventIds: [],
   createdAt: "2024-01-01T00:00:00Z",
   updatedAt: "2024-01-01T00:00:00Z",
 };
@@ -272,5 +273,10 @@ describe("ItemCard", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /edit claim/i }));
     expect(onViewClaim).toHaveBeenCalledWith(expect.objectContaining({ claimerUserId: "user-1" }));
+  });
+
+  it("event item shows Event badge", () => {
+    renderCard({ item: { ...base, itemType: "EVENT", linkedEventIds: ["event-1"] } });
+    expect(screen.getByText("Event")).toBeInTheDocument();
   });
 });

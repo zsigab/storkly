@@ -55,6 +55,7 @@ export function useCreateItem(slug: string) {
       notes: string | null;
       alreadyOwned: boolean;
       itemType: ItemType;
+      eventId: string | null;
     }): Promise<ItemResponse> => {
       const { data, error } = await api.POST("/api/registries/{slug}/items", {
         params: { path: { slug } },
@@ -92,6 +93,7 @@ export function useUpdateItem(slug: string) {
       notes: string | null;
       alreadyOwned: boolean;
       itemType: ItemType;
+      eventId: string | null;
     }): Promise<ItemResponse> => {
       const { data, error } = await api.PATCH("/api/items/{id}", {
         params: { path: { id } },
