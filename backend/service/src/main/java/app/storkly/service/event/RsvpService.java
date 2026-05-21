@@ -9,6 +9,7 @@ import app.storkly.service.auth.TurnstileService;
 import app.storkly.service.email.EmailService;
 import app.storkly.util.TokenUtil;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -86,5 +87,15 @@ public class RsvpService {
         // Confirm the RSVP
         rsvpRepository.confirm(rsvp.id(), OffsetDateTime.now());
         return rsvp.eventId();
+    }
+
+    public Event getEventByRsvpToken(String rsvpToken) {
+        return eventRepository
+                .findByRsvpToken(rsvpToken)
+                .orElseThrow(() -> new InvalidTokenException("Invalid RSVP token"));
+    }
+
+    public List<Rsvp> getAttendeesByEventId(UUID eventId) {
+        return rsvpRepository.findByEventId(eventId);
     }
 }

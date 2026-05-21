@@ -346,4 +346,65 @@ class RsvpServiceTest {
 
         assertThatThrownBy(() -> rsvpService.confirmRsvp(confirmToken)).isInstanceOf(InvalidTokenException.class);
     }
+
+    @Test
+    void getEventByRsvpToken_validToken_returnsEvent() {
+        String rsvpToken = "valid-rsvp-token";
+        UUID eventId = UUID.randomUUID();
+
+        Event event = Event.builder()
+                .id(eventId)
+                .ownerId(UUID.randomUUID())
+                .title("Test Event")
+                .eventDate(OffsetDateTime.now().plusDays(1))
+                .rsvpToken(rsvpToken)
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+
+        Event result = rsvpService.getEventByRsvpToken(rsvpToken);
+
+        assertThat(result).isEqualTo(event);
+    }
+
+    @Test
+    void getEventByRsvpToken_invalidToken_throwsInvalidToken() {
+        String rsvpToken = "invalid-token";
+
+        when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> rsvpService.getEventByRsvpToken(rsvpToken)).isInstanceOf(InvalidTokenException.class);
+    }
+
+    @Test
+    void getAttendeesByEventId_returnsAttendees() {
+        UUID eventId = UUID.randomUUID();
+        Rsvp rsvp1 = Rsvp.builder()
+                .id(UUID.randomUUID())
+                .eventId(eventId)
+                .email("attendee1@example.com")
+                .displayName("Attendee 1")
+                .attending(true)
+                .confirmationToken("token1")
+                .confirmedAt(OffsetDateTime.now())
+                .createdAt(OffsetDateTime.now())
+                .build();
+        Rsvp rsvp2 = Rsvp.builder()
+                .id(UUID.randomUUID())
+                .eventId(eventId)
+                .email("attendee2@example.com")
+                .displayName("Attendee 2")
+                .attending(false)
+                .confirmationToken("token2")
+                .confirmedAt(OffsetDateTime.now())
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(rsvpRepository.findByEventId(eventId)).thenReturn(java.util.List.of(rsvp1, rsvp2));
+
+        java.util.List<Rsvp> result = rsvpService.getAttendeesByEventId(eventId);
+
+        assertThat(result).containsExactly(rsvp1, rsvp2);
+    }
 }

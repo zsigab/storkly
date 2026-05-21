@@ -2,8 +2,10 @@ package app.storkly;
 
 import static app.storkly.domain.generated.Tables.CATEGORY;
 import static app.storkly.domain.generated.Tables.CLAIM;
+import static app.storkly.domain.generated.Tables.EVENT;
 import static app.storkly.domain.generated.Tables.ITEM;
 import static app.storkly.domain.generated.Tables.REGISTRY;
+import static app.storkly.domain.generated.Tables.RSVP;
 import static app.storkly.domain.generated.Tables.USER;
 
 import app.storkly.domain.generated.enums.ItemFlag;
@@ -43,6 +45,7 @@ public class DataSeeder {
         log.info("Seeding sample data...");
         seedUsers();
         seedRegistry();
+        seedEvent();
         log.info("Seed data inserted successfully");
     }
 
@@ -277,6 +280,47 @@ public class DataSeeder {
                 .set(CLAIM.QUANTITY_CLAIMED, 2)
                 .set(CLAIM.CLAIM_TOKEN, "seed-claim-token-00000000000000000000001")
                 .set(CLAIM.CLAIMED_AT, OffsetDateTime.now())
+                .execute();
+    }
+
+    private void seedEvent() {
+        UUID ownerId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        UUID eventId = UUID.fromString("00000000-0000-0000-0000-000000000050");
+
+        dsl.insertInto(EVENT)
+                .set(EVENT.ID, eventId)
+                .set(EVENT.OWNER_ID, ownerId)
+                .set(EVENT.TITLE, "Baby Shower Celebration")
+                .set(EVENT.EVENT_DATE, OffsetDateTime.now().plusDays(7))
+                .set(EVENT.LOCATION, "Community Center, 123 Main St")
+                .set(EVENT.RSVP_TOKEN, "seed-rsvp-token-event001")
+                .set(EVENT.CREATED_AT, OffsetDateTime.now())
+                .execute();
+
+        // RSVP 1: attending, confirmed
+        dsl.insertInto(RSVP)
+                .set(RSVP.ID, UUID.fromString("00000000-0000-0000-0000-000000000060"))
+                .set(RSVP.EVENT_ID, eventId)
+                .set(RSVP.USER_ID, (UUID) null)
+                .set(RSVP.EMAIL, "attendee1@example.com")
+                .set(RSVP.DISPLAY_NAME, "Alice Johnson")
+                .set(RSVP.ATTENDING, true)
+                .set(RSVP.CONFIRMATION_TOKEN, "seed-confirm-token-rsvp0001")
+                .set(RSVP.CONFIRMED_AT, OffsetDateTime.now())
+                .set(RSVP.CREATED_AT, OffsetDateTime.now())
+                .execute();
+
+        // RSVP 2: not attending, confirmed
+        dsl.insertInto(RSVP)
+                .set(RSVP.ID, UUID.fromString("00000000-0000-0000-0000-000000000061"))
+                .set(RSVP.EVENT_ID, eventId)
+                .set(RSVP.USER_ID, (UUID) null)
+                .set(RSVP.EMAIL, "attendee2@example.com")
+                .set(RSVP.DISPLAY_NAME, "Bob Smith")
+                .set(RSVP.ATTENDING, false)
+                .set(RSVP.CONFIRMATION_TOKEN, "seed-confirm-token-rsvp0002")
+                .set(RSVP.CONFIRMED_AT, OffsetDateTime.now())
+                .set(RSVP.CREATED_AT, OffsetDateTime.now())
                 .execute();
     }
 }

@@ -6,7 +6,9 @@ import app.storkly.event.dto.EventCreateRequest;
 import app.storkly.event.dto.EventPublicResponse;
 import app.storkly.event.dto.EventResponse;
 import app.storkly.event.dto.EventUpdateRequest;
+import app.storkly.event.dto.RsvpResponse;
 import app.storkly.service.event.EventService;
+import app.storkly.service.event.RsvpService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class EventController {
 
     private final EventService eventService;
+    private final RsvpService rsvpService;
 
     @GetMapping("/api/events")
     public List<EventResponse> list(@AuthenticationPrincipal User currentUser) {
@@ -72,13 +75,17 @@ public class EventController {
     }
 
     private EventResponse toResponse(Event event) {
+        List<RsvpResponse> attendees = rsvpService.getAttendeesByEventId(event.id()).stream()
+                .map(rsvp -> new RsvpResponse(
+                        rsvp.id(), rsvp.displayName(), rsvp.email(), rsvp.attending(), rsvp.confirmedAt()))
+                .toList();
         return new EventResponse(
                 event.id(),
                 event.title(),
                 event.eventDate(),
                 event.location(),
                 event.rsvpToken(),
-                List.of(),
+                attendees,
                 event.createdAt());
     }
 

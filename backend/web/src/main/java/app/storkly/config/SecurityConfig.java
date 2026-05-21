@@ -93,6 +93,12 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/events/{id}/public")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rsvp/{rsvpToken}")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/rsvp/{rsvpToken}")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rsvp/confirm/{confirmToken}")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.authorizationRequestRepository(
