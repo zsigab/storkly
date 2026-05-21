@@ -49,7 +49,7 @@ export interface CategoryResponse {
 }
 
 export type ItemFlag = "EXACT_ONLY" | "SIMILAR_OK" | "SIMILAR_CHEAPER";
-export type ItemType = "PRODUCT" | "FUND";
+export type ItemType = "PRODUCT" | "FUND" | "EVENT";
 export type SourceSite = "LAZADA_PH" | "SHOPEE_PH" | "AMAZON" | "GALAXUS" | "SM" | "ROBINSONS" | "MANUAL";
 
 export interface LinkPreviewResponse {
@@ -86,6 +86,7 @@ export interface ItemResponse {
   sortOrder: number;
   alreadyOwned: boolean;
   itemType: ItemType;
+  linkedEventIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -131,6 +132,42 @@ export interface DeliveryOptionResponse {
   description: string | null;
   enabled: boolean;
   sortOrder: number;
+}
+
+export interface EventResponse {
+  id: string;
+  title: string;
+  eventDate: string;
+  location: string | null;
+  rsvpToken: string;
+  attendees: RsvpResponse[];
+  createdAt: string;
+}
+
+export interface EventPublicResponse {
+  id: string;
+  title: string;
+  eventDate: string;
+  location: string | null;
+}
+
+export interface RsvpResponse {
+  id: string;
+  displayName: string;
+  email: string;
+  attending: boolean;
+  confirmedAt: string | null;
+}
+
+export interface RsvpPublicEventResponse {
+  eventId: string;
+  eventTitle: string;
+  eventDate: string;
+  location: string | null;
+}
+
+export interface RsvpConfirmResponse {
+  eventId: string;
 }
 
 /** Used for endpoints that return 200/201 with no body. */
@@ -298,6 +335,8 @@ export type paths = {
             quantityDesired: number;
             notes?: string | null;
             alreadyOwned?: boolean;
+            itemType?: ItemType;
+            eventId?: string | null;
           };
         };
       };
@@ -326,6 +365,8 @@ export type paths = {
             notes?: string | null;
             sortOrder?: number | null;
             alreadyOwned?: boolean | null;
+            itemType?: ItemType | null;
+            eventId?: string | null;
           };
         };
       };
@@ -489,6 +530,78 @@ export type paths = {
         content: { "application/json": { displayName: string } };
       };
       responses: { 200: Ok<TokenResponse>; 401: Err; 422: Err };
+    };
+  };
+  "/api/events": {
+    get: {
+      responses: { 200: Ok<EventResponse[]>; 401: Err };
+    };
+    post: {
+      requestBody: {
+        content: {
+          "application/json": {
+            title: string;
+            eventDate: string;
+            location?: string | null;
+          };
+        };
+      };
+      responses: { 201: Ok<EventResponse>; 401: Err; 422: Err };
+    };
+  };
+  "/api/events/{id}": {
+    get: {
+      parameters: { path: { id: string } };
+      responses: { 200: Ok<EventResponse>; 401: Err; 403: Err; 404: Err };
+    };
+    patch: {
+      parameters: { path: { id: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            title?: string | null;
+            eventDate?: string | null;
+            location?: string | null;
+          };
+        };
+      };
+      responses: { 200: Ok<EventResponse>; 401: Err; 403: Err; 404: Err; 422: Err };
+    };
+    delete: {
+      parameters: { path: { id: string } };
+      responses: { 204: Empty; 401: Err; 403: Err; 404: Err };
+    };
+  };
+  "/api/events/{id}/public": {
+    get: {
+      parameters: { path: { id: string } };
+      responses: { 200: Ok<EventPublicResponse>; 404: Err };
+    };
+  };
+  "/api/rsvp/{rsvpToken}": {
+    get: {
+      parameters: { path: { rsvpToken: string } };
+      responses: { 200: Ok<RsvpPublicEventResponse>; 404: Err };
+    };
+    post: {
+      parameters: { path: { rsvpToken: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            displayName: string;
+            email: string;
+            attending: boolean;
+            captchaToken: string;
+          };
+        };
+      };
+      responses: { 200: Empty; 404: Err; 422: Err };
+    };
+  };
+  "/api/rsvp/confirm/{confirmToken}": {
+    get: {
+      parameters: { path: { confirmToken: string } };
+      responses: { 200: Ok<RsvpConfirmResponse>; 404: Err };
     };
   };
 };
