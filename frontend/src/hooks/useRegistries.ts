@@ -29,6 +29,24 @@ export function useRegistry(slug: string) {
   });
 }
 
+export function usePrefetchRegistry() {
+  const queryClient = useQueryClient();
+  return (slug: string): void => {
+    if (slug.length === 0) return;
+    void queryClient.prefetchQuery({
+      queryKey: ["registry", slug],
+      queryFn: async (): Promise<RegistryResponse> => {
+        const { data, error } = await api.GET("/api/registries/{slug}", {
+          params: { path: { slug } },
+        });
+        if (error !== undefined) throw error;
+        if (data === undefined || data === null) throw new Error("No response from server");
+        return data;
+      },
+    });
+  };
+}
+
 export function useCreateRegistry() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();

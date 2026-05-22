@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,36 +47,9 @@ export function RegistryHeader({
   onUnsubscribe,
   isUnsubscribing,
 }: Props): React.ReactElement {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const titleMeasureRef = useRef<HTMLSpanElement>(null);
-  const buttonsRef = useRef<HTMLDivElement>(null);
-  const [isSingleLine, setIsSingleLine] = useState(false);
   const [showGetLink, setShowGetLink] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
-
-  const measure = useCallback(() => {
-    const container = containerRef.current;
-    const titleSpan = titleMeasureRef.current;
-    if (!container || !titleSpan) return;
-    const containerWidth = container.offsetWidth;
-    const titleNaturalWidth = titleSpan.offsetWidth;
-    const buttonsWidth = buttonsRef.current?.offsetWidth ?? 0;
-    setIsSingleLine(titleNaturalWidth + 16 + buttonsWidth <= containerWidth);
-  }, []);
-
-  useLayoutEffect(() => {
-    const observer = new ResizeObserver(measure);
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
-    }
-    measure();
-    return () => observer.disconnect();
-  }, [measure]);
-
-  useLayoutEffect(() => {
-    measure();
-  }, [registry.name, isOwner, isSubscriber, hasUnsubscribed, measure]);
 
   const visibilityBadge = (
     <Badge variant={registry.visibility === "PUBLIC" ? "secondary" : "outline"}>
@@ -89,7 +62,7 @@ export function RegistryHeader({
   );
 
   const actionButtons = (
-    <div ref={buttonsRef} className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {isOwner && (
         <>
           <Button
@@ -178,33 +151,14 @@ export function RegistryHeader({
 
   return (
     <>
-      <div ref={containerRef} className="relative">
-        {/* Hidden span measures the title's natural single-line width */}
-        <span
-          ref={titleMeasureRef}
-          className="pointer-events-none invisible absolute text-3xl font-semibold tracking-tight whitespace-nowrap"
-          aria-hidden="true"
-        >
-          {registry.name}
-        </span>
-
-        {isSingleLine ? (
-          <>
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl font-semibold tracking-tight break-words">{registry.name}</h1>
-              {actionButtons}
-            </div>
-            <div className="mt-1">{visibilityBadge}</div>
-          </>
-        ) : (
-          <>
-            <h1 className="text-3xl font-semibold tracking-tight break-words">{registry.name}</h1>
-            <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-              {visibilityBadge}
-              {actionButtons}
-            </div>
-          </>
-        )}
+      <div>
+        <div className="grid grid-cols-[1fr_auto] items-start gap-4">
+          <h1 className="min-w-0 text-3xl font-semibold tracking-tight break-words">
+            {registry.name}
+          </h1>
+          {actionButtons}
+        </div>
+        <div className="mt-1">{visibilityBadge}</div>
       </div>
 
       {isOwner && registry.visibility !== "HIDDEN" && (

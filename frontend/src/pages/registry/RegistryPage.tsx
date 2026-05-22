@@ -245,12 +245,13 @@ export function RegistryPage(): React.ReactElement {
         className="bg-card border-border space-y-4 rounded-xl border p-6 shadow-md"
         style={{
           viewTransitionName:
-            (fromRegistryCard &&
+            registry !== undefined &&
+            ((fromRegistryCard &&
               isIncomingTransition &&
               !isClaimsTransitioning &&
               !isEditTransitioning &&
               !isAddItemTransitioning) ||
-            isDashboardTransitioning
+              isDashboardTransitioning)
               ? `registry-card-${safeSlug}`
               : undefined,
         }}

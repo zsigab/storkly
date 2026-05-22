@@ -1,5 +1,6 @@
 import { Link, useViewTransitionState } from "react-router";
 import { Badge } from "@/components/ui/badge";
+import { usePrefetchRegistry } from "@/hooks/useRegistries";
 import type { RegistryResponse } from "@/api/schema";
 
 interface RegistryCardProps {
@@ -9,6 +10,7 @@ interface RegistryCardProps {
 export function RegistryCard({ registry }: RegistryCardProps): React.ReactElement {
   const isForwardTransitioning = useViewTransitionState(`/r/${registry.slug}`);
   const isDashboardTransitioning = useViewTransitionState("/dashboard");
+  const prefetchRegistry = usePrefetchRegistry();
 
   return (
     <Link
@@ -16,6 +18,8 @@ export function RegistryCard({ registry }: RegistryCardProps): React.ReactElemen
       viewTransition
       state={{ fromRegistryCard: true }}
       className="block"
+      onMouseEnter={() => prefetchRegistry(registry.slug)}
+      onFocus={() => prefetchRegistry(registry.slug)}
     >
       <div
         className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors"

@@ -2,6 +2,10 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { RegistryCard } from "./RegistryCard";
 
+vi.mock("@/hooks/useRegistries", () => ({
+  usePrefetchRegistry: () => () => undefined,
+}));
+
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return {
