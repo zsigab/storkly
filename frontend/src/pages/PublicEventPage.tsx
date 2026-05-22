@@ -48,51 +48,54 @@ export function PublicEventPage(): React.ReactElement {
       : undefined;
 
   return (
-    <GlassCardLayout {...(viewTransitionName ? { viewTransitionName } : {})}>
-      <div className="space-y-6">
-        {user !== null && (
-          <Link
-            to="/dashboard"
-            viewTransition
-            className="text-muted-foreground hover:text-foreground block text-sm"
-          >
-            ← Back to dashboard
-          </Link>
-        )}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-semibold tracking-tight">{event.title}</h1>
-            <p className="text-muted-foreground text-lg">{formatDateTime(event.eventDate)}</p>
-            {event.location !== null && (
-              <p className="text-muted-foreground text-lg">{event.location}</p>
-            )}
-          </div>
-          {eventFull !== undefined && (
+    <>
+      {/* Header card — sole view-transition target so the morph stays header-sized */}
+      <GlassCardLayout {...(viewTransitionName ? { viewTransitionName } : {})}>
+        <div className="space-y-6">
+          {user !== null && (
             <Link
-              to={`/e/${safeId}/edit`}
+              to="/dashboard"
               viewTransition
-              className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-              style={{
-                viewTransitionName: isEditTransitioning ? "event-edit" : undefined,
-              }}
+              className="text-muted-foreground hover:text-foreground block text-sm"
             >
-              Edit
+              ← Back to dashboard
             </Link>
           )}
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-4xl font-semibold tracking-tight">{event.title}</h1>
+              <p className="text-muted-foreground text-lg">{formatDateTime(event.eventDate)}</p>
+              {event.location !== null && (
+                <p className="text-muted-foreground text-lg">{event.location}</p>
+              )}
+            </div>
+            {eventFull !== undefined && (
+              <Link
+                to={`/e/${safeId}/edit`}
+                viewTransition
+                className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                style={{
+                  viewTransitionName: isEditTransitioning ? "event-edit" : undefined,
+                }}
+              >
+                Edit
+              </Link>
+            )}
+          </div>
+
+          {event.description !== null && (
+            <div className="border-t pt-4">
+              <MarkdownContent content={event.description} className="text-muted-foreground" />
+            </div>
+          )}
         </div>
+      </GlassCardLayout>
 
-        {event.description !== null && (
-          <div className="border-t pt-4">
-            <MarkdownContent content={event.description} className="text-muted-foreground" />
-          </div>
-        )}
-
-        {eventFull !== undefined && (
-          <div className="border-t pt-6">
-            <EventAttendeesTable attendees={eventFull.attendees} />
-          </div>
-        )}
-      </div>
-    </GlassCardLayout>
+      {eventFull !== undefined && (
+        <div className="mx-auto max-w-2xl px-8 pb-10">
+          <EventAttendeesTable attendees={eventFull.attendees} />
+        </div>
+      )}
+    </>
   );
 }
