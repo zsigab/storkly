@@ -1,5 +1,6 @@
 import { Link, useViewTransitionState } from "react-router";
 import { Badge } from "@/components/ui/badge";
+import { usePrefetchPublicEvent } from "@/hooks/useEvents";
 import type { EventResponse } from "@/api/schema";
 import { formatDateTime } from "@/lib/utils";
 
@@ -11,9 +12,17 @@ export function EventCard({ event }: EventCardProps): React.ReactElement {
   const attendingCount = event.attendees.filter((a) => a.attending).length;
   const isForwardTransitioning = useViewTransitionState(`/e/${event.id}`);
   const isDashboardTransitioning = useViewTransitionState("/dashboard");
+  const prefetchPublicEvent = usePrefetchPublicEvent();
 
   return (
-    <Link to={`/e/${event.id}`} viewTransition state={{ fromEventCard: true }} className="block">
+    <Link
+      to={`/e/${event.id}`}
+      viewTransition
+      state={{ fromEventCard: true }}
+      className="block"
+      onMouseEnter={() => prefetchPublicEvent(event.id)}
+      onFocus={() => prefetchPublicEvent(event.id)}
+    >
       <div
         className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors"
         style={{

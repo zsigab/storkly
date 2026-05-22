@@ -23,6 +23,10 @@ vi.mock("react-router", async () => {
   };
 });
 
+vi.mock("@/hooks/useEvents", () => ({
+  usePrefetchPublicEvent: () => () => undefined,
+}));
+
 const baseEvent = {
   id: "event-1",
   title: "Baby Shower",

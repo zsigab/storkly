@@ -55,6 +55,24 @@ export function usePublicEvent(id: string) {
   });
 }
 
+export function usePrefetchPublicEvent() {
+  const queryClient = useQueryClient();
+  return (id: string): void => {
+    if (id.length === 0) return;
+    void queryClient.prefetchQuery({
+      queryKey: ["event", id, "public"],
+      queryFn: async () => {
+        const { data, error } = await api.GET("/api/events/{id}/public", {
+          params: { path: { id } },
+        });
+        if (error !== undefined) throw error;
+        if (data === undefined || data === null) throw new Error("No response from server");
+        return data;
+      },
+    });
+  };
+}
+
 export function useCreateEvent() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
