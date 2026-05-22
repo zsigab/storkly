@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, useViewTransitionState } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import type { EventResponse } from "@/api/schema";
 import { formatDateTime } from "@/lib/utils";
@@ -9,10 +9,20 @@ interface EventCardProps {
 
 export function EventCard({ event }: EventCardProps): React.ReactElement {
   const attendingCount = event.attendees.filter((a) => a.attending).length;
+  const isForwardTransitioning = useViewTransitionState(`/e/${event.id}`);
+  const isDashboardTransitioning = useViewTransitionState("/dashboard");
 
   return (
-    <Link to={`/e/${event.id}`} className="block">
-      <div className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors">
+    <Link to={`/e/${event.id}`} viewTransition state={{ fromEventCard: true }} className="block">
+      <div
+        className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors"
+        style={{
+          viewTransitionName:
+            isForwardTransitioning || isDashboardTransitioning
+              ? `event-card-${event.id}`
+              : undefined,
+        }}
+      >
         <div className="grid grid-cols-[1fr_auto] items-start gap-x-2">
           <h3 className="font-semibold break-words">{event.title}</h3>
           <Badge variant="secondary">{attendingCount} attending</Badge>

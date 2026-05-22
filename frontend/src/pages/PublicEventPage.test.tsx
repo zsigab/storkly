@@ -12,6 +12,8 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useParams: () => mockParams,
+    useLocation: () => ({ state: null }),
+    useViewTransitionState: () => false,
     Link: ({
       to,
       children,
