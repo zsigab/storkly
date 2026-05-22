@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormField } from "@/components/common/FormField";
+import { MarkdownToolbar } from "@/components/common/MarkdownToolbar";
+import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useTheme } from "@/hooks/useTheme";
+import { cn } from "@/lib/utils";
 import type { EventResponse } from "@/api/schema";
 
 const THEME_COLORS = [
@@ -36,6 +39,7 @@ const schema = z.object({
     .min(1, "Event date is required")
     .refine((v) => !isNaN(new Date(v).getTime()), "Invalid date"),
   location: z.string(),
+  description: z.string(),
   themeColor: z.enum(["peach", "blue", "pink", "green", "purple", "beige"]),
   themeBackground: z.enum(["none", "default", "stars", "both"]),
 });
@@ -48,6 +52,7 @@ interface EventFormProps {
     title: string;
     eventDate: string;
     location: string | null;
+    description: string | null;
     themeColor: string;
     themeBackground: string;
   }) => void;
@@ -91,6 +96,7 @@ export function EventForm({
       title: defaultValues?.title ?? "",
       eventDate: defaultValues?.eventDate ? toDateTimeLocal(defaultValues.eventDate) : "",
       location: defaultValues?.location ?? "",
+      description: defaultValues?.description ?? "",
       themeColor: (defaultValues?.themeColor ?? "peach") as ThemeColorValue,
       themeBackground: (defaultValues?.themeBackground ?? "none") as ThemeBackgroundValue,
     },
@@ -98,7 +104,11 @@ export function EventForm({
 
   const themeColor = watch("themeColor");
   const themeBackground = watch("themeBackground");
+  const descriptionValue = watch("description");
   const { setRegistryOverride, clearRegistryOverride } = useTheme();
+  const [previewMode, setPreviewMode] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const { ref: descriptionRegisterRef, ...descriptionRegistration } = register("description");
 
   useEffect(() => {
     setRegistryOverride(themeColor, themeBackground);
@@ -117,6 +127,7 @@ export function EventForm({
           title: values.title,
           eventDate: toIsoString(values.eventDate),
           location: values.location && values.location.trim().length > 0 ? values.location : null,
+          description: values.description.trim().length > 0 ? values.description.trim() : null,
           themeColor: values.themeColor,
           themeBackground: values.themeBackground,
         }),
@@ -139,6 +150,64 @@ export function EventForm({
           {...register("location")}
         />
       </FormField>
+
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="description" className="text-sm leading-none font-medium">
+            Description
+          </label>
+          <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
+            <div
+              className={cn(
+                "bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out",
+                previewMode && "translate-x-full",
+              )}
+              style={{ width: "calc(50% - 4px)" }}
+            />
+            {(["Edit", "Preview"] as const).map((tab) => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setPreviewMode(tab === "Preview")}
+                className={cn(
+                  "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  (tab === "Preview") === previewMode
+                    ? "text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+          <MarkdownToolbar
+            textareaRef={descriptionRef}
+            onChange={(v) => setValue("description", v)}
+            disabled={previewMode || isPending}
+          />
+        </div>
+        {previewMode ? (
+          <div className="border-input bg-background min-h-[120px] w-full rounded-md border px-3 py-2 text-sm">
+            {descriptionValue.trim().length > 0 ? (
+              <MarkdownContent content={descriptionValue} />
+            ) : (
+              <span className="text-muted-foreground italic">Nothing to preview</span>
+            )}
+          </div>
+        ) : (
+          <textarea
+            id="description"
+            rows={5}
+            placeholder="Optional — describe the event, schedule, what to bring…"
+            className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+            ref={(el) => {
+              descriptionRegisterRef(el);
+              descriptionRef.current = el;
+            }}
+            {...descriptionRegistration}
+          />
+        )}
+      </div>
 
       <div className="space-y-2">
         <p className="text-sm leading-none font-medium">Theme color</p>

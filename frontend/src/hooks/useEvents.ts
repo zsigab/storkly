@@ -64,6 +64,7 @@ export function useCreateEvent() {
       title: string;
       eventDate: string;
       location: string | null;
+      description?: string | null;
       themeColor?: string | null;
       themeBackground?: string | null;
     }): Promise<EventResponse> => {
@@ -87,6 +88,7 @@ export function useUpdateEvent(id: string) {
       title?: string | null;
       eventDate?: string | null;
       location?: string | null;
+      description?: string | null;
       themeColor?: string | null;
       themeBackground?: string | null;
     }): Promise<EventResponse> => {

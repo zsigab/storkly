@@ -12,6 +12,7 @@ public record Event(
         String title,
         OffsetDateTime eventDate,
         @Nullable String location,
+        @Nullable String description,
         String rsvpToken,
         String themeColor,
         String themeBackground,

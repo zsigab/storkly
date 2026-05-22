@@ -1,6 +1,7 @@
 import { Link, useParams, useLocation, useViewTransitionState } from "react-router";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { EventAttendeesTable } from "@/components/event/EventAttendeesTable";
+import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { usePublicEvent, useEvent } from "@/hooks/useEvents";
 import { useEventTheme } from "@/hooks/useEventTheme";
 import { useAuth } from "@/hooks/useAuth";
@@ -79,6 +80,12 @@ export function PublicEventPage(): React.ReactElement {
             </Link>
           )}
         </div>
+
+        {event.description !== null && (
+          <div className="border-t pt-4">
+            <MarkdownContent content={event.description} className="text-muted-foreground" />
+          </div>
+        )}
 
         {eventFull !== undefined && (
           <div className="border-t pt-6">

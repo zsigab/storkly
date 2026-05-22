@@ -35,6 +35,7 @@ const eventFixture = {
   title: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
   location: "123 Main St",
+  description: null,
   rsvpToken: "token-abc",
   attendees: [
     {
@@ -131,6 +132,7 @@ describe("EditEventPage", () => {
         body: {
           title: "Updated Shower",
           location: "123 Main St",
+          description: null,
           eventDate: expect.any(String),
           themeColor: "peach",
           themeBackground: "none",

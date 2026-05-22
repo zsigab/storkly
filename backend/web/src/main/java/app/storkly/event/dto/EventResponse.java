@@ -9,6 +9,7 @@ public record EventResponse(
         String title,
         OffsetDateTime eventDate,
         String location,
+        String description,
         String rsvpToken,
         List<RsvpResponse> attendees,
         String themeColor,

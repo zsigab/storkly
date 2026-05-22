@@ -53,6 +53,7 @@ public class EventController {
                 request.title(),
                 request.eventDate(),
                 request.location(),
+                request.description(),
                 request.themeColor(),
                 request.themeBackground(),
                 currentUser.id());
@@ -75,6 +76,7 @@ public class EventController {
                 request.title(),
                 request.eventDate(),
                 request.location(),
+                request.description(),
                 request.themeColor(),
                 request.themeBackground(),
                 currentUser.id());
@@ -103,6 +105,7 @@ public class EventController {
                 event.title(),
                 event.eventDate(),
                 event.location(),
+                event.description(),
                 event.rsvpToken(),
                 attendees,
                 event.themeColor(),
@@ -116,6 +119,7 @@ public class EventController {
                 event.title(),
                 event.eventDate(),
                 event.location(),
+                event.description(),
                 event.themeColor(),
                 event.themeBackground());
     }

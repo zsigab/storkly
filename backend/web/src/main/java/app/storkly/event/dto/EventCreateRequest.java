@@ -10,5 +10,6 @@ public record EventCreateRequest(
         @NotBlank String title,
         @NotNull OffsetDateTime eventDate,
         @Nullable String location,
+        @Nullable String description,
         @Nullable @Size(max = 16) String themeColor,
         @Nullable @Size(max = 16) String themeBackground) {}

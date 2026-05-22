@@ -139,6 +139,7 @@ export interface EventResponse {
   title: string;
   eventDate: string;
   location: string | null;
+  description: string | null;
   rsvpToken: string;
   attendees: RsvpResponse[];
   themeColor: string;
@@ -151,6 +152,7 @@ export interface EventPublicResponse {
   title: string;
   eventDate: string;
   location: string | null;
+  description: string | null;
   themeColor: string;
   themeBackground: string;
 }
