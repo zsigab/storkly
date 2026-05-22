@@ -33,6 +33,7 @@ const event: EventPublicResponse = {
   title: "Baby Shower",
   eventDate: "2025-06-15T14:00:00Z",
   location: "123 Main St",
+  description: null,
   themeColor: "peach",
   themeBackground: "none",
 };
