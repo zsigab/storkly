@@ -11,7 +11,7 @@ export function EventCard({ event }: EventCardProps): React.ReactElement {
   const attendingCount = event.attendees.filter((a) => a.attending).length;
 
   return (
-    <Link to={`/e/${event.id}/edit`} className="block">
+    <Link to={`/e/${event.id}`} className="block">
       <div className="border-border bg-card hover:bg-accent/50 rounded-lg border p-4 transition-colors">
         <div className="grid grid-cols-[1fr_auto] items-start gap-x-2">
           <h3 className="font-semibold break-words">{event.title}</h3>

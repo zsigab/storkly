@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { PublicEventPage } from "./PublicEventPage";
 
@@ -11,6 +12,19 @@ vi.mock("react-router", async () => {
   return {
     ...actual,
     useParams: () => mockParams,
+    Link: ({
+      to,
+      children,
+      className,
+    }: {
+      to: string;
+      children: React.ReactNode;
+      className?: string;
+    }) => (
+      <a href={to} className={className}>
+        {children}
+      </a>
+    ),
   };
 });
 
@@ -20,6 +34,27 @@ const publicEventFixture = {
   eventDate: "2024-06-15T14:00:00Z",
   location: "123 Main St",
 };
+
+const fullEventFixture = {
+  ...publicEventFixture,
+  rsvpToken: "token-abc",
+  attendees: [
+    {
+      id: "rsvp-1",
+      displayName: "Alice",
+      email: "alice@example.com",
+      attending: true,
+      confirmedAt: "2024-01-01T00:00:00Z",
+    },
+  ],
+  createdAt: "2024-01-01T00:00:00Z",
+};
+
+const storedUser = JSON.stringify({
+  id: "user-1",
+  email: "owner@example.com",
+  displayName: "Owner",
+});
 
 function makeClient() {
   return new QueryClient({
@@ -31,7 +66,9 @@ function renderPage() {
   render(
     <QueryClientProvider client={makeClient()}>
       <ThemeProvider>
-        <PublicEventPage />
+        <AuthProvider>
+          <PublicEventPage />
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>,
   );
@@ -39,6 +76,11 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  Object.defineProperty(window, "localStorage", {
+    value: { getItem: vi.fn().mockReturnValue(null), setItem: vi.fn(), removeItem: vi.fn() },
+    writable: true,
+    configurable: true,
+  });
   Object.defineProperty(window, "matchMedia", {
     value: vi
       .fn()
@@ -109,5 +151,46 @@ describe("PublicEventPage", () => {
     });
     renderPage();
     await waitFor(() => expect(screen.getByText(/event not found/i)).toBeInTheDocument());
+  });
+
+  it("does not show edit button for unauthenticated users", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValueOnce({
+      data: publicEventFixture,
+      error: undefined,
+      response: new Response(),
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Baby Shower")).toBeInTheDocument());
+    expect(screen.queryByRole("link", { name: /edit/i })).not.toBeInTheDocument();
+  });
+
+  it("shows edit button and attendees for the event owner", async () => {
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: vi.fn().mockReturnValue(storedUser),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      },
+      writable: true,
+      configurable: true,
+    });
+    const { api } = await import("@/api");
+    vi.mocked(api.GET)
+      .mockResolvedValueOnce({
+        data: publicEventFixture,
+        error: undefined,
+        response: new Response(),
+      })
+      .mockResolvedValueOnce({
+        data: fullEventFixture,
+        error: undefined,
+        response: new Response(),
+      });
+    renderPage();
+    await waitFor(() => expect(screen.getByRole("link", { name: /edit/i })).toBeInTheDocument());
+    expect(screen.getByRole("link", { name: /edit/i })).toHaveAttribute("href", "/e/event-1/edit");
+    await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
+    expect(screen.getByText("alice@example.com")).toBeInTheDocument();
   });
 });

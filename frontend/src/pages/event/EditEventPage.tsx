@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { EventForm } from "@/components/event/EventForm";
-import { EventAttendeesTable } from "@/components/event/EventAttendeesTable";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { useEvent, useUpdateEvent } from "@/hooks/useEvents";
 import type { ProblemDetail } from "@/api/schema";
@@ -102,10 +101,6 @@ export function EditEventPage(): React.ReactElement {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="border-t pt-6">
-        <EventAttendeesTable attendees={event.attendees} />
       </div>
     </GlassCardLayout>
   );

@@ -49,10 +49,10 @@ const baseEvent = {
 };
 
 describe("EventCard", () => {
-  it("renders event title with link to edit page", () => {
+  it("renders event title with link to event page", () => {
     render(<EventCard event={baseEvent} />);
     const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", "/e/event-1/edit");
+    expect(link).toHaveAttribute("href", "/e/event-1");
     expect(screen.getByText("Baby Shower")).toBeInTheDocument();
   });
 

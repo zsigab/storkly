@@ -14,7 +14,7 @@ export function useMyEvents() {
   });
 }
 
-export function useEvent(id: string) {
+export function useEvent(id: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["event", id],
     queryFn: async (): Promise<EventResponse> => {
@@ -25,7 +25,7 @@ export function useEvent(id: string) {
       if (data === undefined || data === null) throw new Error("No response from server");
       return data;
     },
-    enabled: id.length > 0,
+    enabled: id.length > 0 && (options?.enabled ?? true),
   });
 }
 

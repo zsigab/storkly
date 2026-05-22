@@ -175,19 +175,6 @@ describe("EditEventPage", () => {
     );
   });
 
-  it("renders attendees table", async () => {
-    const { api } = await import("@/api");
-    vi.mocked(api.GET).mockResolvedValueOnce({
-      data: eventFixture,
-      error: undefined,
-      response: new Response(),
-    });
-    renderPage();
-    await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
-    expect(screen.getByText("Bob")).toBeInTheDocument();
-    expect(screen.getByText("alice@example.com")).toBeInTheDocument();
-  });
-
   it("shows error state when event cannot be loaded", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockRejectedValueOnce(new Error("Not found"));
