@@ -19,7 +19,9 @@ import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.service.auth.TurnstileService;
 import app.storkly.service.email.EmailService;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -375,6 +377,47 @@ class RsvpServiceTest {
         when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> rsvpService.getEventByRsvpToken(rsvpToken)).isInstanceOf(InvalidTokenException.class);
+    }
+
+    @Test
+    void findAttendingEventsByUser_withAttendingRsvps_returnsEvents() {
+        UUID userId = UUID.randomUUID();
+        UUID eventId1 = UUID.randomUUID();
+        UUID eventId2 = UUID.randomUUID();
+
+        Event event1 = Event.builder()
+                .id(eventId1)
+                .ownerId(UUID.randomUUID())
+                .title("Party A")
+                .eventDate(OffsetDateTime.now().plusDays(1))
+                .rsvpToken("token-a")
+                .createdAt(OffsetDateTime.now())
+                .build();
+        Event event2 = Event.builder()
+                .id(eventId2)
+                .ownerId(UUID.randomUUID())
+                .title("Party B")
+                .eventDate(OffsetDateTime.now().plusDays(2))
+                .rsvpToken("token-b")
+                .createdAt(OffsetDateTime.now())
+                .build();
+
+        when(rsvpRepository.findConfirmedEventIdsByUserId(userId)).thenReturn(Set.of(eventId1, eventId2));
+        when(eventRepository.findByIds(Set.of(eventId1, eventId2))).thenReturn(List.of(event1, event2));
+
+        List<Event> result = rsvpService.findAttendingEventsByUser(userId);
+
+        assertThat(result).containsExactlyInAnyOrder(event1, event2);
+    }
+
+    @Test
+    void findAttendingEventsByUser_noRsvps_returnsEmpty() {
+        UUID userId = UUID.randomUUID();
+        when(rsvpRepository.findConfirmedEventIdsByUserId(userId)).thenReturn(Set.of());
+
+        List<Event> result = rsvpService.findAttendingEventsByUser(userId);
+
+        assertThat(result).isEmpty();
     }
 
     @Test

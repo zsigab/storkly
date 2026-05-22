@@ -2,6 +2,7 @@ package app.storkly.event;
 
 import app.storkly.auth.dto.LoginRequest;
 import app.storkly.event.dto.EventCreateRequest;
+import app.storkly.rsvp.dto.RsvpSubmitRequest;
 import java.time.OffsetDateTime;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
@@ -291,6 +292,116 @@ class EventControllerIntegrationTest {
                 .isEqualTo("Public Location")
                 .jsonPath("$.rsvpToken")
                 .doesNotExist();
+    }
+
+    @Test
+    void listRsvped_unauthenticated_returnsUnauthorized() {
+        restTestClient.get().uri("/api/events/rsvped").exchange().expectStatus().isUnauthorized();
+    }
+
+    @Test
+    void listRsvped_noRsvps_returnsEmpty() {
+        // owner@example.com never RSVPs as a guest in any test, so this is always empty
+        String authCookie = loginAndGetCookie("owner@example.com", "password");
+
+        restTestClient
+                .get()
+                .uri("/api/events/rsvped")
+                .cookie("access_token", authCookie)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json("[]");
+    }
+
+    @Test
+    void listRsvped_afterAttendingRsvp_returnsEvent() {
+        String ownerCookie = loginAndGetCookie("owner@example.com", "password");
+
+        EventCreateRequest createRequest =
+                new EventCreateRequest("Birthday Party", OffsetDateTime.now().plusDays(7), "Main Hall", null, null);
+
+        AtomicReference<String> rsvpTokenRef = new AtomicReference<>();
+
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", ownerCookie)
+                .body(createRequest)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.rsvpToken")
+                .value(token -> rsvpTokenRef.set((String) token));
+
+        String gifterCookie = loginAndGetCookie("gifter@example.com", "password");
+
+        restTestClient
+                .post()
+                .uri("/api/rsvp/" + rsvpTokenRef.get())
+                .cookie("access_token", gifterCookie)
+                .body(new RsvpSubmitRequest("Gifter", "gifter@example.com", true, "test-captcha"))
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        restTestClient
+                .get()
+                .uri("/api/events/rsvped")
+                .cookie("access_token", gifterCookie)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$[0].title")
+                .isEqualTo("Birthday Party")
+                .jsonPath("$[0].rsvpToken")
+                .doesNotExist();
+    }
+
+    @Test
+    void listRsvped_declinedRsvp_notReturned() {
+        String ownerCookie = loginAndGetCookie("owner@example.com", "password");
+
+        EventCreateRequest createRequest =
+                new EventCreateRequest("Declined Party", OffsetDateTime.now().plusDays(7), null, null, null);
+
+        AtomicReference<String> rsvpTokenRef = new AtomicReference<>();
+
+        restTestClient
+                .post()
+                .uri("/api/events")
+                .cookie("access_token", ownerCookie)
+                .body(createRequest)
+                .exchange()
+                .expectStatus()
+                .isCreated()
+                .expectBody()
+                .jsonPath("$.rsvpToken")
+                .value(token -> rsvpTokenRef.set((String) token));
+
+        String gifterCookie = loginAndGetCookie("gifter@example.com", "password");
+
+        restTestClient
+                .post()
+                .uri("/api/rsvp/" + rsvpTokenRef.get())
+                .cookie("access_token", gifterCookie)
+                .body(new RsvpSubmitRequest("Gifter", "gifter@example.com", false, "test-captcha"))
+                .exchange()
+                .expectStatus()
+                .isOk();
+
+        restTestClient
+                .get()
+                .uri("/api/events/rsvped")
+                .cookie("access_token", gifterCookie)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .json("[]");
     }
 
     @Test

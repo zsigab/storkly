@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RegistryCard } from "@/components/registry/RegistryCard";
 import { EventCard } from "@/components/event/EventCard";
+import { GuestEventCard } from "@/components/event/GuestEventCard";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { useMyRegistries } from "@/hooks/useRegistries";
-import { useMyEvents } from "@/hooks/useEvents";
+import { useMyEvents, useRsvpedEvents } from "@/hooks/useEvents";
 
 export function DashboardPage(): React.ReactElement {
   const { user } = useAuth();
@@ -17,6 +18,7 @@ export function DashboardPage(): React.ReactElement {
     isError: eventsIsError,
     error: eventsError,
   } = useMyEvents();
+  const { data: rsvpedEvents } = useRsvpedEvents();
   const isNewRegistryTransitioning = useViewTransitionState("/registry/new");
 
   const ownedRegistries = registries?.filter((r) => r.ownerId === user?.id) ?? [];
@@ -93,6 +95,17 @@ export function DashboardPage(): React.ReactElement {
           <div className="space-y-3">
             {(events ?? []).map((event) => (
               <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(rsvpedEvents ?? []).length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold tracking-tight">Going to</h2>
+          <div className="space-y-3">
+            {(rsvpedEvents ?? []).map((event) => (
+              <GuestEventCard key={event.id} event={event} />
             ))}
           </div>
         </div>

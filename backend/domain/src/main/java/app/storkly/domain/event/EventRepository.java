@@ -1,5 +1,6 @@
 package app.storkly.domain.event;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,6 +13,8 @@ public interface EventRepository {
     Optional<Event> findByRsvpToken(String rsvpToken);
 
     List<Event> findByOwnerId(UUID ownerId);
+
+    List<Event> findByIds(Collection<UUID> ids);
 
     void deleteById(UUID id);
 }

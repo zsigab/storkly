@@ -1,13 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { api } from "@/api";
-import type { EventResponse } from "@/api/schema";
+import type { EventPublicResponse, EventResponse } from "@/api/schema";
 
 export function useMyEvents() {
   return useQuery({
     queryKey: ["events"],
     queryFn: async (): Promise<EventResponse[]> => {
       const { data, error } = await api.GET("/api/events");
+      if (error !== undefined) throw error;
+      return data ?? [];
+    },
+  });
+}
+
+export function useRsvpedEvents() {
+  return useQuery({
+    queryKey: ["events", "rsvped"],
+    queryFn: async (): Promise<EventPublicResponse[]> => {
+      const { data, error } = await api.GET("/api/events/rsvped");
       if (error !== undefined) throw error;
       return data ?? [];
     },

@@ -536,6 +536,11 @@ export type paths = {
       responses: { 200: Ok<TokenResponse>; 401: Err; 422: Err };
     };
   };
+  "/api/events/rsvped": {
+    get: {
+      responses: { 200: Ok<EventPublicResponse[]>; 401: Err };
+    };
+  };
   "/api/events": {
     get: {
       responses: { 200: Ok<EventResponse[]>; 401: Err };

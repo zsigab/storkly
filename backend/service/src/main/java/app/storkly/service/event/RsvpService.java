@@ -11,6 +11,7 @@ import app.storkly.util.TokenUtil;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -97,5 +98,11 @@ public class RsvpService {
 
     public List<Rsvp> getAttendeesByEventId(UUID eventId) {
         return rsvpRepository.findByEventId(eventId);
+    }
+
+    public List<Event> findAttendingEventsByUser(UUID userId) {
+        Set<UUID> eventIds = rsvpRepository.findConfirmedEventIdsByUserId(userId);
+        if (eventIds.isEmpty()) return List.of();
+        return eventRepository.findByIds(eventIds);
     }
 }

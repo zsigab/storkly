@@ -262,4 +262,51 @@ describe("DashboardPage", () => {
     renderPage();
     await waitFor(() => expect(screen.getByText(/server error/i)).toBeInTheDocument());
   });
+
+  it("shows 'Going to' section when user has RSVPed attending events", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(async (path: string) => {
+      if (path === "/api/registries") {
+        return { data: [], error: undefined, response: new Response() };
+      }
+      if (path === "/api/events") {
+        return { data: [], error: undefined, response: new Response() };
+      }
+      if (path === "/api/events/rsvped") {
+        return {
+          data: [
+            {
+              id: "event-rsvp-1",
+              title: "Friend's Baby Shower",
+              eventDate: "2025-07-20T15:00:00Z",
+              location: "Community Hall",
+              themeColor: "peach",
+              themeBackground: "none",
+            },
+          ],
+          error: undefined,
+          response: new Response(),
+        };
+      }
+      return { data: null, error: undefined, response: new Response() };
+    });
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText("Going to")).toBeInTheDocument();
+      expect(screen.getByText("Friend's Baby Shower")).toBeInTheDocument();
+    });
+  });
+
+  it("does not show 'Going to' section when no RSVPed events", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(async (path: string) => {
+      if (path === "/api/registries") {
+        return { data: [], error: undefined, response: new Response() };
+      }
+      return { data: [], error: undefined, response: new Response() };
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("My Dashboard")).toBeInTheDocument());
+    expect(screen.queryByText("Going to")).not.toBeInTheDocument();
+  });
 });

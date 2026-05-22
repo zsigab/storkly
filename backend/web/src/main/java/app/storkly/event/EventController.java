@@ -38,6 +38,13 @@ public class EventController {
                 .toList();
     }
 
+    @GetMapping("/api/events/rsvped")
+    public List<EventPublicResponse> listRsvped(@AuthenticationPrincipal User currentUser) {
+        return rsvpService.findAttendingEventsByUser(currentUser.id()).stream()
+                .map(this::toPublicResponse)
+                .toList();
+    }
+
     @PostMapping("/api/events")
     @ResponseStatus(HttpStatus.CREATED)
     public EventResponse create(

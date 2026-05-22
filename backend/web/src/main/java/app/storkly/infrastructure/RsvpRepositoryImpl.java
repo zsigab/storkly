@@ -126,7 +126,10 @@ public class RsvpRepositoryImpl implements RsvpRepository {
     public Set<UUID> findConfirmedEventIdsByUserId(UUID userId) {
         return dsl.select(RSVP.EVENT_ID)
                 .from(RSVP)
-                .where(RSVP.USER_ID.eq(userId).and(RSVP.CONFIRMED_AT.isNotNull()))
+                .where(RSVP.USER_ID
+                        .eq(userId)
+                        .and(RSVP.CONFIRMED_AT.isNotNull())
+                        .and(RSVP.ATTENDING.isTrue()))
                 .fetchSet(RSVP.EVENT_ID);
     }
 

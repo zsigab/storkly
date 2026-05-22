@@ -5,6 +5,7 @@ import static app.storkly.domain.generated.Tables.EVENT;
 import app.storkly.domain.event.Event;
 import app.storkly.domain.event.EventRepository;
 import app.storkly.domain.generated.tables.records.EventRecord;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -73,6 +74,12 @@ public class EventRepositoryImpl implements EventRepository {
     @Override
     public List<Event> findByOwnerId(UUID ownerId) {
         return dsl.selectFrom(EVENT).where(EVENT.OWNER_ID.eq(ownerId)).fetch().map(this::toDomain);
+    }
+
+    @Override
+    public List<Event> findByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) return List.of();
+        return dsl.selectFrom(EVENT).where(EVENT.ID.in(ids)).fetch().map(this::toDomain);
     }
 
     @Override
