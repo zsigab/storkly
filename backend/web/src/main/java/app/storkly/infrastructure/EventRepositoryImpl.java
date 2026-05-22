@@ -29,6 +29,8 @@ public class EventRepositoryImpl implements EventRepository {
                     .set(EVENT.EVENT_DATE, event.eventDate())
                     .set(EVENT.LOCATION, event.location())
                     .set(EVENT.RSVP_TOKEN, event.rsvpToken())
+                    .set(EVENT.THEME_COLOR, event.themeColor())
+                    .set(EVENT.THEME_BACKGROUND, event.themeBackground())
                     .set(EVENT.CREATED_AT, event.createdAt())
                     .execute();
             return Event.builder()
@@ -38,6 +40,8 @@ public class EventRepositoryImpl implements EventRepository {
                     .eventDate(event.eventDate())
                     .location(event.location())
                     .rsvpToken(event.rsvpToken())
+                    .themeColor(event.themeColor())
+                    .themeBackground(event.themeBackground())
                     .createdAt(event.createdAt())
                     .build();
         } else {
@@ -45,6 +49,8 @@ public class EventRepositoryImpl implements EventRepository {
                     .set(EVENT.TITLE, event.title())
                     .set(EVENT.EVENT_DATE, event.eventDate())
                     .set(EVENT.LOCATION, event.location())
+                    .set(EVENT.THEME_COLOR, event.themeColor())
+                    .set(EVENT.THEME_BACKGROUND, event.themeBackground())
                     .where(EVENT.ID.eq(event.id()))
                     .execute();
             return event;
@@ -82,6 +88,8 @@ public class EventRepositoryImpl implements EventRepository {
                 .eventDate(record.getEventDate())
                 .location(record.getLocation())
                 .rsvpToken(record.getRsvpToken())
+                .themeColor(record.getThemeColor())
+                .themeBackground(record.getThemeBackground())
                 .createdAt(record.getCreatedAt())
                 .build();
     }

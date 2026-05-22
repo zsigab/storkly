@@ -2,6 +2,7 @@ import { Link, useParams, useLocation, useViewTransitionState } from "react-rout
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { EventAttendeesTable } from "@/components/event/EventAttendeesTable";
 import { usePublicEvent, useEvent } from "@/hooks/useEvents";
+import { useEventTheme } from "@/hooks/useEventTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDateTime } from "@/lib/utils";
 
@@ -10,6 +11,7 @@ export function PublicEventPage(): React.ReactElement {
   const safeId = id ?? "";
   const { user } = useAuth();
   const isAuthenticated = user !== null;
+  useEventTheme(safeId);
   const { state: navState } = useLocation();
   const fromEventCard =
     navState !== null &&
@@ -45,7 +47,7 @@ export function PublicEventPage(): React.ReactElement {
       : undefined;
 
   return (
-    <GlassCardLayout viewTransitionName={viewTransitionName}>
+    <GlassCardLayout {...(viewTransitionName ? { viewTransitionName } : {})}>
       <div className="space-y-6">
         {user !== null && (
           <Link

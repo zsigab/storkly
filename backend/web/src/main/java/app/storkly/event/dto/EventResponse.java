@@ -11,4 +11,6 @@ public record EventResponse(
         String location,
         String rsvpToken,
         List<RsvpResponse> attendees,
+        String themeColor,
+        String themeBackground,
         OffsetDateTime createdAt) {}

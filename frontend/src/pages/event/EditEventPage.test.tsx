@@ -52,6 +52,8 @@ const eventFixture = {
       confirmedAt: null,
     },
   ],
+  themeColor: "peach",
+  themeBackground: "none",
   createdAt: "2024-01-01T00:00:00Z",
 };
 
@@ -130,6 +132,8 @@ describe("EditEventPage", () => {
           title: "Updated Shower",
           location: "123 Main St",
           eventDate: expect.any(String),
+          themeColor: "peach",
+          themeBackground: "none",
         },
       }),
     );

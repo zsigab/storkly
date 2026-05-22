@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,7 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FormField } from "@/components/common/FormField";
 import { getApiErrorMessage } from "@/api/helpers";
+import { useTheme } from "@/hooks/useTheme";
 import type { EventResponse } from "@/api/schema";
+
+const THEME_COLORS = [
+  { value: "peach", label: "Peach", swatch: "hsl(15 85% 68%)" },
+  { value: "blue", label: "Blue", swatch: "hsl(217 91% 60%)" },
+  { value: "pink", label: "Pink", swatch: "hsl(340 75% 64%)" },
+  { value: "green", label: "Green", swatch: "hsl(160 84% 39%)" },
+  { value: "purple", label: "Purple", swatch: "hsl(271 81% 56%)" },
+  { value: "beige", label: "Beige", swatch: "hsl(35 50% 70%)" },
+] as const;
+
+const THEME_BACKGROUNDS = [
+  { value: "none", label: "Clean" },
+  { value: "default", label: "Blobs" },
+  { value: "stars", label: "Stars" },
+  { value: "both", label: "Blobs + Stars" },
+] as const;
+
+type ThemeColorValue = (typeof THEME_COLORS)[number]["value"];
+type ThemeBackgroundValue = (typeof THEME_BACKGROUNDS)[number]["value"];
 
 const schema = z.object({
   title: z.string().min(1, "Title is required").max(256, "Title must be 256 characters or fewer"),
@@ -15,13 +36,21 @@ const schema = z.object({
     .min(1, "Event date is required")
     .refine((v) => !isNaN(new Date(v).getTime()), "Invalid date"),
   location: z.string(),
+  themeColor: z.enum(["peach", "blue", "pink", "green", "purple", "beige"]),
+  themeBackground: z.enum(["none", "default", "stars", "both"]),
 });
 
 type FormValues = z.infer<typeof schema>;
 
 interface EventFormProps {
   defaultValues?: Partial<EventResponse>;
-  onSubmit: (values: { title: string; eventDate: string; location: string | null }) => void;
+  onSubmit: (values: {
+    title: string;
+    eventDate: string;
+    location: string | null;
+    themeColor: string;
+    themeBackground: string;
+  }) => void;
   isPending: boolean;
   isError: boolean;
   error: unknown;
@@ -54,14 +83,30 @@ export function EventForm({
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: defaultValues?.title ?? "",
       eventDate: defaultValues?.eventDate ? toDateTimeLocal(defaultValues.eventDate) : "",
       location: defaultValues?.location ?? "",
+      themeColor: (defaultValues?.themeColor ?? "peach") as ThemeColorValue,
+      themeBackground: (defaultValues?.themeBackground ?? "none") as ThemeBackgroundValue,
     },
   });
+
+  const themeColor = watch("themeColor");
+  const themeBackground = watch("themeBackground");
+  const { setRegistryOverride, clearRegistryOverride } = useTheme();
+
+  useEffect(() => {
+    setRegistryOverride(themeColor, themeBackground);
+  }, [themeColor, themeBackground, setRegistryOverride]);
+
+  useLayoutEffect(() => {
+    return () => clearRegistryOverride();
+  }, [clearRegistryOverride]);
 
   return (
     <form
@@ -72,6 +117,8 @@ export function EventForm({
           title: values.title,
           eventDate: toIsoString(values.eventDate),
           location: values.location && values.location.trim().length > 0 ? values.location : null,
+          themeColor: values.themeColor,
+          themeBackground: values.themeBackground,
         }),
       )}
     >
@@ -92,6 +139,48 @@ export function EventForm({
           {...register("location")}
         />
       </FormField>
+
+      <div className="space-y-2">
+        <p className="text-sm leading-none font-medium">Theme color</p>
+        <div className="flex gap-2">
+          {THEME_COLORS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setValue("themeColor", opt.value)}
+              aria-label={opt.label}
+              aria-pressed={themeColor === opt.value}
+              className="h-6 w-6 rounded-full transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2"
+              style={{
+                backgroundColor: opt.swatch,
+                boxShadow:
+                  themeColor === opt.value
+                    ? `0 0 0 2px hsl(var(--background)), 0 0 0 4px ${opt.swatch}`
+                    : "none",
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm leading-none font-medium">Theme style</p>
+        <div className="flex flex-wrap gap-1.5">
+          {THEME_BACKGROUNDS.map((opt) => (
+            <Button
+              key={opt.value}
+              type="button"
+              variant={themeBackground === opt.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setValue("themeBackground", opt.value)}
+              aria-pressed={themeBackground === opt.value}
+              className="text-xs"
+            >
+              {opt.label}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {isError && (
         <Alert variant="destructive">

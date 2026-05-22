@@ -141,6 +141,8 @@ export interface EventResponse {
   location: string | null;
   rsvpToken: string;
   attendees: RsvpResponse[];
+  themeColor: string;
+  themeBackground: string;
   createdAt: string;
 }
 
@@ -149,6 +151,8 @@ export interface EventPublicResponse {
   title: string;
   eventDate: string;
   location: string | null;
+  themeColor: string;
+  themeBackground: string;
 }
 
 export interface RsvpResponse {
@@ -543,6 +547,8 @@ export type paths = {
             title: string;
             eventDate: string;
             location?: string | null;
+            themeColor?: string | null;
+            themeBackground?: string | null;
           };
         };
       };
@@ -562,6 +568,8 @@ export type paths = {
             title?: string | null;
             eventDate?: string | null;
             location?: string | null;
+            themeColor?: string | null;
+            themeBackground?: string | null;
           };
         };
       };

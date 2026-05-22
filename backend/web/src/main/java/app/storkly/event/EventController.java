@@ -42,7 +42,13 @@ public class EventController {
     @ResponseStatus(HttpStatus.CREATED)
     public EventResponse create(
             @RequestBody @Valid EventCreateRequest request, @AuthenticationPrincipal User currentUser) {
-        Event event = eventService.create(request.title(), request.eventDate(), request.location(), currentUser.id());
+        Event event = eventService.create(
+                request.title(),
+                request.eventDate(),
+                request.location(),
+                request.themeColor(),
+                request.themeBackground(),
+                currentUser.id());
         return toResponse(event);
     }
 
@@ -57,8 +63,14 @@ public class EventController {
             @PathVariable UUID id,
             @RequestBody @Valid EventUpdateRequest request,
             @AuthenticationPrincipal User currentUser) {
-        Event event =
-                eventService.update(id, request.title(), request.eventDate(), request.location(), currentUser.id());
+        Event event = eventService.update(
+                id,
+                request.title(),
+                request.eventDate(),
+                request.location(),
+                request.themeColor(),
+                request.themeBackground(),
+                currentUser.id());
         return toResponse(event);
     }
 
@@ -86,10 +98,18 @@ public class EventController {
                 event.location(),
                 event.rsvpToken(),
                 attendees,
+                event.themeColor(),
+                event.themeBackground(),
                 event.createdAt());
     }
 
     private EventPublicResponse toPublicResponse(Event event) {
-        return new EventPublicResponse(event.id(), event.title(), event.eventDate(), event.location());
+        return new EventPublicResponse(
+                event.id(),
+                event.title(),
+                event.eventDate(),
+                event.location(),
+                event.themeColor(),
+                event.themeBackground());
     }
 }

@@ -101,6 +101,8 @@ describe("CreateEventPage", () => {
           title: "Baby Shower",
           location: "123 Main St",
           eventDate: expect.stringContaining("2024-06-15"),
+          themeColor: "peach",
+          themeBackground: "none",
         },
       }),
     );

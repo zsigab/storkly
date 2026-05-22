@@ -95,7 +95,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request =
-                new EventCreateRequest("New Event", OffsetDateTime.now().plusDays(1), "Test Location");
+                new EventCreateRequest("New Event", OffsetDateTime.now().plusDays(1), "Test Location", null, null);
 
         restTestClient
                 .post()
@@ -119,7 +119,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request =
-                new EventCreateRequest("Test Event", OffsetDateTime.now().plusDays(1), "Test Location");
+                new EventCreateRequest("Test Event", OffsetDateTime.now().plusDays(1), "Test Location", null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -152,7 +152,7 @@ class EventControllerIntegrationTest {
         String ownerCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request =
-                new EventCreateRequest("Secret Event", OffsetDateTime.now().plusDays(1), null);
+                new EventCreateRequest("Secret Event", OffsetDateTime.now().plusDays(1), null, null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -183,8 +183,8 @@ class EventControllerIntegrationTest {
     void patchEvent_authenticated_owner_returnsUpdated() {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-        EventCreateRequest createRequest =
-                new EventCreateRequest("Original Title", OffsetDateTime.now().plusDays(1), "Original Location");
+        EventCreateRequest createRequest = new EventCreateRequest(
+                "Original Title", OffsetDateTime.now().plusDays(1), "Original Location", null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -202,7 +202,7 @@ class EventControllerIntegrationTest {
 
         OffsetDateTime newDate = OffsetDateTime.now().plusDays(5);
         app.storkly.event.dto.EventUpdateRequest updateRequest =
-                new app.storkly.event.dto.EventUpdateRequest("Updated Title", newDate, "Updated Location");
+                new app.storkly.event.dto.EventUpdateRequest("Updated Title", newDate, "Updated Location", null, null);
 
         restTestClient
                 .patch()
@@ -224,7 +224,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request =
-                new EventCreateRequest("To Delete", OffsetDateTime.now().plusDays(1), null);
+                new EventCreateRequest("To Delete", OffsetDateTime.now().plusDays(1), null, null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -262,7 +262,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request =
-                new EventCreateRequest("Public Event", OffsetDateTime.now().plusDays(1), "Public Location");
+                new EventCreateRequest("Public Event", OffsetDateTime.now().plusDays(1), "Public Location", null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 

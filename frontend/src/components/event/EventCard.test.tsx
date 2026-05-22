@@ -45,6 +45,8 @@ const baseEvent = {
       confirmedAt: "2024-01-01T00:00:00Z",
     },
   ],
+  themeColor: "peach",
+  themeBackground: "none",
   createdAt: "2024-01-01T00:00:00Z",
 };
 

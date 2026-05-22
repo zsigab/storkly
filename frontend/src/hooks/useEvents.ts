@@ -53,6 +53,8 @@ export function useCreateEvent() {
       title: string;
       eventDate: string;
       location: string | null;
+      themeColor?: string | null;
+      themeBackground?: string | null;
     }): Promise<EventResponse> => {
       const { data, error } = await api.POST("/api/events", { body: values });
       if (error !== undefined) throw error;
@@ -74,6 +76,8 @@ export function useUpdateEvent(id: string) {
       title?: string | null;
       eventDate?: string | null;
       location?: string | null;
+      themeColor?: string | null;
+      themeBackground?: string | null;
     }): Promise<EventResponse> => {
       const { data, error } = await api.PATCH("/api/events/{id}", {
         params: { path: { id } },

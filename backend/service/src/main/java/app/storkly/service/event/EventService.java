@@ -22,7 +22,13 @@ public class EventService {
     private final EventRepository eventRepository;
 
     @Transactional
-    public Event create(String title, OffsetDateTime eventDate, @Nullable String location, UUID ownerId) {
+    public Event create(
+            String title,
+            OffsetDateTime eventDate,
+            @Nullable String location,
+            @Nullable String themeColor,
+            @Nullable String themeBackground,
+            UUID ownerId) {
         String rsvpToken = TokenUtil.generate();
         Event event = Event.builder()
                 .ownerId(ownerId)
@@ -30,6 +36,8 @@ public class EventService {
                 .eventDate(eventDate)
                 .location(location)
                 .rsvpToken(rsvpToken)
+                .themeColor(themeColor != null ? themeColor : "peach")
+                .themeBackground(themeBackground != null ? themeBackground : "none")
                 .createdAt(OffsetDateTime.now())
                 .build();
         return eventRepository.save(event);
@@ -57,6 +65,8 @@ public class EventService {
             @Nullable String title,
             @Nullable OffsetDateTime eventDate,
             @Nullable String location,
+            @Nullable String themeColor,
+            @Nullable String themeBackground,
             UUID currentUserId) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
         if (!event.ownerId().equals(currentUserId)) {
@@ -69,6 +79,8 @@ public class EventService {
                 .eventDate(eventDate != null ? eventDate : event.eventDate())
                 .location(location != null ? location : event.location())
                 .rsvpToken(event.rsvpToken())
+                .themeColor(themeColor != null ? themeColor : event.themeColor())
+                .themeBackground(themeBackground != null ? themeBackground : event.themeBackground())
                 .createdAt(event.createdAt())
                 .build();
         return eventRepository.save(updated);

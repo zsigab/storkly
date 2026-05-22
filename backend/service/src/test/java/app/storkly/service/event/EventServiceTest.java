@@ -46,11 +46,13 @@ class EventServiceTest {
                     .eventDate(event.eventDate())
                     .location(event.location())
                     .rsvpToken(event.rsvpToken())
+                    .themeColor(event.themeColor())
+                    .themeBackground(event.themeBackground())
                     .createdAt(event.createdAt())
                     .build();
         });
 
-        Event result = eventService.create(title, eventDate, location, ownerId);
+        Event result = eventService.create(title, eventDate, location, null, null, ownerId);
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isNotNull();
@@ -76,6 +78,8 @@ class EventServiceTest {
                 .title("Event 1")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token1")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
         Event event2 = Event.builder()
@@ -84,6 +88,8 @@ class EventServiceTest {
                 .title("Event 2")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token2")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -105,6 +111,8 @@ class EventServiceTest {
                 .title("My Event")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -138,6 +146,8 @@ class EventServiceTest {
                 .title("My Event")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -158,6 +168,8 @@ class EventServiceTest {
                 .title("My Event")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -179,6 +191,8 @@ class EventServiceTest {
                 .eventDate(OffsetDateTime.now())
                 .location("Old Location")
                 .rsvpToken("token")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
         String newTitle = "New Title";
@@ -194,11 +208,13 @@ class EventServiceTest {
                     .eventDate(event.eventDate())
                     .location(event.location())
                     .rsvpToken(event.rsvpToken())
+                    .themeColor(event.themeColor())
+                    .themeBackground(event.themeBackground())
                     .createdAt(event.createdAt())
                     .build();
         });
 
-        Event result = eventService.update(eventId, newTitle, newDate, null, ownerId);
+        Event result = eventService.update(eventId, newTitle, newDate, null, null, null, ownerId);
 
         assertThat(result.title()).isEqualTo(newTitle);
         assertThat(result.eventDate()).isEqualTo(newDate);
@@ -217,12 +233,14 @@ class EventServiceTest {
                 .title("My Event")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
 
-        assertThatThrownBy(() -> eventService.update(eventId, "New", null, null, currentUserId))
+        assertThatThrownBy(() -> eventService.update(eventId, "New", null, null, null, null, currentUserId))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("owner");
     }
@@ -237,6 +255,8 @@ class EventServiceTest {
                 .title("My Event")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
@@ -258,6 +278,8 @@ class EventServiceTest {
                 .title("My Event")
                 .eventDate(OffsetDateTime.now())
                 .rsvpToken("token")
+                .themeColor("peach")
+                .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
                 .build();
 
