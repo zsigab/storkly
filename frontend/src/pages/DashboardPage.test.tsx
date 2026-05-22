@@ -297,6 +297,40 @@ describe("DashboardPage", () => {
     });
   });
 
+  it("renders an owned-and-RSVPed event only once (no view-transition-name collision)", async () => {
+    const sharedEvent = {
+      id: "shared-event-1",
+      title: "Baby Shower QC",
+      eventDate: "2026-07-25T22:00:00Z",
+      location: "Stellar Place",
+      themeColor: "peach",
+      themeBackground: "none",
+    };
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockImplementation(async (path: string) => {
+      if (path === "/api/registries") {
+        return { data: [], error: undefined, response: new Response() };
+      }
+      if (path === "/api/events") {
+        return {
+          data: [
+            { ...sharedEvent, rsvpToken: "tok", attendees: [], createdAt: sharedEvent.eventDate },
+          ],
+          error: undefined,
+          response: new Response(),
+        };
+      }
+      if (path === "/api/events/rsvped") {
+        return { data: [sharedEvent], error: undefined, response: new Response() };
+      }
+      return { data: null, error: undefined, response: new Response() };
+    });
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Events")).toBeInTheDocument());
+    expect(screen.getAllByText("Baby Shower QC")).toHaveLength(1);
+    expect(screen.queryByText("Going to")).not.toBeInTheDocument();
+  });
+
   it("does not show 'Going to' section when no RSVPed events", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockImplementation(async (path: string) => {

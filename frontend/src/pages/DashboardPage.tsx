@@ -24,6 +24,9 @@ export function DashboardPage(): React.ReactElement {
   const ownedRegistries = registries?.filter((r) => r.ownerId === user?.id) ?? [];
   const subscribedRegistries = registries?.filter((r) => r.ownerId !== user?.id) ?? [];
 
+  const ownedEventIds = new Set((events ?? []).map((e) => e.id));
+  const goingToEvents = (rsvpedEvents ?? []).filter((e) => !ownedEventIds.has(e.id));
+
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-10">
       <div className="bg-card border-border space-y-4 rounded-xl border p-6 shadow-md">
@@ -100,11 +103,11 @@ export function DashboardPage(): React.ReactElement {
         </div>
       )}
 
-      {(rsvpedEvents ?? []).length > 0 && (
+      {goingToEvents.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-semibold tracking-tight">Going to</h2>
           <div className="space-y-3">
-            {(rsvpedEvents ?? []).map((event) => (
+            {goingToEvents.map((event) => (
               <GuestEventCard key={event.id} event={event} />
             ))}
           </div>
