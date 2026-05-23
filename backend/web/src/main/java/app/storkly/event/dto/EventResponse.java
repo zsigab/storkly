@@ -9,6 +9,7 @@ public record EventResponse(
         UUID id,
         String title,
         OffsetDateTime eventDate,
+        @Nullable Integer eventDateOffsetSeconds,
         @Nullable String location,
         @Nullable String description,
         String rsvpToken,

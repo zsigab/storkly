@@ -2,7 +2,7 @@ import { useParams } from "react-router";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { RsvpForm } from "@/components/rsvp/RsvpForm";
 import { useRsvpEventInfo } from "@/hooks/useRsvp";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDate } from "@/lib/utils";
 
 export function RsvpPage(): React.ReactElement {
   const { token } = useParams<{ token: string }>();
@@ -31,7 +31,9 @@ export function RsvpPage(): React.ReactElement {
         <div className="space-y-2">
           <h1 className="text-4xl font-semibold tracking-tight">You're invited!</h1>
           <p className="text-muted-foreground text-lg">{event.eventTitle}</p>
-          <p className="text-muted-foreground text-lg">{formatDateTime(event.eventDate)}</p>
+          <p className="text-muted-foreground text-lg">
+            {formatEventDate(event.eventDate, event.eventDateOffsetSeconds)}
+          </p>
           {event.location !== null && (
             <p className="text-muted-foreground text-lg">{event.location}</p>
           )}

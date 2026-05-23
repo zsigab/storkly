@@ -81,6 +81,7 @@ export function useCreateEvent() {
     mutationFn: async (values: {
       title: string;
       eventDate: string;
+      eventDateOffsetSeconds?: number | null;
       location: string | null;
       description?: string | null;
       rsvpCapacity?: number | null;
@@ -106,6 +107,7 @@ export function useUpdateEvent(id: string) {
     mutationFn: async (values: {
       title?: string | null;
       eventDate?: string | null;
+      eventDateOffsetSeconds?: number | null;
       location?: string | null;
       description?: string | null;
       rsvpCapacity?: number | null;

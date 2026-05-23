@@ -31,6 +31,7 @@ const baseEvent = {
   id: "event-1",
   title: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
+  eventDateOffsetSeconds: null,
   location: "123 Main St",
   rsvpToken: "token-abc",
   attendees: [

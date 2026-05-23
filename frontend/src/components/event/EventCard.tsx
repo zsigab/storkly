@@ -2,7 +2,7 @@ import { Link, useViewTransitionState } from "react-router";
 import { Badge } from "@/components/ui/badge";
 import { usePrefetchPublicEvent } from "@/hooks/useEvents";
 import type { EventResponse } from "@/api/schema";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDate } from "@/lib/utils";
 
 interface EventCardProps {
   event: EventResponse;
@@ -36,7 +36,9 @@ export function EventCard({ event }: EventCardProps): React.ReactElement {
           <h3 className="font-semibold break-words">{event.title}</h3>
           <Badge variant="secondary">{attendingCount} attending</Badge>
         </div>
-        <p className="text-muted-foreground mt-1 text-sm">{formatDateTime(event.eventDate)}</p>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {formatEventDate(event.eventDate, event.eventDateOffsetSeconds)}
+        </p>
         {event.location !== null && (
           <p className="text-muted-foreground text-sm">{event.location}</p>
         )}

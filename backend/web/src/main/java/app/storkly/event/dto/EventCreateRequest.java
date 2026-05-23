@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 public record EventCreateRequest(
         @NotBlank String title,
         @NotNull OffsetDateTime eventDate,
+        @Nullable Integer eventDateOffsetSeconds,
         @Nullable String location,
         @Nullable String description,
         @Nullable @jakarta.validation.constraints.Min(1) Integer rsvpCapacity,

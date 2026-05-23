@@ -18,6 +18,7 @@ const eventFixture = {
   eventId: "event-1",
   eventTitle: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
+  eventDateOffsetSeconds: null,
   location: "123 Main St",
   spotsLeft: null,
   timeSlots: [],

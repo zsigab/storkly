@@ -12,8 +12,13 @@ import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { EventTimeSlotsSection } from "@/components/event/EventTimeSlotsSection";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useTheme } from "@/hooks/useTheme";
-import { cn } from "@/lib/utils";
+import { cn, applyOffset, toIsoWithTimezone } from "@/lib/utils";
 import type { EventResponse, EventTimeSlotResponse } from "@/api/schema";
+
+const TIMEZONES: string[] = Intl.supportedValuesOf("timeZone");
+const LOCAL_TIMEZONE: string = Intl.DateTimeFormat().resolvedOptions().timeZone;
+// JS getTimezoneOffset() is negated vs. UTC+ convention
+const LOCAL_OFFSET_SECONDS: number = -new Date().getTimezoneOffset() * 60;
 
 const THEME_COLORS = [
   { value: "peach", label: "Peach", swatch: "hsl(15 85% 68%)" },
@@ -59,6 +64,7 @@ interface EventFormProps {
   onSubmit: (values: {
     title: string;
     eventDate: string;
+    eventDateOffsetSeconds: number | null;
     location: string | null;
     description: string | null;
     rsvpCapacity: number | null;
@@ -73,18 +79,14 @@ interface EventFormProps {
   slots?: EventTimeSlotResponse[];
 }
 
-function toDateTimeLocal(isoString: string): string {
-  const d = new Date(isoString);
-  const yyyy = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
+function toDateTimeLocal(isoString: string, offsetSeconds: number): string {
+  const d = applyOffset(isoString, offsetSeconds);
+  const yyyy = d.getUTCFullYear();
+  const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const min = String(d.getUTCMinutes()).padStart(2, "0");
   return `${yyyy}-${mo}-${dd}T${hh}:${min}`;
-}
-
-function toIsoString(dateTimeLocal: string): string {
-  return `${dateTimeLocal}:00Z`;
 }
 
 function isAllDayIso(iso: string): boolean {
@@ -103,9 +105,11 @@ export function EventForm({
 }: EventFormProps): React.ReactElement {
   const defaultIso = defaultValues?.eventDate ?? "";
   const defaultFullDay = defaultIso.length > 0 && isAllDayIso(defaultIso);
+  const defaultOffset = defaultValues?.eventDateOffsetSeconds ?? LOCAL_OFFSET_SECONDS;
 
   const [fullDay, setFullDay] = useState(defaultFullDay);
   const [slotsEnabled, setSlotsEnabled] = useState((slots?.length ?? 0) > 0);
+  const [eventDateTimezone, setEventDateTimezone] = useState(LOCAL_TIMEZONE);
 
   const {
     register,
@@ -121,7 +125,7 @@ export function EventForm({
         defaultIso.length > 0
           ? defaultFullDay
             ? defaultIso.slice(0, 10)
-            : toDateTimeLocal(defaultIso)
+            : toDateTimeLocal(defaultIso, defaultOffset)
           : "",
       location: defaultValues?.location ?? "",
       description: defaultValues?.description ?? "",
@@ -160,10 +164,22 @@ export function EventForm({
   };
 
   const handleSubmitForm = (values: FormValues): void => {
-    const iso = fullDay ? `${values.eventDate}T00:00:00Z` : toIsoString(values.eventDate);
+    let iso: string;
+    let offsetSeconds: number | null;
+    if (fullDay) {
+      iso = `${values.eventDate}T00:00:00Z`;
+      offsetSeconds = null;
+    } else {
+      const datePart = values.eventDate.slice(0, 10);
+      const timePart = values.eventDate.slice(11, 16);
+      const result = toIsoWithTimezone(datePart, timePart, eventDateTimezone);
+      iso = result.iso;
+      offsetSeconds = result.offsetSeconds;
+    }
     onSubmit({
       title: values.title,
       eventDate: iso,
+      eventDateOffsetSeconds: offsetSeconds,
       location: values.location && values.location.trim().length > 0 ? values.location : null,
       description: values.description.trim().length > 0 ? values.description.trim() : null,
       rsvpCapacity: values.rsvpCapacity !== "" ? parseInt(values.rsvpCapacity, 10) : null,
@@ -275,6 +291,20 @@ export function EventForm({
             type={fullDay ? "date" : "datetime-local"}
             {...register("eventDate")}
           />
+          {!fullDay && (
+            <select
+              aria-label="Event timezone"
+              value={eventDateTimezone}
+              onChange={(e) => setEventDateTimezone(e.target.value)}
+              className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
+            >
+              {TIMEZONES.map((tz) => (
+                <option key={tz} value={tz}>
+                  {tz}
+                </option>
+              ))}
+            </select>
+          )}
           {errors.eventDate !== undefined && (
             <p className="text-destructive text-sm">{errors.eventDate.message}</p>
           )}

@@ -25,6 +25,7 @@ public class EventService {
     public Event create(
             String title,
             OffsetDateTime eventDate,
+            @Nullable Integer eventDateOffsetSeconds,
             @Nullable String location,
             @Nullable String description,
             @Nullable Integer rsvpCapacity,
@@ -36,6 +37,7 @@ public class EventService {
                 .ownerId(ownerId)
                 .title(title)
                 .eventDate(eventDate)
+                .eventDateOffsetSeconds(eventDateOffsetSeconds)
                 .location(location)
                 .description(description)
                 .rsvpToken(rsvpToken)
@@ -68,6 +70,7 @@ public class EventService {
             UUID id,
             @Nullable String title,
             @Nullable OffsetDateTime eventDate,
+            @Nullable Integer eventDateOffsetSeconds,
             @Nullable String location,
             @Nullable String description,
             @Nullable Integer rsvpCapacity,
@@ -83,6 +86,7 @@ public class EventService {
                 .ownerId(event.ownerId())
                 .title(title != null ? title : event.title())
                 .eventDate(eventDate != null ? eventDate : event.eventDate())
+                .eventDateOffsetSeconds(eventDate != null ? eventDateOffsetSeconds : event.eventDateOffsetSeconds())
                 .location(location != null ? location : event.location())
                 .description(description != null ? description : event.description())
                 .rsvpToken(event.rsvpToken())

@@ -153,6 +153,7 @@ export interface EventResponse {
   id: string;
   title: string;
   eventDate: string;
+  eventDateOffsetSeconds: number | null;
   location: string | null;
   description: string | null;
   rsvpToken: string;
@@ -168,6 +169,7 @@ export interface EventPublicResponse {
   id: string;
   title: string;
   eventDate: string;
+  eventDateOffsetSeconds: number | null;
   location: string | null;
   description: string | null;
   themeColor: string;
@@ -187,6 +189,7 @@ export interface RsvpPublicEventResponse {
   eventId: string;
   eventTitle: string;
   eventDate: string;
+  eventDateOffsetSeconds: number | null;
   location: string | null;
   spotsLeft: number | null;
   timeSlots: EventTimeSlotPublicResponse[];
@@ -573,6 +576,7 @@ export type paths = {
           "application/json": {
             title: string;
             eventDate: string;
+            eventDateOffsetSeconds?: number | null;
             location?: string | null;
             themeColor?: string | null;
             themeBackground?: string | null;
@@ -594,6 +598,7 @@ export type paths = {
           "application/json": {
             title?: string | null;
             eventDate?: string | null;
+            eventDateOffsetSeconds?: number | null;
             location?: string | null;
             themeColor?: string | null;
             themeBackground?: string | null;

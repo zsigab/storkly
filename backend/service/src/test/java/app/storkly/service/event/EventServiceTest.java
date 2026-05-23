@@ -52,7 +52,7 @@ class EventServiceTest {
                     .build();
         });
 
-        Event result = eventService.create(title, eventDate, location, null, null, null, null, ownerId);
+        Event result = eventService.create(title, eventDate, null, location, null, null, null, null, ownerId);
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isNotNull();
@@ -214,7 +214,7 @@ class EventServiceTest {
                     .build();
         });
 
-        Event result = eventService.update(eventId, newTitle, newDate, null, null, null, null, null, ownerId);
+        Event result = eventService.update(eventId, newTitle, newDate, null, null, null, null, null, null, ownerId);
 
         assertThat(result.title()).isEqualTo(newTitle);
         assertThat(result.eventDate()).isEqualTo(newDate);
@@ -240,7 +240,8 @@ class EventServiceTest {
 
         when(eventRepository.findById(eventId)).thenReturn(Optional.of(event));
 
-        assertThatThrownBy(() -> eventService.update(eventId, "New", null, null, null, null, null, null, currentUserId))
+        assertThatThrownBy(() ->
+                        eventService.update(eventId, "New", null, null, null, null, null, null, null, currentUserId))
                 .isInstanceOf(AccessDeniedException.class)
                 .hasMessageContaining("owner");
     }

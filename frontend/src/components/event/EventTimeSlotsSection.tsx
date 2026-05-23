@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useAddSlot, useUpdateSlot, useDeleteSlot } from "@/hooks/useEvents";
+import { applyOffset, formatEventDate, toIsoWithTimezone } from "@/lib/utils";
 import type { EventTimeSlotResponse } from "@/api/schema";
 
 interface EventTimeSlotsSectionProps {
@@ -31,10 +32,6 @@ function parseCapacity(raw: string): number | null {
   return isNaN(n) ? null : n;
 }
 
-function applyOffset(iso: string, offsetSeconds: number): Date {
-  return new Date(new Date(iso).getTime() + offsetSeconds * 1000);
-}
-
 function toSlotDate(iso: string, offsetSeconds: number): string {
   const d = applyOffset(iso, offsetSeconds);
   const yyyy = d.getUTCFullYear();
@@ -48,80 +45,6 @@ function toSlotTime(iso: string, offsetSeconds: number): string {
   const hh = String(d.getUTCHours()).padStart(2, "0");
   const min = String(d.getUTCMinutes()).padStart(2, "0");
   return `${hh}:${min}`;
-}
-
-function toIsoWithTimezone(
-  slotDate: string,
-  slotTime: string,
-  timezone: string,
-): { iso: string; offsetSeconds: number } {
-  // Parse the entered date+time as a UTC reference point, then determine the real offset
-  // for the target timezone at that approximate moment.
-  const naiveUtc = new Date(`${slotDate}T${slotTime}:00Z`);
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).formatToParts(naiveUtc);
-
-  const getValue = (type: Intl.DateTimeFormatPartTypes): number => {
-    const part = parts.find((p) => p.type === type);
-    if (part === undefined) return 0;
-    const n = parseInt(part.value, 10);
-    return isNaN(n) ? 0 : n;
-  };
-
-  const rawHour = getValue("hour");
-  const hour = rawHour === 24 ? 0 : rawHour; // Intl returns 24 for midnight in some locales
-
-  const tzMs = Date.UTC(
-    getValue("year"),
-    getValue("month") - 1,
-    getValue("day"),
-    hour,
-    getValue("minute"),
-    getValue("second"),
-  );
-  const offsetMins = Math.round((tzMs - naiveUtc.getTime()) / 60000);
-  const offsetSeconds = offsetMins * 60;
-
-  const sign = offsetMins >= 0 ? "+" : "-";
-  const abs = Math.abs(offsetMins);
-  const offH = String(Math.floor(abs / 60)).padStart(2, "0");
-  const offM = String(abs % 60).padStart(2, "0");
-
-  return { iso: `${slotDate}T${slotTime}:00${sign}${offH}:${offM}`, offsetSeconds };
-}
-
-function formatWithOffset(iso: string, offsetSeconds: number): string {
-  const d = applyOffset(iso, offsetSeconds);
-  const yyyy = d.getUTCFullYear();
-  const mo = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const min = String(d.getUTCMinutes()).padStart(2, "0");
-  return `${yyyy}-${mo}-${dd} ${hh}:${min}`;
-}
-
-function formatOffsetLabel(offsetSeconds: number): string {
-  const sign = offsetSeconds >= 0 ? "+" : "-";
-  const abs = Math.abs(offsetSeconds);
-  const h = Math.floor(abs / 3600);
-  const m = Math.floor((abs % 3600) / 60);
-  return m === 0 ? `GMT${sign}${h}` : `GMT${sign}${h}:${String(m).padStart(2, "0")}`;
-}
-
-function getLocalTzAbbr(iso: string): string {
-  return (
-    new Intl.DateTimeFormat("en-US", { timeZone: LOCAL_TIMEZONE, timeZoneName: "short" })
-      .formatToParts(new Date(iso))
-      .find((p) => p.type === "timeZoneName")?.value ?? LOCAL_TIMEZONE
-  );
 }
 
 export function EventTimeSlotsSection({
@@ -281,16 +204,7 @@ export function EventTimeSlotsSection({
               >
                 <div>
                   <span className="text-sm font-medium">
-                    {formatWithOffset(slot.slotTime, LOCAL_OFFSET_SECONDS)}{" "}
-                    <span className="font-normal">{getLocalTzAbbr(slot.slotTime)}</span>
-                    {slot.slotOffsetSeconds !== null &&
-                      slot.slotOffsetSeconds !== LOCAL_OFFSET_SECONDS && (
-                        <span className="text-muted-foreground font-normal">
-                          {" "}
-                          ({formatWithOffset(slot.slotTime, slot.slotOffsetSeconds)}{" "}
-                          {formatOffsetLabel(slot.slotOffsetSeconds)})
-                        </span>
-                      )}
+                    {formatEventDate(slot.slotTime, slot.slotOffsetSeconds)}
                   </span>
                   {slot.capacity !== null && (
                     <span className="text-muted-foreground ml-2 text-xs">

@@ -50,7 +50,13 @@ public class RsvpController {
         }
 
         return new RsvpPublicEventResponse(
-                event.id(), event.title(), event.eventDate(), event.location(), eventSpotsLeft, slotResponses);
+                event.id(),
+                event.title(),
+                event.eventDate(),
+                event.eventDateOffsetSeconds(),
+                event.location(),
+                eventSpotsLeft,
+                slotResponses);
     }
 
     @PostMapping("/api/rsvp/{rsvpToken}")

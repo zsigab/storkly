@@ -89,7 +89,8 @@ describe("EventForm", () => {
       expect(mockOnSubmit).toHaveBeenCalled();
     });
     const call = mockOnSubmit.mock.calls[0]?.[0];
-    expect(call?.eventDate).toMatch(/2024-06-15T14:00:00Z/);
+    expect(call?.eventDate).toMatch(/2024-06-15T14:00:00/);
+    expect(typeof call?.eventDateOffsetSeconds).toBe("number");
   });
 
   it("submits form with all fields", async () => {

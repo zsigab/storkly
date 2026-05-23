@@ -10,6 +10,7 @@ public record RsvpPublicEventResponse(
         UUID eventId,
         String eventTitle,
         OffsetDateTime eventDate,
+        @Nullable Integer eventDateOffsetSeconds,
         @Nullable String location,
         @Nullable Integer spotsLeft,
         List<EventTimeSlotPublicResponse> timeSlots) {}

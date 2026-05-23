@@ -5,7 +5,7 @@ import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { usePublicEvent, useEvent } from "@/hooks/useEvents";
 import { useEventTheme } from "@/hooks/useEventTheme";
 import { useAuth } from "@/hooks/useAuth";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDate } from "@/lib/utils";
 
 export function PublicEventPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
@@ -64,7 +64,9 @@ export function PublicEventPage(): React.ReactElement {
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <h1 className="text-4xl font-semibold tracking-tight">{event.title}</h1>
-              <p className="text-muted-foreground text-lg">{formatDateTime(event.eventDate)}</p>
+              <p className="text-muted-foreground text-lg">
+                {formatEventDate(event.eventDate, event.eventDateOffsetSeconds)}
+              </p>
               {event.location !== null && (
                 <p className="text-muted-foreground text-lg">{event.location}</p>
               )}

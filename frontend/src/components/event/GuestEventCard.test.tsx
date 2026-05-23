@@ -32,6 +32,7 @@ const event: EventPublicResponse = {
   id: "event-abc",
   title: "Baby Shower",
   eventDate: "2025-06-15T14:00:00Z",
+  eventDateOffsetSeconds: null,
   location: "123 Main St",
   description: null,
   themeColor: "peach",
