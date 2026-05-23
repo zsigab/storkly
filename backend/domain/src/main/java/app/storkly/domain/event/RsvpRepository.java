@@ -10,6 +10,8 @@ import org.jspecify.annotations.Nullable;
 public interface RsvpRepository {
     Rsvp upsert(Rsvp rsvp);
 
+    Optional<Rsvp> findById(UUID id);
+
     Optional<Rsvp> findByEventIdAndEmail(UUID eventId, String email);
 
     List<Rsvp> findByEventId(UUID eventId);
@@ -23,4 +25,6 @@ public interface RsvpRepository {
     int countAttendingByEventIdExcluding(UUID eventId, @Nullable UUID excludeRsvpId);
 
     int countAttendingBySlotIdExcluding(UUID slotId, @Nullable UUID excludeRsvpId);
+
+    void deleteById(UUID id);
 }

@@ -1,6 +1,9 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { EventAttendeesTable } from "./EventAttendeesTable";
+
+vi.mock("@/api", () => ({ api: { GET: vi.fn(), DELETE: vi.fn() } }));
 
 const mockAttendees = [
   {
@@ -29,22 +32,37 @@ const mockAttendees = [
   },
 ];
 
+function renderTable(props: { ownerEventId?: string } = {}) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  render(
+    <QueryClientProvider client={client}>
+      <EventAttendeesTable attendees={mockAttendees} {...props} />
+    </QueryClientProvider>,
+  );
+}
+
 describe("EventAttendeesTable", () => {
-  it("renders table with attendee rows", () => {
-    render(<EventAttendeesTable attendees={mockAttendees} />);
+  it("renders collapsible header with attendee count", () => {
+    renderTable();
+    expect(screen.getByRole("button", { name: /Attendees/ })).toBeInTheDocument();
+    expect(screen.getByText("(3)")).toBeInTheDocument();
+  });
+
+  it("renders attendee names in the DOM", () => {
+    renderTable();
     expect(screen.getByText("Alice")).toBeInTheDocument();
     expect(screen.getByText("Bob")).toBeInTheDocument();
     expect(screen.getByText("Charlie")).toBeInTheDocument();
   });
 
   it("shows email addresses", () => {
-    render(<EventAttendeesTable attendees={mockAttendees} />);
-    expect(screen.getByText("alice@example.com")).toBeInTheDocument();
-    expect(screen.getByText("bob@example.com")).toBeInTheDocument();
+    renderTable();
+    expect(screen.getByText(/alice/)).toBeInTheDocument();
+    expect(screen.getByText(/bob/)).toBeInTheDocument();
   });
 
   it("shows attending status with badges", () => {
-    render(<EventAttendeesTable attendees={mockAttendees} />);
+    renderTable();
     const yeses = screen.getAllByText("Yes");
     const nos = screen.getAllByText("No");
     expect(yeses).toHaveLength(2);
@@ -52,26 +70,83 @@ describe("EventAttendeesTable", () => {
   });
 
   it("shows confirmed status for RSVPs with confirmedAt", () => {
-    render(<EventAttendeesTable attendees={mockAttendees} />);
-    const confirmed = screen.getAllByText("Confirmed");
-    const pending = screen.getAllByText("Pending");
-    expect(confirmed).toHaveLength(1);
-    expect(pending).toHaveLength(2);
+    renderTable();
+    expect(screen.getAllByText("Confirmed")).toHaveLength(1);
+    expect(screen.getAllByText("Pending")).toHaveLength(2);
   });
 
   it("shows formatted time slot when present", () => {
-    render(<EventAttendeesTable attendees={mockAttendees} />);
+    renderTable();
     expect(screen.getByText(/2024-06-15/)).toBeInTheDocument();
   });
 
-  it("shows dash when time slot label is null", () => {
-    render(<EventAttendeesTable attendees={mockAttendees} />);
+  it("shows dash when time slot is null", () => {
+    renderTable();
     const dashes = screen.getAllByText("—");
     expect(dashes.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders empty table when no attendees", () => {
-    render(<EventAttendeesTable attendees={[]} />);
-    expect(screen.getByText("Attendees")).toBeInTheDocument();
+  it("toggles open state when header is clicked", () => {
+    renderTable();
+    const toggle = screen.getByRole("button", { name: /Attendees/ });
+    expect(toggle).toHaveTextContent("▼");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveTextContent("▲");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveTextContent("▼");
+  });
+
+  it("sorts by name descending when Name header is clicked (initial state is name asc)", () => {
+    renderTable();
+    fireEvent.click(screen.getByRole("button", { name: /Name/ }));
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(rows.at(0)?.textContent).toContain("Charlie");
+    expect(rows.at(-1)?.textContent).toContain("Alice");
+  });
+
+  it("reverses back to ascending on second click of Name header", () => {
+    renderTable();
+    fireEvent.click(screen.getByRole("button", { name: /Name/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Name/ }));
+    const rows = screen.getAllByRole("row").slice(1);
+    expect(rows.at(0)?.textContent).toContain("Alice");
+    expect(rows.at(-1)?.textContent).toContain("Charlie");
+  });
+
+  it("does not show delete buttons without ownerEventId", () => {
+    renderTable();
+    expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  });
+
+  it("shows delete buttons when ownerEventId is provided", () => {
+    renderTable({ ownerEventId: "event-1" });
+    expect(screen.getAllByRole("button", { name: "Delete" })).toHaveLength(3);
+  });
+
+  it("opens confirm dialog when Delete is clicked", async () => {
+    renderTable({ ownerEventId: "event-1" });
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0] ?? document.body);
+    await waitFor(() => expect(screen.getByRole("dialog", { hidden: true })).toBeInTheDocument());
+    expect(screen.getByText("Delete RSVP?")).toBeInTheDocument();
+  });
+
+  it("closes confirm dialog on Cancel", async () => {
+    renderTable({ ownerEventId: "event-1" });
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete" })[0] ?? document.body);
+    await waitFor(() => expect(screen.getByText("Cancel")).toBeInTheDocument());
+    fireEvent.click(screen.getByText("Cancel"));
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument(),
+    );
+  });
+
+  it("renders empty state when no attendees", () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <EventAttendeesTable attendees={[]} />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText("No RSVPs yet.")).toBeInTheDocument();
   });
 });

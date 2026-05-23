@@ -6,9 +6,12 @@ import app.storkly.domain.event.EventTimeSlot;
 import app.storkly.domain.event.EventTimeSlotRepository;
 import app.storkly.domain.event.Rsvp;
 import app.storkly.domain.event.RsvpRepository;
+import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.EventAtCapacityException;
+import app.storkly.domain.exception.EventNotFoundException;
 import app.storkly.domain.exception.InvalidSlotException;
 import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.RsvpNotFoundException;
 import app.storkly.domain.exception.SlotAtCapacityException;
 import app.storkly.service.auth.TurnstileService;
 import app.storkly.service.email.EmailService;
@@ -152,5 +155,18 @@ public class RsvpService {
 
     public int countAttendingBySlot(UUID slotId) {
         return rsvpRepository.countAttendingBySlotIdExcluding(slotId, null);
+    }
+
+    @Transactional
+    public void deleteRsvp(UUID rsvpId, UUID eventId, UUID ownerId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
+        if (!event.ownerId().equals(ownerId)) {
+            throw new AccessDeniedException("Only the event owner can delete RSVPs");
+        }
+        Rsvp rsvp = rsvpRepository.findById(rsvpId).orElseThrow(() -> new RsvpNotFoundException(rsvpId));
+        if (!rsvp.eventId().equals(eventId)) {
+            throw new RsvpNotFoundException(rsvpId);
+        }
+        rsvpRepository.deleteById(rsvpId);
     }
 }

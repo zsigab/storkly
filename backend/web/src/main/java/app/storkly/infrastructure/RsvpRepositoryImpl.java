@@ -83,6 +83,12 @@ public class RsvpRepositoryImpl implements RsvpRepository {
     }
 
     @Override
+    public Optional<Rsvp> findById(UUID id) {
+        RsvpRecord record = dsl.selectFrom(RSVP).where(RSVP.ID.eq(id)).fetchOne();
+        return Optional.ofNullable(record).map(this::toDomain);
+    }
+
+    @Override
     public Optional<Rsvp> findByEventIdAndEmail(UUID eventId, String email) {
         RsvpRecord record = dsl.selectFrom(RSVP)
                 .where(RSVP.EVENT_ID.eq(eventId).and(RSVP.EMAIL.eq(email)))
@@ -130,6 +136,11 @@ public class RsvpRepositoryImpl implements RsvpRepository {
             condition = condition.and(RSVP.ID.ne(excludeRsvpId));
         }
         return dsl.fetchCount(RSVP, condition);
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        dsl.deleteFrom(RSVP).where(RSVP.ID.eq(id)).execute();
     }
 
     private Rsvp toDomain(RsvpRecord record) {

@@ -100,6 +100,13 @@ public class EventController {
         eventService.delete(id, currentUser.id());
     }
 
+    @DeleteMapping("/api/events/{id}/rsvps/{rsvpId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteRsvp(
+            @PathVariable UUID id, @PathVariable UUID rsvpId, @AuthenticationPrincipal User currentUser) {
+        rsvpService.deleteRsvp(rsvpId, id, currentUser.id());
+    }
+
     @GetMapping("/api/events/{id}/public")
     public EventPublicResponse getPublic(@PathVariable UUID id) {
         Event event = eventService.findPublicById(id);

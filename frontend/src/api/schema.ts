@@ -647,6 +647,12 @@ export type paths = {
       responses: { 204: Empty; 403: Err; 404: Err };
     };
   };
+  "/api/events/{id}/rsvps/{rsvpId}": {
+    delete: {
+      parameters: { path: { id: string; rsvpId: string } };
+      responses: { 204: Empty; 401: Err; 403: Err; 404: Err };
+    };
+  };
   "/api/rsvp/{rsvpToken}": {
     get: {
       parameters: { path: { rsvpToken: string } };

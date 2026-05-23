@@ -92,8 +92,8 @@ export function PublicEventPage(): React.ReactElement {
       </GlassCardLayout>
 
       {eventFull !== undefined && (
-        <div className="mx-auto max-w-2xl px-8 pb-10">
-          <EventAttendeesTable attendees={eventFull.attendees} />
+        <div className="mx-auto max-w-2xl pb-10">
+          <EventAttendeesTable attendees={eventFull.attendees} ownerEventId={safeId} />
         </div>
       )}
     </>

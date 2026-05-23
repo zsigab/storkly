@@ -193,6 +193,21 @@ export function useDeleteSlot(eventId: string) {
   });
 }
 
+export function useDeleteRsvp(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (rsvpId: string) => {
+      const { error } = await api.DELETE("/api/events/{id}/rsvps/{rsvpId}", {
+        params: { path: { id: eventId, rsvpId } },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+  });
+}
+
 export function useDeleteEvent() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
