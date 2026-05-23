@@ -38,6 +38,8 @@ spring:
       "[mail.smtp.starttls.enable]": "false"
 
 storkly:
+  facebook:
+    app-secret: ${FACEBOOK_CLIENT_SECRET:not-configured}
   images:
     upload-dir: ${IMAGES_DIR:${user.home}/.storkly/uploads}
   captcha:

@@ -23,6 +23,8 @@ spring:
             user-info-uri: https://graph.facebook.com/me?fields=id,name,email
 
 storkly:
+  facebook:
+    app-secret: test-facebook-app-secret
   captcha:
     enabled: false
     secret-key: "test-turnstile-key"

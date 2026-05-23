@@ -94,6 +94,21 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     @Override
+    public void removeOAuthProvider(UUID userId, AuthProvider provider) {
+        dsl.deleteFrom(USER_OAUTH_PROVIDER)
+                .where(USER_OAUTH_PROVIDER
+                        .USER_ID
+                        .eq(userId)
+                        .and(USER_OAUTH_PROVIDER.PROVIDER.eq(mapProvider(provider))))
+                .execute();
+    }
+
+    @Override
+    public int countOAuthProviders(UUID userId) {
+        return dsl.fetchCount(USER_OAUTH_PROVIDER, USER_OAUTH_PROVIDER.USER_ID.eq(userId));
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return dsl.fetchCount(USER, USER.EMAIL.eq(email)) > 0;
     }

@@ -25,6 +25,7 @@ import { EditEventPage } from "@/pages/event/EditEventPage";
 import { RsvpPage } from "@/pages/RsvpPage";
 import { RsvpConfirmPage } from "@/pages/RsvpConfirmPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
+import { DataDeletionPage } from "@/pages/DataDeletionPage";
 
 export const router = createBrowserRouter([
   {
@@ -45,6 +46,7 @@ export const router = createBrowserRouter([
       { path: "rsvp/confirm", element: <RsvpConfirmPage /> },
       { path: "rsvp/:token", element: <RsvpPage /> },
       { path: "privacy", element: <PrivacyPolicyPage /> },
+      { path: "data-deletion", element: <DataDeletionPage /> },
       {
         element: (
           <RequireAuth>

@@ -31,6 +31,8 @@ spring:
       "[mail.smtp.starttls.enable]": "true"
 
 storkly:
+  facebook:
+    app-secret: ${FACEBOOK_CLIENT_SECRET}
   captcha:
     enabled: true
     secret-key: ${TURNSTILE_SECRET_KEY}

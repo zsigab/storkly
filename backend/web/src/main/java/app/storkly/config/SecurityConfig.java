@@ -63,6 +63,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/auth/oauth/**")
                         .permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/facebook/data-deletion")
+                        .permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/registries/{slug}")

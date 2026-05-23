@@ -14,6 +14,10 @@ public interface UserRepository {
 
     void addOAuthProvider(UUID userId, AuthProvider provider, String providerId);
 
+    void removeOAuthProvider(UUID userId, AuthProvider provider);
+
+    int countOAuthProviders(UUID userId);
+
     boolean existsByEmail(String email);
 
     void deleteById(UUID id);
