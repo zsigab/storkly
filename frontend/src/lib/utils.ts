@@ -126,3 +126,16 @@ export function formatEventDate(iso: string, storedOffsetSeconds?: number | null
   const localStr = formatWithOffset(iso, localOffset);
   return `${persistedStr} ${formatOffsetLabel(persistedOffset)} (${localStr} ${formatOffsetLabel(localOffset)})`;
 }
+
+/**
+ * Format a time slot for the attendees table: shows the stored time in the stored timezone.
+ * Appends the GMT label only when the stored offset differs from local — no local conversion.
+ */
+export function formatSlotDate(iso: string, storedOffsetSeconds?: number | null): string {
+  const persistedOffset = storedOffsetSeconds ?? 0;
+  const str = formatWithOffset(iso, persistedOffset);
+  if (persistedOffset === LOCAL_OFFSET_SECONDS) {
+    return str;
+  }
+  return `${str} ${formatOffsetLabel(persistedOffset)}`;
+}
