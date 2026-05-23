@@ -27,14 +27,20 @@ public class EventTimeSlotService {
     }
 
     @Transactional
-    public EventTimeSlot addSlot(UUID eventId, String label, @Nullable Integer capacity, UUID currentUserId) {
+    public EventTimeSlot addSlot(
+            UUID eventId,
+            OffsetDateTime slotTime,
+            @Nullable Integer slotOffsetSeconds,
+            @Nullable Integer capacity,
+            UUID currentUserId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
         if (!event.ownerId().equals(currentUserId)) {
             throw new AccessDeniedException("Only the event owner can manage time slots");
         }
         EventTimeSlot slot = EventTimeSlot.builder()
                 .eventId(eventId)
-                .label(label)
+                .slotTime(slotTime)
+                .slotOffsetSeconds(slotOffsetSeconds)
                 .capacity(capacity)
                 .createdAt(OffsetDateTime.now())
                 .build();
@@ -43,7 +49,12 @@ public class EventTimeSlotService {
 
     @Transactional
     public EventTimeSlot updateSlot(
-            UUID eventId, UUID slotId, String label, @Nullable Integer capacity, UUID currentUserId) {
+            UUID eventId,
+            UUID slotId,
+            OffsetDateTime slotTime,
+            @Nullable Integer slotOffsetSeconds,
+            @Nullable Integer capacity,
+            UUID currentUserId) {
         Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
         if (!event.ownerId().equals(currentUserId)) {
             throw new AccessDeniedException("Only the event owner can manage time slots");
@@ -55,7 +66,8 @@ public class EventTimeSlotService {
         EventTimeSlot updated = EventTimeSlot.builder()
                 .id(slot.id())
                 .eventId(eventId)
-                .label(label)
+                .slotTime(slotTime)
+                .slotOffsetSeconds(slotOffsetSeconds)
                 .capacity(capacity)
                 .createdAt(slot.createdAt())
                 .build();

@@ -1,5 +1,6 @@
 import type { RsvpResponse } from "@/api/schema";
 import { Badge } from "@/components/ui/badge";
+import { formatDateTime } from "@/lib/utils";
 
 interface EventAttendeesTableProps {
   attendees: RsvpResponse[];
@@ -31,7 +32,7 @@ export function EventAttendeesTable({ attendees }: EventAttendeesTableProps): Re
                   </Badge>
                 </td>
                 <td className="text-muted-foreground px-4 py-3 text-sm">
-                  {attendee.timeSlotLabel ?? "—"}
+                  {attendee.timeSlotTime !== null ? formatDateTime(attendee.timeSlotTime) : "—"}
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <Badge variant={attendee.confirmedAt !== null ? "default" : "outline"}>

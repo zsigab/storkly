@@ -9,6 +9,7 @@ import org.jspecify.annotations.Nullable;
 public record EventTimeSlot(
         @Nullable UUID id,
         UUID eventId,
-        String label,
+        OffsetDateTime slotTime,
+        @Nullable Integer slotOffsetSeconds,
         @Nullable Integer capacity,
         OffsetDateTime createdAt) {}

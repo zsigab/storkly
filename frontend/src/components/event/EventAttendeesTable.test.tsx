@@ -9,7 +9,7 @@ const mockAttendees = [
     email: "alice@example.com",
     attending: true,
     confirmedAt: "2024-01-01T00:00:00Z",
-    timeSlotLabel: "8:00 AM",
+    timeSlotTime: "2024-06-15T08:00:00Z",
   },
   {
     id: "rsvp-2",
@@ -17,7 +17,7 @@ const mockAttendees = [
     email: "bob@example.com",
     attending: false,
     confirmedAt: null,
-    timeSlotLabel: null,
+    timeSlotTime: null,
   },
   {
     id: "rsvp-3",
@@ -25,7 +25,7 @@ const mockAttendees = [
     email: "charlie@example.com",
     attending: true,
     confirmedAt: null,
-    timeSlotLabel: null,
+    timeSlotTime: null,
   },
 ];
 
@@ -59,9 +59,9 @@ describe("EventAttendeesTable", () => {
     expect(pending).toHaveLength(2);
   });
 
-  it("shows time slot label when present", () => {
+  it("shows formatted time slot when present", () => {
     render(<EventAttendeesTable attendees={mockAttendees} />);
-    expect(screen.getByText("8:00 AM")).toBeInTheDocument();
+    expect(screen.getByText(/2024-06-15/)).toBeInTheDocument();
   });
 
   it("shows dash when time slot label is null", () => {

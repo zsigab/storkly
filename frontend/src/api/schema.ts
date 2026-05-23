@@ -136,14 +136,16 @@ export interface DeliveryOptionResponse {
 
 export interface EventTimeSlotResponse {
   id: string;
-  label: string;
+  slotTime: string;
+  slotOffsetSeconds: number | null;
   capacity: number | null;
   attendingCount: number;
 }
 
 export interface EventTimeSlotPublicResponse {
   id: string;
-  label: string;
+  slotTime: string;
+  slotOffsetSeconds: number | null;
   spotsLeft: number | null;
 }
 
@@ -178,7 +180,7 @@ export interface RsvpResponse {
   email: string;
   attending: boolean;
   confirmedAt: string | null;
-  timeSlotLabel: string | null;
+  timeSlotTime: string | null;
 }
 
 export interface RsvpPublicEventResponse {
@@ -616,7 +618,11 @@ export type paths = {
       parameters: { path: { id: string } };
       requestBody: {
         content: {
-          "application/json": { label: string; capacity?: number | null };
+          "application/json": {
+            slotTime: string;
+            slotOffsetSeconds?: number | null;
+            capacity?: number | null;
+          };
         };
       };
       responses: { 201: Ok<EventTimeSlotResponse>; 403: Err; 404: Err };
@@ -627,7 +633,11 @@ export type paths = {
       parameters: { path: { id: string; slotId: string } };
       requestBody: {
         content: {
-          "application/json": { label: string; capacity?: number | null };
+          "application/json": {
+            slotTime: string;
+            slotOffsetSeconds?: number | null;
+            capacity?: number | null;
+          };
         };
       };
       responses: { 200: Ok<EventTimeSlotResponse>; 403: Err; 404: Err };

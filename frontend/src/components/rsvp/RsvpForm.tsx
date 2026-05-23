@@ -10,6 +10,7 @@ import { FormField } from "@/components/common/FormField";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useAuth } from "@/hooks/useAuth";
 import { useSubmitRsvp } from "@/hooks/useRsvp";
+import { formatDateTime } from "@/lib/utils";
 import type { RsvpPublicEventResponse } from "@/api/schema";
 
 const schema = z.object({
@@ -162,7 +163,7 @@ export function RsvpForm({ rsvpToken, event }: RsvpFormProps): React.ReactElemen
                         : "border-border hover:border-primary/50",
                   ].join(" ")}
                 >
-                  <span>{slot.label}</span>
+                  <span>{formatDateTime(slot.slotTime)}</span>
                   {slot.spotsLeft !== null && (
                     <span className="text-muted-foreground text-xs">
                       {full ? "Full" : `${slot.spotsLeft} spots left`}

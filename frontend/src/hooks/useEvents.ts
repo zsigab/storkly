@@ -130,7 +130,11 @@ export function useUpdateEvent(id: string) {
 export function useAddSlot(eventId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { label: string; capacity?: number | null }) => {
+    mutationFn: async (values: {
+      slotTime: string;
+      slotOffsetSeconds?: number | null;
+      capacity?: number | null;
+    }) => {
       const { data, error } = await api.POST("/api/events/{id}/slots", {
         params: { path: { id: eventId } },
         body: values,
@@ -148,11 +152,19 @@ export function useAddSlot(eventId: string) {
 export function useUpdateSlot(eventId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (values: { slotId: string; label: string; capacity?: number | null }) => {
+    mutationFn: async (values: {
+      slotId: string;
+      slotTime: string;
+      slotOffsetSeconds?: number | null;
+      capacity?: number | null;
+    }) => {
       const { data, error } = await api.PUT("/api/events/{id}/slots/{slotId}", {
         params: { path: { id: eventId, slotId: values.slotId } },
         body: {
-          label: values.label,
+          slotTime: values.slotTime,
+          ...(values.slotOffsetSeconds !== undefined
+            ? { slotOffsetSeconds: values.slotOffsetSeconds }
+            : {}),
           ...(values.capacity !== undefined ? { capacity: values.capacity } : {}),
         },
       });

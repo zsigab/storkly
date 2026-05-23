@@ -46,7 +46,7 @@ const eventFixture = {
       email: "alice@example.com",
       attending: true,
       confirmedAt: "2024-01-01T00:00:00Z",
-      timeSlotLabel: null,
+      timeSlotTime: null,
     },
     {
       id: "rsvp-2",
@@ -54,7 +54,7 @@ const eventFixture = {
       email: "bob@example.com",
       attending: false,
       confirmedAt: null,
-      timeSlotLabel: null,
+      timeSlotTime: null,
     },
   ],
   themeColor: "peach",

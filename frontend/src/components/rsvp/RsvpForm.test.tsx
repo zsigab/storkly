@@ -141,16 +141,18 @@ describe("RsvpForm", () => {
     const eventWithSlots = {
       ...eventFixture,
       timeSlots: [
-        { id: "slot-1", label: "8:00 AM", spotsLeft: 5 },
-        { id: "slot-2", label: "12:00 PM", spotsLeft: null },
-        { id: "slot-3", label: "4:00 PM", spotsLeft: 0 },
+        { id: "slot-1", slotTime: "2024-06-15T08:00:00Z", spotsLeft: 5 },
+        { id: "slot-2", slotTime: "2024-06-16T08:00:00Z", spotsLeft: null },
+        { id: "slot-3", slotTime: "2024-06-17T08:00:00Z", spotsLeft: 0 },
       ],
     };
     renderWithProviders(<RsvpForm rsvpToken="token-abc" event={eventWithSlots} />);
 
-    expect(screen.getByText("8:00 AM")).toBeInTheDocument();
-    expect(screen.getByText("12:00 PM")).toBeInTheDocument();
-    expect(screen.getByText("4:00 PM")).toBeInTheDocument();
+    // Three slot buttons should be rendered (timezone-agnostic check)
+    const slotButtons = screen
+      .getAllByRole("button")
+      .filter((b) => b.textContent?.match(/2024-06-1[5-7]/));
+    expect(slotButtons).toHaveLength(3);
     expect(screen.getByText("5 spots left")).toBeInTheDocument();
     expect(screen.getByText("Full")).toBeInTheDocument();
   });
@@ -158,12 +160,15 @@ describe("RsvpForm", () => {
   it("hides time slot buttons when attending is no", () => {
     const eventWithSlots = {
       ...eventFixture,
-      timeSlots: [{ id: "slot-1", label: "8:00 AM", spotsLeft: 5 }],
+      timeSlots: [{ id: "slot-1", slotTime: "2024-06-15T08:00:00Z", spotsLeft: 5 }],
     };
     renderWithProviders(<RsvpForm rsvpToken="token-abc" event={eventWithSlots} />);
 
     fireEvent.click(screen.getByRole("button", { name: /no, i can't make it/i }));
 
-    expect(screen.queryByText("8:00 AM")).not.toBeInTheDocument();
+    const slotButtons = screen
+      .queryAllByRole("button")
+      .filter((b) => b.textContent?.match(/2024-06-15/));
+    expect(slotButtons).toHaveLength(0);
   });
 });

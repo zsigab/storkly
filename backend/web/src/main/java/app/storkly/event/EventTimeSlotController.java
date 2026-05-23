@@ -31,8 +31,9 @@ public class EventTimeSlotController {
             @PathVariable UUID id,
             @RequestBody @Valid EventTimeSlotCreateRequest request,
             @AuthenticationPrincipal User currentUser) {
-        EventTimeSlot slot = eventTimeSlotService.addSlot(id, request.label(), request.capacity(), currentUser.id());
-        return new EventTimeSlotResponse(slot.id(), slot.label(), slot.capacity(), 0);
+        EventTimeSlot slot = eventTimeSlotService.addSlot(
+                id, request.slotTime(), request.slotOffsetSeconds(), request.capacity(), currentUser.id());
+        return new EventTimeSlotResponse(slot.id(), slot.slotTime(), slot.slotOffsetSeconds(), slot.capacity(), 0);
     }
 
     @PutMapping("/api/events/{id}/slots/{slotId}")
@@ -41,9 +42,9 @@ public class EventTimeSlotController {
             @PathVariable UUID slotId,
             @RequestBody @Valid EventTimeSlotUpdateRequest request,
             @AuthenticationPrincipal User currentUser) {
-        EventTimeSlot slot =
-                eventTimeSlotService.updateSlot(id, slotId, request.label(), request.capacity(), currentUser.id());
-        return new EventTimeSlotResponse(slot.id(), slot.label(), slot.capacity(), 0);
+        EventTimeSlot slot = eventTimeSlotService.updateSlot(
+                id, slotId, request.slotTime(), request.slotOffsetSeconds(), request.capacity(), currentUser.id());
+        return new EventTimeSlotResponse(slot.id(), slot.slotTime(), slot.slotOffsetSeconds(), slot.capacity(), 0);
     }
 
     @DeleteMapping("/api/events/{id}/slots/{slotId}")

@@ -14,6 +14,7 @@ import app.storkly.service.event.EventService;
 import app.storkly.service.event.EventTimeSlotService;
 import app.storkly.service.event.RsvpService;
 import jakarta.validation.Valid;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -109,11 +110,11 @@ public class EventController {
         List<Rsvp> rsvps = rsvpService.getAttendeesByEventId(event.id());
         List<EventTimeSlot> slots = eventTimeSlotService.findByEventId(event.id());
 
-        // Build slot label lookup
-        Map<UUID, String> slotLabelById = new HashMap<>();
+        // Build slot time lookup
+        Map<UUID, OffsetDateTime> slotTimeById = new HashMap<>();
         for (EventTimeSlot slot : slots) {
             if (slot.id() != null) {
-                slotLabelById.put(slot.id(), slot.label());
+                slotTimeById.put(slot.id(), slot.slotTime());
             }
         }
 
@@ -132,13 +133,14 @@ public class EventController {
                         rsvp.email(),
                         rsvp.attending(),
                         rsvp.confirmedAt(),
-                        rsvp.timeSlotId() != null ? slotLabelById.get(rsvp.timeSlotId()) : null))
+                        rsvp.timeSlotId() != null ? slotTimeById.get(rsvp.timeSlotId()) : null))
                 .toList();
 
         List<EventTimeSlotResponse> timeSlotResponses = new ArrayList<>();
         for (EventTimeSlot slot : slots) {
             int count = slot.id() != null ? attendingCountPerSlot.getOrDefault(slot.id(), 0) : 0;
-            timeSlotResponses.add(new EventTimeSlotResponse(slot.id(), slot.label(), slot.capacity(), count));
+            timeSlotResponses.add(new EventTimeSlotResponse(
+                    slot.id(), slot.slotTime(), slot.slotOffsetSeconds(), slot.capacity(), count));
         }
 
         return new EventResponse(

@@ -25,20 +25,23 @@ public class EventTimeSlotRepositoryImpl implements EventTimeSlotRepository {
             dsl.insertInto(EVENT_TIME_SLOT)
                     .set(EVENT_TIME_SLOT.ID, id)
                     .set(EVENT_TIME_SLOT.EVENT_ID, slot.eventId())
-                    .set(EVENT_TIME_SLOT.LABEL, slot.label())
+                    .set(EVENT_TIME_SLOT.SLOT_TIME, slot.slotTime())
+                    .set(EVENT_TIME_SLOT.SLOT_OFFSET_SECONDS, slot.slotOffsetSeconds())
                     .set(EVENT_TIME_SLOT.CAPACITY, slot.capacity())
                     .set(EVENT_TIME_SLOT.CREATED_AT, slot.createdAt())
                     .execute();
             return EventTimeSlot.builder()
                     .id(id)
                     .eventId(slot.eventId())
-                    .label(slot.label())
+                    .slotTime(slot.slotTime())
+                    .slotOffsetSeconds(slot.slotOffsetSeconds())
                     .capacity(slot.capacity())
                     .createdAt(slot.createdAt())
                     .build();
         } else {
             dsl.update(EVENT_TIME_SLOT)
-                    .set(EVENT_TIME_SLOT.LABEL, slot.label())
+                    .set(EVENT_TIME_SLOT.SLOT_TIME, slot.slotTime())
+                    .set(EVENT_TIME_SLOT.SLOT_OFFSET_SECONDS, slot.slotOffsetSeconds())
                     .set(EVENT_TIME_SLOT.CAPACITY, slot.capacity())
                     .where(EVENT_TIME_SLOT.ID.eq(slot.id()))
                     .execute();
@@ -71,7 +74,8 @@ public class EventTimeSlotRepositoryImpl implements EventTimeSlotRepository {
         return EventTimeSlot.builder()
                 .id(record.getId())
                 .eventId(record.getEventId())
-                .label(record.getLabel())
+                .slotTime(record.getSlotTime())
+                .slotOffsetSeconds(record.getSlotOffsetSeconds())
                 .capacity(record.getCapacity())
                 .createdAt(record.getCreatedAt())
                 .build();

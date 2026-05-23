@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { EventForm } from "@/components/event/EventForm";
-import { EventTimeSlotsSection } from "@/components/event/EventTimeSlotsSection";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { useEvent, useUpdateEvent } from "@/hooks/useEvents";
 import type { ProblemDetail } from "@/api/schema";
@@ -79,11 +78,9 @@ export function EditEventPage(): React.ReactElement {
         isError={updateEvent.isError}
         error={updateEvent.error}
         submitLabel="Save changes"
+        eventId={safeId}
+        slots={event.timeSlots}
       />
-
-      <div className="border-t pt-6">
-        <EventTimeSlotsSection eventId={safeId} slots={event.timeSlots} />
-      </div>
 
       <div className="border-t pt-6">
         <div className="space-y-4">

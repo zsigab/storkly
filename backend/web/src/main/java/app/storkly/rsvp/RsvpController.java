@@ -40,7 +40,8 @@ public class RsvpController {
             if (slot.capacity() != null && slot.id() != null) {
                 spotsLeft = Math.max(0, slot.capacity() - rsvpService.countAttendingBySlot(slot.id()));
             }
-            slotResponses.add(new EventTimeSlotPublicResponse(slot.id(), slot.label(), spotsLeft));
+            slotResponses.add(
+                    new EventTimeSlotPublicResponse(slot.id(), slot.slotTime(), slot.slotOffsetSeconds(), spotsLeft));
         }
 
         Integer eventSpotsLeft = null;

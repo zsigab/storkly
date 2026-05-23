@@ -5,13 +5,15 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Collapsible } from "@/components/common/Collapsible";
 import { FormField } from "@/components/common/FormField";
 import { MarkdownToolbar } from "@/components/common/MarkdownToolbar";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
+import { EventTimeSlotsSection } from "@/components/event/EventTimeSlotsSection";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/utils";
-import type { EventResponse } from "@/api/schema";
+import type { EventResponse, EventTimeSlotResponse } from "@/api/schema";
 
 const THEME_COLORS = [
   { value: "peach", label: "Peach", swatch: "hsl(15 85% 68%)" },
@@ -67,6 +69,8 @@ interface EventFormProps {
   isError: boolean;
   error: unknown;
   submitLabel: string;
+  eventId?: string;
+  slots?: EventTimeSlotResponse[];
 }
 
 function toDateTimeLocal(isoString: string): string {
@@ -83,6 +87,10 @@ function toIsoString(dateTimeLocal: string): string {
   return `${dateTimeLocal}:00Z`;
 }
 
+function isAllDayIso(iso: string): boolean {
+  return iso.endsWith("T00:00:00Z");
+}
+
 export function EventForm({
   defaultValues,
   onSubmit,
@@ -90,7 +98,15 @@ export function EventForm({
   isError,
   error,
   submitLabel,
+  eventId,
+  slots,
 }: EventFormProps): React.ReactElement {
+  const defaultIso = defaultValues?.eventDate ?? "";
+  const defaultFullDay = defaultIso.length > 0 && isAllDayIso(defaultIso);
+
+  const [fullDay, setFullDay] = useState(defaultFullDay);
+  const [slotsEnabled, setSlotsEnabled] = useState((slots?.length ?? 0) > 0);
+
   const {
     register,
     handleSubmit,
@@ -101,7 +117,12 @@ export function EventForm({
     resolver: zodResolver(schema),
     defaultValues: {
       title: defaultValues?.title ?? "",
-      eventDate: defaultValues?.eventDate ? toDateTimeLocal(defaultValues.eventDate) : "",
+      eventDate:
+        defaultIso.length > 0
+          ? defaultFullDay
+            ? defaultIso.slice(0, 10)
+            : toDateTimeLocal(defaultIso)
+          : "",
       location: defaultValues?.location ?? "",
       description: defaultValues?.description ?? "",
       rsvpCapacity: defaultValues?.rsvpCapacity != null ? String(defaultValues.rsvpCapacity) : "",
@@ -113,6 +134,7 @@ export function EventForm({
   const themeColor = watch("themeColor");
   const themeBackground = watch("themeBackground");
   const descriptionValue = watch("description");
+  const eventDateValue = watch("eventDate");
   const { setRegistryOverride, clearRegistryOverride } = useTheme();
   const [previewMode, setPreviewMode] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement | null>(null);
@@ -126,148 +148,222 @@ export function EventForm({
     return () => clearRegistryOverride();
   }, [clearRegistryOverride]);
 
+  const toggleFullDay = (checked: boolean): void => {
+    setFullDay(checked);
+    if (checked) {
+      // Keep just the date part (YYYY-MM-DD)
+      setValue("eventDate", eventDateValue.slice(0, 10));
+    } else {
+      // Append midnight time
+      setValue("eventDate", `${eventDateValue.slice(0, 10)}T00:00`);
+    }
+  };
+
+  const handleSubmitForm = (values: FormValues): void => {
+    const iso = fullDay ? `${values.eventDate}T00:00:00Z` : toIsoString(values.eventDate);
+    onSubmit({
+      title: values.title,
+      eventDate: iso,
+      location: values.location && values.location.trim().length > 0 ? values.location : null,
+      description: values.description.trim().length > 0 ? values.description.trim() : null,
+      rsvpCapacity: values.rsvpCapacity !== "" ? parseInt(values.rsvpCapacity, 10) : null,
+      themeColor: values.themeColor,
+      themeBackground: values.themeBackground,
+    });
+  };
+
   return (
-    <form
-      className="space-y-4"
-      noValidate
-      onSubmit={handleSubmit((values) =>
-        onSubmit({
-          title: values.title,
-          eventDate: toIsoString(values.eventDate),
-          location: values.location && values.location.trim().length > 0 ? values.location : null,
-          description: values.description.trim().length > 0 ? values.description.trim() : null,
-          rsvpCapacity: values.rsvpCapacity !== "" ? parseInt(values.rsvpCapacity, 10) : null,
-          themeColor: values.themeColor,
-          themeBackground: values.themeBackground,
-        }),
-      )}
-    >
-      <FormField label="Title" htmlFor="title" error={errors.title?.message}>
-        <Input id="title" type="text" autoComplete="off" maxLength={256} {...register("title")} />
-      </FormField>
+    <form className="space-y-8" noValidate onSubmit={handleSubmit(handleSubmitForm)}>
+      {/* General */}
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold">General</h2>
 
-      <FormField label="Event date & time" htmlFor="eventDate" error={errors.eventDate?.message}>
-        <Input id="eventDate" type="datetime-local" {...register("eventDate")} />
-      </FormField>
+        <FormField label="Title" htmlFor="title" error={errors.title?.message}>
+          <Input id="title" type="text" autoComplete="off" maxLength={256} {...register("title")} />
+        </FormField>
 
-      <FormField label="Location" htmlFor="location" error={errors.location?.message}>
-        <Input
-          id="location"
-          type="text"
-          placeholder="Optional — e.g., 123 Main St, Springfield"
-          autoComplete="off"
-          {...register("location")}
-        />
-      </FormField>
+        <FormField label="Location" htmlFor="location" error={errors.location?.message}>
+          <Input
+            id="location"
+            type="text"
+            placeholder="Optional — e.g., 123 Main St, Springfield"
+            autoComplete="off"
+            {...register("location")}
+          />
+        </FormField>
 
-      <FormField label="RSVP capacity" htmlFor="rsvpCapacity" error={errors.rsvpCapacity?.message}>
-        <Input
-          id="rsvpCapacity"
-          type="number"
-          min={1}
-          placeholder="Unlimited"
-          {...register("rsvpCapacity")}
-        />
-        <p className="text-muted-foreground text-xs">Leave blank for unlimited</p>
-      </FormField>
-
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="description" className="text-sm leading-none font-medium">
-            Description
-          </label>
-          <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
-            <div
-              className={cn(
-                "bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out",
-                previewMode && "translate-x-full",
-              )}
-              style={{ width: "calc(50% - 4px)" }}
-            />
-            {(["Edit", "Preview"] as const).map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setPreviewMode(tab === "Preview")}
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <label htmlFor="description" className="text-sm leading-none font-medium">
+              Description
+            </label>
+            <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
+              <div
                 className={cn(
-                  "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                  (tab === "Preview") === previewMode
-                    ? "text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                  "bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out",
+                  previewMode && "translate-x-full",
                 )}
-              >
-                {tab}
-              </button>
-            ))}
+                style={{ width: "calc(50% - 4px)" }}
+              />
+              {(["Edit", "Preview"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setPreviewMode(tab === "Preview")}
+                  className={cn(
+                    "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                    (tab === "Preview") === previewMode
+                      ? "text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+            <MarkdownToolbar
+              textareaRef={descriptionRef}
+              onChange={(v) => setValue("description", v)}
+              disabled={previewMode || isPending}
+            />
           </div>
-          <MarkdownToolbar
-            textareaRef={descriptionRef}
-            onChange={(v) => setValue("description", v)}
-            disabled={previewMode || isPending}
-          />
+          {previewMode ? (
+            <div className="border-input bg-background min-h-[120px] w-full rounded-md border px-3 py-2 text-sm">
+              {descriptionValue.trim().length > 0 ? (
+                <MarkdownContent content={descriptionValue} />
+              ) : (
+                <span className="text-muted-foreground italic">Nothing to preview</span>
+              )}
+            </div>
+          ) : (
+            <textarea
+              id="description"
+              rows={5}
+              placeholder="Optional — describe the event, schedule, what to bring…"
+              className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+              ref={(el) => {
+                descriptionRegisterRef(el);
+                descriptionRef.current = el;
+              }}
+              {...descriptionRegistration}
+            />
+          )}
         </div>
-        {previewMode ? (
-          <div className="border-input bg-background min-h-[120px] w-full rounded-md border px-3 py-2 text-sm">
-            {descriptionValue.trim().length > 0 ? (
-              <MarkdownContent content={descriptionValue} />
-            ) : (
-              <span className="text-muted-foreground italic">Nothing to preview</span>
-            )}
+      </div>
+
+      {/* Date & Time */}
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold">Date & Time</h2>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label htmlFor="eventDate" className="text-sm leading-none font-medium">
+              Event date{fullDay ? "" : " & time"}
+            </label>
+            <label className="text-muted-foreground flex cursor-pointer items-center gap-1.5 text-sm select-none">
+              <input
+                type="checkbox"
+                checked={fullDay}
+                onChange={(e) => toggleFullDay(e.target.checked)}
+                className="accent-primary"
+              />
+              All day
+            </label>
           </div>
-        ) : (
-          <textarea
-            id="description"
-            rows={5}
-            placeholder="Optional — describe the event, schedule, what to bring…"
-            className="border-input bg-background placeholder:text-muted-foreground focus-visible:ring-ring flex w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-            ref={(el) => {
-              descriptionRegisterRef(el);
-              descriptionRef.current = el;
-            }}
-            {...descriptionRegistration}
+          <Input
+            id="eventDate"
+            type={fullDay ? "date" : "datetime-local"}
+            {...register("eventDate")}
           />
+          {errors.eventDate !== undefined && (
+            <p className="text-destructive text-sm">{errors.eventDate.message}</p>
+          )}
+        </div>
+
+        <FormField
+          label="RSVP capacity"
+          htmlFor="rsvpCapacity"
+          error={errors.rsvpCapacity?.message}
+        >
+          <Input
+            id="rsvpCapacity"
+            type="number"
+            min={1}
+            placeholder="Unlimited"
+            {...register("rsvpCapacity")}
+          />
+          <p className="text-muted-foreground text-xs">Leave blank for unlimited</p>
+        </FormField>
+
+        {eventId !== undefined && slots !== undefined && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm leading-none font-medium">Time Slots</p>
+              <label className="text-muted-foreground flex cursor-pointer items-center gap-1.5 text-sm select-none">
+                <input
+                  type="checkbox"
+                  checked={slotsEnabled}
+                  onChange={(e) => setSlotsEnabled(e.target.checked)}
+                  className="accent-primary"
+                />
+                Enable
+              </label>
+            </div>
+            <Collapsible open={slotsEnabled}>
+              <EventTimeSlotsSection
+                eventId={eventId}
+                slots={slots}
+                eventDate={eventDateValue.length >= 10 ? eventDateValue.slice(0, 10) : undefined}
+              />
+            </Collapsible>
+          </div>
         )}
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm leading-none font-medium">Theme color</p>
-        <div className="flex gap-2">
-          {THEME_COLORS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setValue("themeColor", opt.value)}
-              aria-label={opt.label}
-              aria-pressed={themeColor === opt.value}
-              className="h-6 w-6 rounded-full transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2"
-              style={{
-                backgroundColor: opt.swatch,
-                boxShadow:
-                  themeColor === opt.value
-                    ? `0 0 0 2px hsl(var(--background)), 0 0 0 4px ${opt.swatch}`
-                    : "none",
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      {/* Style */}
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold">Style</h2>
 
-      <div className="space-y-2">
-        <p className="text-sm leading-none font-medium">Theme style</p>
-        <div className="flex flex-wrap gap-1.5">
-          {THEME_BACKGROUNDS.map((opt) => (
-            <Button
-              key={opt.value}
-              type="button"
-              variant={themeBackground === opt.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setValue("themeBackground", opt.value)}
-              aria-pressed={themeBackground === opt.value}
-              className="text-xs"
-            >
-              {opt.label}
-            </Button>
-          ))}
+        <div className="space-y-2">
+          <p className="text-sm leading-none font-medium">Theme color</p>
+          <div className="flex gap-2">
+            {THEME_COLORS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setValue("themeColor", opt.value)}
+                aria-label={opt.label}
+                aria-pressed={themeColor === opt.value}
+                className="h-6 w-6 rounded-full transition-transform hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2"
+                style={{
+                  backgroundColor: opt.swatch,
+                  boxShadow:
+                    themeColor === opt.value
+                      ? `0 0 0 2px hsl(var(--background)), 0 0 0 4px ${opt.swatch}`
+                      : "none",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-sm leading-none font-medium">Theme style</p>
+          <div className="flex flex-wrap gap-1.5">
+            {THEME_BACKGROUNDS.map((opt) => (
+              <Button
+                key={opt.value}
+                type="button"
+                variant={themeBackground === opt.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setValue("themeBackground", opt.value)}
+                aria-pressed={themeBackground === opt.value}
+                className="text-xs"
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
