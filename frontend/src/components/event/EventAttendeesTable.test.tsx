@@ -13,6 +13,7 @@ const mockAttendees = [
     attending: true,
     confirmedAt: "2024-01-01T00:00:00Z",
     timeSlotTime: "2024-06-15T08:00:00Z",
+    timeSlotOffsetSeconds: null,
   },
   {
     id: "rsvp-2",
@@ -21,6 +22,7 @@ const mockAttendees = [
     attending: false,
     confirmedAt: null,
     timeSlotTime: null,
+    timeSlotOffsetSeconds: null,
   },
   {
     id: "rsvp-3",
@@ -29,6 +31,7 @@ const mockAttendees = [
     attending: true,
     confirmedAt: null,
     timeSlotTime: null,
+    timeSlotOffsetSeconds: null,
   },
 ];
 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible } from "@/components/common/Collapsible";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { useDeleteRsvp } from "@/hooks/useEvents";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDate } from "@/lib/utils";
 
 type SortColumn = "name" | "email" | "attending" | "timeSlot" | "status";
 type SortDir = "asc" | "desc";
@@ -173,7 +173,7 @@ export function EventAttendeesTable({
                       </td>
                       <td className="text-muted-foreground px-4 py-3 text-sm">
                         {attendee.timeSlotTime !== null
-                          ? formatDateTime(attendee.timeSlotTime)
+                          ? formatEventDate(attendee.timeSlotTime, attendee.timeSlotOffsetSeconds)
                           : "—"}
                       </td>
                       <td className="px-4 py-3 text-sm">

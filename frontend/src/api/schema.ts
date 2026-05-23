@@ -183,6 +183,7 @@ export interface RsvpResponse {
   attending: boolean;
   confirmedAt: string | null;
   timeSlotTime: string | null;
+  timeSlotOffsetSeconds: number | null;
 }
 
 export interface RsvpPublicEventResponse {

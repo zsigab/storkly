@@ -34,12 +34,17 @@ const publicEventFixture = {
   id: "event-1",
   title: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
+  eventDateOffsetSeconds: null,
   location: "123 Main St",
+  description: null,
+  themeColor: "peach",
+  themeBackground: "none",
 };
 
 const fullEventFixture = {
   ...publicEventFixture,
   rsvpToken: "token-abc",
+  rsvpCapacity: null,
   attendees: [
     {
       id: "rsvp-1",
@@ -47,8 +52,11 @@ const fullEventFixture = {
       email: "alice@example.com",
       attending: true,
       confirmedAt: "2024-01-01T00:00:00Z",
+      timeSlotTime: null,
+      timeSlotOffsetSeconds: null,
     },
   ],
+  timeSlots: [],
   createdAt: "2024-01-01T00:00:00Z",
 };
 

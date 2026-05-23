@@ -119,11 +119,15 @@ public class EventController {
         List<Rsvp> rsvps = rsvpService.getAttendeesByEventId(event.id());
         List<EventTimeSlot> slots = eventTimeSlotService.findByEventId(event.id());
 
-        // Build slot time lookup
+        // Build slot lookups
         Map<UUID, OffsetDateTime> slotTimeById = new HashMap<>();
+        Map<UUID, Integer> slotOffsetById = new HashMap<>();
         for (EventTimeSlot slot : slots) {
             if (slot.id() != null) {
                 slotTimeById.put(slot.id(), slot.slotTime());
+                if (slot.slotOffsetSeconds() != null) {
+                    slotOffsetById.put(slot.id(), slot.slotOffsetSeconds());
+                }
             }
         }
 
@@ -142,7 +146,8 @@ public class EventController {
                         rsvp.email(),
                         rsvp.attending(),
                         rsvp.confirmedAt(),
-                        rsvp.timeSlotId() != null ? slotTimeById.get(rsvp.timeSlotId()) : null))
+                        rsvp.timeSlotId() != null ? slotTimeById.get(rsvp.timeSlotId()) : null,
+                        rsvp.timeSlotId() != null ? slotOffsetById.get(rsvp.timeSlotId()) : null))
                 .toList();
 
         List<EventTimeSlotResponse> timeSlotResponses = new ArrayList<>();

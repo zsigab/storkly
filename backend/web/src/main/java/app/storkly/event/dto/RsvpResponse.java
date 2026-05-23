@@ -10,4 +10,5 @@ public record RsvpResponse(
         String email,
         boolean attending,
         @Nullable OffsetDateTime confirmedAt,
-        @Nullable OffsetDateTime timeSlotTime) {}
+        @Nullable OffsetDateTime timeSlotTime,
+        @Nullable Integer timeSlotOffsetSeconds) {}
