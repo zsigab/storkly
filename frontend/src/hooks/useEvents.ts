@@ -151,7 +151,10 @@ export function useUpdateSlot(eventId: string) {
     mutationFn: async (values: { slotId: string; label: string; capacity?: number | null }) => {
       const { data, error } = await api.PUT("/api/events/{id}/slots/{slotId}", {
         params: { path: { id: eventId, slotId: values.slotId } },
-        body: { label: values.label, capacity: values.capacity },
+        body: {
+          label: values.label,
+          ...(values.capacity !== undefined ? { capacity: values.capacity } : {}),
+        },
       });
       if (error !== undefined) throw error;
       if (data === undefined || data === null) throw new Error("No response from server");

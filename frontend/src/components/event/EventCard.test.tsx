@@ -40,6 +40,7 @@ const baseEvent = {
       email: "alice@example.com",
       attending: true,
       confirmedAt: "2024-01-01T00:00:00Z",
+      timeSlotLabel: null,
     },
     {
       id: "rsvp-2",
@@ -47,12 +48,15 @@ const baseEvent = {
       email: "bob@example.com",
       attending: false,
       confirmedAt: "2024-01-01T00:00:00Z",
+      timeSlotLabel: null,
     },
   ],
   description: null,
   themeColor: "peach",
   themeBackground: "none",
   createdAt: "2024-01-01T00:00:00Z",
+  rsvpCapacity: null,
+  timeSlots: [],
 };
 
 describe("EventCard", () => {
