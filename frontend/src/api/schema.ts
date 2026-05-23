@@ -134,6 +134,19 @@ export interface DeliveryOptionResponse {
   sortOrder: number;
 }
 
+export interface EventTimeSlotResponse {
+  id: string;
+  label: string;
+  capacity: number | null;
+  attendingCount: number;
+}
+
+export interface EventTimeSlotPublicResponse {
+  id: string;
+  label: string;
+  spotsLeft: number | null;
+}
+
 export interface EventResponse {
   id: string;
   title: string;
@@ -141,7 +154,9 @@ export interface EventResponse {
   location: string | null;
   description: string | null;
   rsvpToken: string;
+  rsvpCapacity: number | null;
   attendees: RsvpResponse[];
+  timeSlots: EventTimeSlotResponse[];
   themeColor: string;
   themeBackground: string;
   createdAt: string;
@@ -163,6 +178,7 @@ export interface RsvpResponse {
   email: string;
   attending: boolean;
   confirmedAt: string | null;
+  timeSlotLabel: string | null;
 }
 
 export interface RsvpPublicEventResponse {
@@ -170,6 +186,8 @@ export interface RsvpPublicEventResponse {
   eventTitle: string;
   eventDate: string;
   location: string | null;
+  spotsLeft: number | null;
+  timeSlots: EventTimeSlotPublicResponse[];
 }
 
 export interface RsvpConfirmResponse {
@@ -593,6 +611,32 @@ export type paths = {
       responses: { 200: Ok<EventPublicResponse>; 404: Err };
     };
   };
+  "/api/events/{id}/slots": {
+    post: {
+      parameters: { path: { id: string } };
+      requestBody: {
+        content: {
+          "application/json": { label: string; capacity?: number | null };
+        };
+      };
+      responses: { 201: Ok<EventTimeSlotResponse>; 403: Err; 404: Err };
+    };
+  };
+  "/api/events/{id}/slots/{slotId}": {
+    put: {
+      parameters: { path: { id: string; slotId: string } };
+      requestBody: {
+        content: {
+          "application/json": { label: string; capacity?: number | null };
+        };
+      };
+      responses: { 200: Ok<EventTimeSlotResponse>; 403: Err; 404: Err };
+    };
+    delete: {
+      parameters: { path: { id: string; slotId: string } };
+      responses: { 204: Empty; 403: Err; 404: Err };
+    };
+  };
   "/api/rsvp/{rsvpToken}": {
     get: {
       parameters: { path: { rsvpToken: string } };
@@ -607,10 +651,11 @@ export type paths = {
             email: string;
             attending: boolean;
             captchaToken: string;
+            timeSlotId?: string | null;
           };
         };
       };
-      responses: { 200: Empty; 404: Err; 422: Err };
+      responses: { 200: Empty; 404: Err; 409: Err; 422: Err };
     };
   };
   "/api/rsvp/confirm/{confirmToken}": {

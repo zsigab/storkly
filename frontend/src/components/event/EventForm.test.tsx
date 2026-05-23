@@ -158,6 +158,8 @@ describe("EventForm", () => {
       location: "123 Main St",
       rsvpToken: "token-abc",
       attendees: [],
+      rsvpCapacity: null,
+      timeSlots: [],
       themeColor: "blue",
       themeBackground: "both",
       createdAt: "2024-01-01T00:00:00Z",
@@ -222,5 +224,50 @@ describe("EventForm", () => {
       </ThemeProvider>,
     );
     expect(screen.getByRole("button", { name: /save changes/i })).toBeInTheDocument();
+  });
+
+  it("submits rsvpCapacity as number when filled", async () => {
+    render(
+      <ThemeProvider>
+        <EventForm
+          onSubmit={mockOnSubmit}
+          isPending={false}
+          isError={false}
+          error={undefined}
+          submitLabel="Create event"
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Baby Shower" } });
+    fireEvent.change(screen.getByLabelText(/event date/i), {
+      target: { value: "2024-06-15T14:00" },
+    });
+    fireEvent.change(screen.getByLabelText(/rsvp capacity/i), { target: { value: "20" } });
+    fireEvent.click(screen.getByRole("button", { name: /create event/i }));
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled());
+    const call = mockOnSubmit.mock.calls[0]?.[0];
+    expect(call?.rsvpCapacity).toBe(20);
+  });
+
+  it("submits rsvpCapacity as null when blank", async () => {
+    render(
+      <ThemeProvider>
+        <EventForm
+          onSubmit={mockOnSubmit}
+          isPending={false}
+          isError={false}
+          error={undefined}
+          submitLabel="Create event"
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.change(screen.getByLabelText(/title/i), { target: { value: "Baby Shower" } });
+    fireEvent.change(screen.getByLabelText(/event date/i), {
+      target: { value: "2024-06-15T14:00" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /create event/i }));
+    await waitFor(() => expect(mockOnSubmit).toHaveBeenCalled());
+    const call = mockOnSubmit.mock.calls[0]?.[0];
+    expect(call?.rsvpCapacity).toBeNull();
   });
 });

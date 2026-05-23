@@ -83,6 +83,7 @@ export function useCreateEvent() {
       eventDate: string;
       location: string | null;
       description?: string | null;
+      rsvpCapacity?: number | null;
       themeColor?: string | null;
       themeBackground?: string | null;
     }): Promise<EventResponse> => {
@@ -107,6 +108,7 @@ export function useUpdateEvent(id: string) {
       eventDate?: string | null;
       location?: string | null;
       description?: string | null;
+      rsvpCapacity?: number | null;
       themeColor?: string | null;
       themeBackground?: string | null;
     }): Promise<EventResponse> => {
@@ -121,6 +123,57 @@ export function useUpdateEvent(id: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["event", id] });
       void queryClient.invalidateQueries({ queryKey: ["events"] });
+    },
+  });
+}
+
+export function useAddSlot(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { label: string; capacity?: number | null }) => {
+      const { data, error } = await api.POST("/api/events/{id}/slots", {
+        params: { path: { id: eventId } },
+        body: values,
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+  });
+}
+
+export function useUpdateSlot(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (values: { slotId: string; label: string; capacity?: number | null }) => {
+      const { data, error } = await api.PUT("/api/events/{id}/slots/{slotId}", {
+        params: { path: { id: eventId, slotId: values.slotId } },
+        body: { label: values.label, capacity: values.capacity },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+  });
+}
+
+export function useDeleteSlot(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (slotId: string) => {
+      const { error } = await api.DELETE("/api/events/{id}/slots/{slotId}", {
+        params: { path: { id: eventId, slotId } },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
     },
   });
 }

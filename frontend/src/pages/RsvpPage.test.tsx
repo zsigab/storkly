@@ -23,6 +23,8 @@ const eventFixture = {
   eventTitle: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
   location: "123 Main St",
+  spotsLeft: null,
+  timeSlots: [],
 };
 
 function makeClient() {

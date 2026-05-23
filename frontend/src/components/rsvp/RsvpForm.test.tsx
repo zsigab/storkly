@@ -19,6 +19,8 @@ const eventFixture = {
   eventTitle: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
   location: "123 Main St",
+  spotsLeft: null,
+  timeSlots: [],
 };
 
 function makeClient() {
@@ -133,5 +135,35 @@ describe("RsvpForm", () => {
     await waitFor(() => {
       expect(screen.getByText(/invalid rsvp token/i)).toBeInTheDocument();
     });
+  });
+
+  it("shows time slot buttons when event has slots and attending is yes", () => {
+    const eventWithSlots = {
+      ...eventFixture,
+      timeSlots: [
+        { id: "slot-1", label: "8:00 AM", spotsLeft: 5 },
+        { id: "slot-2", label: "12:00 PM", spotsLeft: null },
+        { id: "slot-3", label: "4:00 PM", spotsLeft: 0 },
+      ],
+    };
+    renderWithProviders(<RsvpForm rsvpToken="token-abc" event={eventWithSlots} />);
+
+    expect(screen.getByText("8:00 AM")).toBeInTheDocument();
+    expect(screen.getByText("12:00 PM")).toBeInTheDocument();
+    expect(screen.getByText("4:00 PM")).toBeInTheDocument();
+    expect(screen.getByText("5 spots left")).toBeInTheDocument();
+    expect(screen.getByText("Full")).toBeInTheDocument();
+  });
+
+  it("hides time slot buttons when attending is no", () => {
+    const eventWithSlots = {
+      ...eventFixture,
+      timeSlots: [{ id: "slot-1", label: "8:00 AM", spotsLeft: 5 }],
+    };
+    renderWithProviders(<RsvpForm rsvpToken="token-abc" event={eventWithSlots} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /no, i can't make it/i }));
+
+    expect(screen.queryByText("8:00 AM")).not.toBeInTheDocument();
   });
 });

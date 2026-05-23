@@ -11,5 +11,6 @@ public record EventCreateRequest(
         @NotNull OffsetDateTime eventDate,
         @Nullable String location,
         @Nullable String description,
+        @Nullable @jakarta.validation.constraints.Min(1) Integer rsvpCapacity,
         @Nullable @Size(max = 16) String themeColor,
         @Nullable @Size(max = 16) String themeBackground) {}

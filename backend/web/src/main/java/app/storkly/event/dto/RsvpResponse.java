@@ -9,4 +9,5 @@ public record RsvpResponse(
         String displayName,
         String email,
         boolean attending,
-        @Nullable OffsetDateTime confirmedAt) {}
+        @Nullable OffsetDateTime confirmedAt,
+        @Nullable String timeSlotLabel) {}

@@ -16,6 +16,7 @@ const schema = z.object({
   displayName: z.string().min(1, "Display name is required"),
   email: z.string().email("Enter a valid email address"),
   attending: z.boolean(),
+  timeSlotId: z.string().nullable(),
   captchaToken: z.string().min(1, "Please complete the CAPTCHA"),
 });
 
@@ -43,18 +44,27 @@ export function RsvpForm({ rsvpToken, event }: RsvpFormProps): React.ReactElemen
       displayName: user?.displayName ?? "",
       email: user?.email ?? "",
       attending: true,
+      timeSlotId: null,
       captchaToken: "",
     },
   });
 
   const attending = watch("attending");
+  const timeSlotId = watch("timeSlotId");
+  const hasSlots = event.timeSlots.length > 0;
 
   const onSubmit = (values: FormValues): void => {
-    submitRsvp.mutate(values, {
-      onSuccess: () => {
-        setSubmitted(true);
+    submitRsvp.mutate(
+      {
+        ...values,
+        timeSlotId: values.attending && hasSlots ? values.timeSlotId : null,
       },
-    });
+      {
+        onSuccess: () => {
+          setSubmitted(true);
+        },
+      },
+    );
   };
 
   if (submitted) {
@@ -130,6 +140,40 @@ export function RsvpForm({ rsvpToken, event }: RsvpFormProps): React.ReactElemen
         </div>
       </div>
       <input type="hidden" {...register("attending")} />
+
+      {attending && hasSlots && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Time slot</label>
+          <div className="flex flex-col gap-2">
+            {event.timeSlots.map((slot) => {
+              const full = slot.spotsLeft !== null && slot.spotsLeft <= 0;
+              return (
+                <button
+                  key={slot.id}
+                  type="button"
+                  disabled={full}
+                  onClick={() => setValue("timeSlotId", slot.id, { shouldValidate: true })}
+                  className={[
+                    "flex items-center justify-between rounded-lg border px-4 py-3 text-sm transition-colors",
+                    full
+                      ? "border-border text-muted-foreground cursor-not-allowed opacity-50"
+                      : timeSlotId === slot.id
+                        ? "border-primary bg-primary/10 font-medium"
+                        : "border-border hover:border-primary/50",
+                  ].join(" ")}
+                >
+                  <span>{slot.label}</span>
+                  {slot.spotsLeft !== null && (
+                    <span className="text-muted-foreground text-xs">
+                      {full ? "Full" : `${slot.spotsLeft} spots left`}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <div className="flex justify-center">

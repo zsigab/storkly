@@ -16,6 +16,7 @@ export function EventAttendeesTable({ attendees }: EventAttendeesTableProps): Re
               <th className="px-4 py-3 text-left text-sm font-medium">Name</th>
               <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
               <th className="px-4 py-3 text-left text-sm font-medium">Attending</th>
+              <th className="px-4 py-3 text-left text-sm font-medium">Time Slot</th>
               <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
             </tr>
           </thead>
@@ -28,6 +29,9 @@ export function EventAttendeesTable({ attendees }: EventAttendeesTableProps): Re
                   <Badge variant={attendee.attending ? "default" : "secondary"}>
                     {attendee.attending ? "Yes" : "No"}
                   </Badge>
+                </td>
+                <td className="text-muted-foreground px-4 py-3 text-sm">
+                  {attendee.timeSlotLabel ?? "—"}
                 </td>
                 <td className="px-4 py-3 text-sm">
                   <Badge variant={attendee.confirmedAt !== null ? "default" : "outline"}>

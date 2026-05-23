@@ -24,6 +24,7 @@ export function useSubmitRsvp(rsvpToken: string) {
       email: string;
       attending: boolean;
       captchaToken: string;
+      timeSlotId?: string | null;
     }) => {
       const { error } = await api.POST("/api/rsvp/{rsvpToken}", {
         params: { path: { rsvpToken } },

@@ -11,7 +11,9 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -36,6 +38,7 @@ public class RsvpRepositoryImpl implements RsvpRepository {
                     .set(RSVP.EMAIL, rsvp.email())
                     .set(RSVP.DISPLAY_NAME, rsvp.displayName())
                     .set(RSVP.ATTENDING, rsvp.attending())
+                    .set(RSVP.TIME_SLOT_ID, rsvp.timeSlotId())
                     .set(RSVP.CONFIRMATION_TOKEN, rsvp.confirmationToken())
                     .set(RSVP.CONFIRMED_AT, rsvp.confirmedAt())
                     .set(RSVP.CREATED_AT, rsvp.createdAt())
@@ -47,6 +50,7 @@ public class RsvpRepositoryImpl implements RsvpRepository {
                     .email(rsvp.email())
                     .displayName(rsvp.displayName())
                     .attending(rsvp.attending())
+                    .timeSlotId(rsvp.timeSlotId())
                     .confirmationToken(rsvp.confirmationToken())
                     .confirmedAt(rsvp.confirmedAt())
                     .createdAt(rsvp.createdAt())
@@ -55,18 +59,20 @@ public class RsvpRepositoryImpl implements RsvpRepository {
             // RSVP exists: check if already confirmed
             RsvpRecord existingRecord = existing.get();
             if (existingRecord.getConfirmedAt() == null) {
-                // Not confirmed yet: reset token, update display name and attending
+                // Not confirmed yet: reset token, update display name, attending, and slot
                 dsl.update(RSVP)
                         .set(RSVP.DISPLAY_NAME, rsvp.displayName())
                         .set(RSVP.ATTENDING, rsvp.attending())
+                        .set(RSVP.TIME_SLOT_ID, rsvp.timeSlotId())
                         .set(RSVP.CONFIRMATION_TOKEN, rsvp.confirmationToken())
                         .set(RSVP.USER_ID, rsvp.userId())
                         .where(RSVP.ID.eq(existingRecord.getId()))
                         .execute();
             } else {
-                // Already confirmed: update only attending, keep token and confirmed_at
+                // Already confirmed: update attending and slot, keep token and confirmed_at
                 dsl.update(RSVP)
                         .set(RSVP.ATTENDING, rsvp.attending())
+                        .set(RSVP.TIME_SLOT_ID, rsvp.timeSlotId())
                         .where(RSVP.ID.eq(existingRecord.getId()))
                         .execute();
             }
@@ -108,6 +114,24 @@ public class RsvpRepositoryImpl implements RsvpRepository {
                 .orElseThrow(() -> new RuntimeException("RSVP disappeared after confirm"));
     }
 
+    @Override
+    public int countAttendingByEventIdExcluding(UUID eventId, @Nullable UUID excludeRsvpId) {
+        Condition condition = RSVP.EVENT_ID.eq(eventId).and(RSVP.ATTENDING.isTrue());
+        if (excludeRsvpId != null) {
+            condition = condition.and(RSVP.ID.ne(excludeRsvpId));
+        }
+        return dsl.fetchCount(RSVP, condition);
+    }
+
+    @Override
+    public int countAttendingBySlotIdExcluding(UUID slotId, @Nullable UUID excludeRsvpId) {
+        Condition condition = RSVP.TIME_SLOT_ID.eq(slotId).and(RSVP.ATTENDING.isTrue());
+        if (excludeRsvpId != null) {
+            condition = condition.and(RSVP.ID.ne(excludeRsvpId));
+        }
+        return dsl.fetchCount(RSVP, condition);
+    }
+
     private Rsvp toDomain(RsvpRecord record) {
         return Rsvp.builder()
                 .id(record.getId())
@@ -116,6 +140,7 @@ public class RsvpRepositoryImpl implements RsvpRepository {
                 .email(record.getEmail())
                 .displayName(record.getDisplayName())
                 .attending(record.getAttending())
+                .timeSlotId(record.getTimeSlotId())
                 .confirmationToken(record.getConfirmationToken())
                 .confirmedAt(record.getConfirmedAt())
                 .createdAt(record.getCreatedAt())
@@ -141,6 +166,7 @@ public class RsvpRepositoryImpl implements RsvpRepository {
         record.setEmail(rsvp.email());
         record.setDisplayName(rsvp.displayName());
         record.setAttending(rsvp.attending());
+        record.setTimeSlotId(rsvp.timeSlotId());
         record.setConfirmationToken(rsvp.confirmationToken());
         record.setConfirmedAt(rsvp.confirmedAt());
         record.setCreatedAt(rsvp.createdAt());

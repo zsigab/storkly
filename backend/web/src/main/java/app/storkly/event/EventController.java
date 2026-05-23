@@ -1,16 +1,23 @@
 package app.storkly.event;
 
 import app.storkly.domain.event.Event;
+import app.storkly.domain.event.EventTimeSlot;
+import app.storkly.domain.event.Rsvp;
 import app.storkly.domain.user.User;
 import app.storkly.event.dto.EventCreateRequest;
 import app.storkly.event.dto.EventPublicResponse;
 import app.storkly.event.dto.EventResponse;
+import app.storkly.event.dto.EventTimeSlotResponse;
 import app.storkly.event.dto.EventUpdateRequest;
 import app.storkly.event.dto.RsvpResponse;
 import app.storkly.service.event.EventService;
+import app.storkly.service.event.EventTimeSlotService;
 import app.storkly.service.event.RsvpService;
 import jakarta.validation.Valid;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -30,6 +37,7 @@ public class EventController {
 
     private final EventService eventService;
     private final RsvpService rsvpService;
+    private final EventTimeSlotService eventTimeSlotService;
 
     @GetMapping("/api/events")
     public List<EventResponse> list(@AuthenticationPrincipal User currentUser) {
@@ -54,6 +62,7 @@ public class EventController {
                 request.eventDate(),
                 request.location(),
                 request.description(),
+                request.rsvpCapacity(),
                 request.themeColor(),
                 request.themeBackground(),
                 currentUser.id());
@@ -77,6 +86,7 @@ public class EventController {
                 request.eventDate(),
                 request.location(),
                 request.description(),
+                request.rsvpCapacity(),
                 request.themeColor(),
                 request.themeBackground(),
                 currentUser.id());
@@ -96,10 +106,41 @@ public class EventController {
     }
 
     private EventResponse toResponse(Event event) {
-        List<RsvpResponse> attendees = rsvpService.getAttendeesByEventId(event.id()).stream()
+        List<Rsvp> rsvps = rsvpService.getAttendeesByEventId(event.id());
+        List<EventTimeSlot> slots = eventTimeSlotService.findByEventId(event.id());
+
+        // Build slot label lookup
+        Map<UUID, String> slotLabelById = new HashMap<>();
+        for (EventTimeSlot slot : slots) {
+            if (slot.id() != null) {
+                slotLabelById.put(slot.id(), slot.label());
+            }
+        }
+
+        // Count attending RSVPs per slot
+        Map<UUID, Integer> attendingCountPerSlot = new HashMap<>();
+        for (Rsvp rsvp : rsvps) {
+            if (rsvp.attending() && rsvp.timeSlotId() != null) {
+                attendingCountPerSlot.merge(rsvp.timeSlotId(), 1, Integer::sum);
+            }
+        }
+
+        List<RsvpResponse> attendees = rsvps.stream()
                 .map(rsvp -> new RsvpResponse(
-                        rsvp.id(), rsvp.displayName(), rsvp.email(), rsvp.attending(), rsvp.confirmedAt()))
+                        rsvp.id(),
+                        rsvp.displayName(),
+                        rsvp.email(),
+                        rsvp.attending(),
+                        rsvp.confirmedAt(),
+                        rsvp.timeSlotId() != null ? slotLabelById.get(rsvp.timeSlotId()) : null))
                 .toList();
+
+        List<EventTimeSlotResponse> timeSlotResponses = new ArrayList<>();
+        for (EventTimeSlot slot : slots) {
+            int count = slot.id() != null ? attendingCountPerSlot.getOrDefault(slot.id(), 0) : 0;
+            timeSlotResponses.add(new EventTimeSlotResponse(slot.id(), slot.label(), slot.capacity(), count));
+        }
+
         return new EventResponse(
                 event.id(),
                 event.title(),
@@ -107,7 +148,9 @@ public class EventController {
                 event.location(),
                 event.description(),
                 event.rsvpToken(),
+                event.rsvpCapacity(),
                 attendees,
+                timeSlotResponses,
                 event.themeColor(),
                 event.themeBackground(),
                 event.createdAt());

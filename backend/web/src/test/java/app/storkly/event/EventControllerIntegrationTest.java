@@ -96,7 +96,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request = new EventCreateRequest(
-                "New Event", OffsetDateTime.now().plusDays(1), "Test Location", null, null, null);
+                "New Event", OffsetDateTime.now().plusDays(1), "Test Location", null, null, null, null);
 
         restTestClient
                 .post()
@@ -120,7 +120,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request = new EventCreateRequest(
-                "Test Event", OffsetDateTime.now().plusDays(1), "Test Location", null, null, null);
+                "Test Event", OffsetDateTime.now().plusDays(1), "Test Location", null, null, null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -153,7 +153,7 @@ class EventControllerIntegrationTest {
         String ownerCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request =
-                new EventCreateRequest("Secret Event", OffsetDateTime.now().plusDays(1), null, null, null, null);
+                new EventCreateRequest("Secret Event", OffsetDateTime.now().plusDays(1), null, null, null, null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -185,7 +185,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest createRequest = new EventCreateRequest(
-                "Original Title", OffsetDateTime.now().plusDays(1), "Original Location", null, null, null);
+                "Original Title", OffsetDateTime.now().plusDays(1), "Original Location", null, null, null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -203,7 +203,7 @@ class EventControllerIntegrationTest {
 
         OffsetDateTime newDate = OffsetDateTime.now().plusDays(5);
         app.storkly.event.dto.EventUpdateRequest updateRequest = new app.storkly.event.dto.EventUpdateRequest(
-                "Updated Title", newDate, "Updated Location", null, null, null);
+                "Updated Title", newDate, "Updated Location", null, null, null, null);
 
         restTestClient
                 .patch()
@@ -225,7 +225,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request =
-                new EventCreateRequest("To Delete", OffsetDateTime.now().plusDays(1), null, null, null, null);
+                new EventCreateRequest("To Delete", OffsetDateTime.now().plusDays(1), null, null, null, null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -263,7 +263,7 @@ class EventControllerIntegrationTest {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest request = new EventCreateRequest(
-                "Public Event", OffsetDateTime.now().plusDays(1), "Public Location", null, null, null);
+                "Public Event", OffsetDateTime.now().plusDays(1), "Public Location", null, null, null, null);
 
         AtomicReference<String> eventIdRef = new AtomicReference<>();
 
@@ -320,7 +320,7 @@ class EventControllerIntegrationTest {
         String ownerCookie = loginAndGetCookie("owner@example.com", "password");
 
         EventCreateRequest createRequest = new EventCreateRequest(
-                "Birthday Party", OffsetDateTime.now().plusDays(7), "Main Hall", null, null, null);
+                "Birthday Party", OffsetDateTime.now().plusDays(7), "Main Hall", null, null, null, null);
 
         AtomicReference<String> rsvpTokenRef = new AtomicReference<>();
 
@@ -342,7 +342,7 @@ class EventControllerIntegrationTest {
                 .post()
                 .uri("/api/rsvp/" + rsvpTokenRef.get())
                 .cookie("access_token", gifterCookie)
-                .body(new RsvpSubmitRequest("Gifter", "gifter@example.com", true, "test-captcha"))
+                .body(new RsvpSubmitRequest("Gifter", "gifter@example.com", true, "test-captcha", null))
                 .exchange()
                 .expectStatus()
                 .isOk();
@@ -365,8 +365,8 @@ class EventControllerIntegrationTest {
     void listRsvped_declinedRsvp_notReturned() {
         String ownerCookie = loginAndGetCookie("owner@example.com", "password");
 
-        EventCreateRequest createRequest =
-                new EventCreateRequest("Declined Party", OffsetDateTime.now().plusDays(7), null, null, null, null);
+        EventCreateRequest createRequest = new EventCreateRequest(
+                "Declined Party", OffsetDateTime.now().plusDays(7), null, null, null, null, null);
 
         AtomicReference<String> rsvpTokenRef = new AtomicReference<>();
 
@@ -388,7 +388,7 @@ class EventControllerIntegrationTest {
                 .post()
                 .uri("/api/rsvp/" + rsvpTokenRef.get())
                 .cookie("access_token", gifterCookie)
-                .body(new RsvpSubmitRequest("Gifter", "gifter@example.com", false, "test-captcha"))
+                .body(new RsvpSubmitRequest("Gifter", "gifter@example.com", false, "test-captcha", null))
                 .exchange()
                 .expectStatus()
                 .isOk();

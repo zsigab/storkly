@@ -2,9 +2,14 @@ package app.storkly.service.event;
 
 import app.storkly.domain.event.Event;
 import app.storkly.domain.event.EventRepository;
+import app.storkly.domain.event.EventTimeSlot;
+import app.storkly.domain.event.EventTimeSlotRepository;
 import app.storkly.domain.event.Rsvp;
 import app.storkly.domain.event.RsvpRepository;
+import app.storkly.domain.exception.EventAtCapacityException;
+import app.storkly.domain.exception.InvalidSlotException;
 import app.storkly.domain.exception.InvalidTokenException;
+import app.storkly.domain.exception.SlotAtCapacityException;
 import app.storkly.service.auth.TurnstileService;
 import app.storkly.service.email.EmailService;
 import app.storkly.util.TokenUtil;
@@ -26,6 +31,7 @@ public class RsvpService {
 
     private final RsvpRepository rsvpRepository;
     private final EventRepository eventRepository;
+    private final EventTimeSlotRepository slotRepository;
     private final TurnstileService turnstileService;
     private final EmailService emailService;
 
@@ -36,7 +42,8 @@ public class RsvpService {
             String email,
             boolean attending,
             String captchaToken,
-            @Nullable UUID userId) {
+            @Nullable UUID userId,
+            @Nullable UUID timeSlotId) {
         // Verify CAPTCHA (always, even for authenticated users)
         turnstileService.assertValid(captchaToken);
 
@@ -45,10 +52,42 @@ public class RsvpService {
                 .findByRsvpToken(rsvpToken)
                 .orElseThrow(() -> new InvalidTokenException("Invalid RSVP token"));
 
+        // Get all slots for this event
+        List<EventTimeSlot> slots = slotRepository.findByEventId(event.id());
+
+        // Validate slot selection when attending
+        EventTimeSlot selectedSlot = null;
+        if (attending && !slots.isEmpty()) {
+            if (timeSlotId == null) {
+                throw new InvalidSlotException("A time slot is required for this event");
+            }
+            selectedSlot = slots.stream()
+                    .filter(s -> timeSlotId.equals(s.id()))
+                    .findFirst()
+                    .orElseThrow(() -> new InvalidSlotException("Invalid time slot for this event"));
+        }
+
         // Check if RSVP already exists
         Optional<Rsvp> existingRsvp = rsvpRepository.findByEventIdAndEmail(event.id(), email);
         boolean isNewRsvp = existingRsvp.isEmpty();
         boolean wasUnconfirmed = existingRsvp.isPresent() && existingRsvp.get().confirmedAt() == null;
+        UUID existingRsvpId = existingRsvp.map(Rsvp::id).orElse(null);
+
+        // Capacity checks (only when attending)
+        if (attending) {
+            if (selectedSlot != null && selectedSlot.capacity() != null) {
+                int used = rsvpRepository.countAttendingBySlotIdExcluding(timeSlotId, existingRsvpId);
+                if (used >= selectedSlot.capacity()) {
+                    throw new SlotAtCapacityException();
+                }
+            }
+            if (event.rsvpCapacity() != null) {
+                int used = rsvpRepository.countAttendingByEventIdExcluding(event.id(), existingRsvpId);
+                if (used >= event.rsvpCapacity()) {
+                    throw new EventAtCapacityException();
+                }
+            }
+        }
 
         // Build RSVP
         String confirmationToken = TokenUtil.generate();
@@ -59,6 +98,7 @@ public class RsvpService {
                 .email(email)
                 .displayName(displayName)
                 .attending(attending)
+                .timeSlotId(attending ? timeSlotId : null)
                 .confirmationToken(confirmationToken)
                 .confirmedAt(confirmedAt)
                 .createdAt(OffsetDateTime.now())
@@ -104,5 +144,13 @@ public class RsvpService {
         Set<UUID> eventIds = rsvpRepository.findConfirmedEventIdsByUserId(userId);
         if (eventIds.isEmpty()) return List.of();
         return eventRepository.findByIds(eventIds);
+    }
+
+    public int countAttendingByEventId(UUID eventId) {
+        return rsvpRepository.countAttendingByEventIdExcluding(eventId, null);
+    }
+
+    public int countAttendingBySlot(UUID slotId) {
+        return rsvpRepository.countAttendingBySlotIdExcluding(slotId, null);
     }
 }

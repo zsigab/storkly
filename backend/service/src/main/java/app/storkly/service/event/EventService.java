@@ -27,6 +27,7 @@ public class EventService {
             OffsetDateTime eventDate,
             @Nullable String location,
             @Nullable String description,
+            @Nullable Integer rsvpCapacity,
             @Nullable String themeColor,
             @Nullable String themeBackground,
             UUID ownerId) {
@@ -38,6 +39,7 @@ public class EventService {
                 .location(location)
                 .description(description)
                 .rsvpToken(rsvpToken)
+                .rsvpCapacity(rsvpCapacity)
                 .themeColor(themeColor != null ? themeColor : "peach")
                 .themeBackground(themeBackground != null ? themeBackground : "none")
                 .createdAt(OffsetDateTime.now())
@@ -68,6 +70,7 @@ public class EventService {
             @Nullable OffsetDateTime eventDate,
             @Nullable String location,
             @Nullable String description,
+            @Nullable Integer rsvpCapacity,
             @Nullable String themeColor,
             @Nullable String themeBackground,
             UUID currentUserId) {
@@ -83,6 +86,7 @@ public class EventService {
                 .location(location != null ? location : event.location())
                 .description(description != null ? description : event.description())
                 .rsvpToken(event.rsvpToken())
+                .rsvpCapacity(rsvpCapacity)
                 .themeColor(themeColor != null ? themeColor : event.themeColor())
                 .themeBackground(themeBackground != null ? themeBackground : event.themeBackground())
                 .createdAt(event.createdAt())

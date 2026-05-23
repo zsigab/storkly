@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import app.storkly.domain.event.Event;
 import app.storkly.domain.event.EventRepository;
+import app.storkly.domain.event.EventTimeSlotRepository;
 import app.storkly.domain.event.Rsvp;
 import app.storkly.domain.event.RsvpRepository;
 import app.storkly.domain.exception.InvalidTokenException;
@@ -37,6 +38,9 @@ class RsvpServiceTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private EventTimeSlotRepository slotRepository;
 
     @Mock
     private TurnstileService turnstileService;
@@ -67,6 +71,7 @@ class RsvpServiceTest {
 
         doNothing().when(turnstileService).assertValid(captchaToken);
         when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(slotRepository.findByEventId(eventId)).thenReturn(List.of());
         when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.empty());
         when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
             Rsvp rsvp = invocation.getArgument(0);
@@ -83,7 +88,7 @@ class RsvpServiceTest {
                     .build();
         });
 
-        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null);
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null, null);
 
         assertThat(result).isNotNull();
         assertThat(result.id()).isNotNull();
@@ -114,6 +119,7 @@ class RsvpServiceTest {
 
         doNothing().when(turnstileService).assertValid(captchaToken);
         when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(slotRepository.findByEventId(eventId)).thenReturn(List.of());
         when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.empty());
         when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
             Rsvp rsvp = invocation.getArgument(0);
@@ -130,7 +136,7 @@ class RsvpServiceTest {
                     .build();
         });
 
-        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, userId);
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, userId, null);
 
         assertThat(result).isNotNull();
         assertThat(result.confirmedAt()).isNotNull();
@@ -171,6 +177,7 @@ class RsvpServiceTest {
 
         doNothing().when(turnstileService).assertValid(captchaToken);
         when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(slotRepository.findByEventId(eventId)).thenReturn(List.of());
         when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.of(existing));
         when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
             Rsvp rsvp = invocation.getArgument(0);
@@ -187,7 +194,7 @@ class RsvpServiceTest {
                     .build();
         });
 
-        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null);
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null, null);
 
         assertThat(result.confirmationToken()).isNotEqualTo(existing.confirmationToken());
         assertThat(result.attending()).isEqualTo(attending);
@@ -228,6 +235,7 @@ class RsvpServiceTest {
 
         doNothing().when(turnstileService).assertValid(captchaToken);
         when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.of(event));
+        when(slotRepository.findByEventId(eventId)).thenReturn(List.of());
         when(rsvpRepository.findByEventIdAndEmail(eventId, email)).thenReturn(Optional.of(existing));
         when(rsvpRepository.upsert(any(Rsvp.class))).thenAnswer(invocation -> {
             Rsvp rsvp = invocation.getArgument(0);
@@ -244,7 +252,7 @@ class RsvpServiceTest {
                     .build();
         });
 
-        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null);
+        Rsvp result = rsvpService.submitRsvp(rsvpToken, displayName, email, attending, captchaToken, null, null);
 
         assertThat(result.confirmationToken()).isEqualTo(oldToken);
         assertThat(result.confirmedAt()).isEqualTo(confirmedAt);
@@ -260,8 +268,8 @@ class RsvpServiceTest {
         doNothing().when(turnstileService).assertValid(captchaToken);
         when(eventRepository.findByRsvpToken(rsvpToken)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(
-                        () -> rsvpService.submitRsvp(rsvpToken, "John", "john@example.com", true, captchaToken, null))
+        assertThatThrownBy(() ->
+                        rsvpService.submitRsvp(rsvpToken, "John", "john@example.com", true, captchaToken, null, null))
                 .isInstanceOf(InvalidTokenException.class);
     }
 
@@ -274,8 +282,8 @@ class RsvpServiceTest {
                 .when(turnstileService)
                 .assertValid(captchaToken);
 
-        assertThatThrownBy(
-                        () -> rsvpService.submitRsvp(rsvpToken, "John", "john@example.com", true, captchaToken, null))
+        assertThatThrownBy(() ->
+                        rsvpService.submitRsvp(rsvpToken, "John", "john@example.com", true, captchaToken, null, null))
                 .isInstanceOf(InvalidTokenException.class);
     }
 

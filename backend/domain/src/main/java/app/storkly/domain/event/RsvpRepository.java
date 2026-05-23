@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import org.jspecify.annotations.Nullable;
 
 public interface RsvpRepository {
     Rsvp upsert(Rsvp rsvp);
@@ -18,4 +19,8 @@ public interface RsvpRepository {
     Rsvp confirm(UUID id, OffsetDateTime confirmedAt);
 
     Set<UUID> findConfirmedEventIdsByUserId(UUID userId);
+
+    int countAttendingByEventIdExcluding(UUID eventId, @Nullable UUID excludeRsvpId);
+
+    int countAttendingBySlotIdExcluding(UUID slotId, @Nullable UUID excludeRsvpId);
 }

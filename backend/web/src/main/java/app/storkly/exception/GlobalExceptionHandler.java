@@ -9,10 +9,12 @@ import app.storkly.domain.exception.ClaimNotReceivedException;
 import app.storkly.domain.exception.ContributionExceedsRemainingException;
 import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
+import app.storkly.domain.exception.EventAtCapacityException;
 import app.storkly.domain.exception.EventNotFoundException;
 import app.storkly.domain.exception.FullClaimBlockedByPartialException;
 import app.storkly.domain.exception.FundContributionRequiredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
+import app.storkly.domain.exception.InvalidSlotException;
 import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.ItemAlreadyOwnedException;
 import app.storkly.domain.exception.ItemHasClaimsException;
@@ -20,6 +22,8 @@ import app.storkly.domain.exception.ItemNotFoundException;
 import app.storkly.domain.exception.PriceReferenceBelowReceivedAmountException;
 import app.storkly.domain.exception.QuantityBelowClaimedAmountException;
 import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.exception.SlotAtCapacityException;
+import app.storkly.domain.exception.SlotNotFoundException;
 import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.exception.UserNotFoundException;
 import app.storkly.scraper.ScrapingException;
@@ -45,7 +49,8 @@ public class GlobalExceptionHandler {
         CategoryNotFoundException.class,
         ItemNotFoundException.class,
         ClaimNotFoundException.class,
-        EventNotFoundException.class
+        EventNotFoundException.class,
+        SlotNotFoundException.class
     })
     public ProblemDetail handleNotFound(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -58,7 +63,9 @@ public class GlobalExceptionHandler {
         SubscriberHasClaimsException.class,
         ClaimNotReceivedException.class,
         ClaimAlreadyReceivedException.class,
-        DeliveryOptionHasClaimsException.class
+        DeliveryOptionHasClaimsException.class,
+        SlotAtCapacityException.class,
+        EventAtCapacityException.class
     })
     public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
@@ -106,7 +113,8 @@ public class GlobalExceptionHandler {
         FundContributionRequiredException.class,
         FullClaimBlockedByPartialException.class,
         PriceReferenceBelowReceivedAmountException.class,
-        QuantityBelowClaimedAmountException.class
+        QuantityBelowClaimedAmountException.class,
+        InvalidSlotException.class
     })
     public ProblemDetail handleContributionValidation(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());

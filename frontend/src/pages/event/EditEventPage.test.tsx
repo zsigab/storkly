@@ -37,6 +37,8 @@ const eventFixture = {
   location: "123 Main St",
   description: null,
   rsvpToken: "token-abc",
+  rsvpCapacity: null,
+  timeSlots: [],
   attendees: [
     {
       id: "rsvp-1",
@@ -44,6 +46,7 @@ const eventFixture = {
       email: "alice@example.com",
       attending: true,
       confirmedAt: "2024-01-01T00:00:00Z",
+      timeSlotLabel: null,
     },
     {
       id: "rsvp-2",
@@ -51,6 +54,7 @@ const eventFixture = {
       email: "bob@example.com",
       attending: false,
       confirmedAt: null,
+      timeSlotLabel: null,
     },
   ],
   themeColor: "peach",
@@ -133,6 +137,7 @@ describe("EditEventPage", () => {
           title: "Updated Shower",
           location: "123 Main St",
           description: null,
+          rsvpCapacity: null,
           eventDate: expect.any(String),
           themeColor: "peach",
           themeBackground: "none",

@@ -9,6 +9,7 @@ const mockAttendees = [
     email: "alice@example.com",
     attending: true,
     confirmedAt: "2024-01-01T00:00:00Z",
+    timeSlotLabel: "8:00 AM",
   },
   {
     id: "rsvp-2",
@@ -16,6 +17,7 @@ const mockAttendees = [
     email: "bob@example.com",
     attending: false,
     confirmedAt: null,
+    timeSlotLabel: null,
   },
   {
     id: "rsvp-3",
@@ -23,6 +25,7 @@ const mockAttendees = [
     email: "charlie@example.com",
     attending: true,
     confirmedAt: null,
+    timeSlotLabel: null,
   },
 ];
 
@@ -54,6 +57,17 @@ describe("EventAttendeesTable", () => {
     const pending = screen.getAllByText("Pending");
     expect(confirmed).toHaveLength(1);
     expect(pending).toHaveLength(2);
+  });
+
+  it("shows time slot label when present", () => {
+    render(<EventAttendeesTable attendees={mockAttendees} />);
+    expect(screen.getByText("8:00 AM")).toBeInTheDocument();
+  });
+
+  it("shows dash when time slot label is null", () => {
+    render(<EventAttendeesTable attendees={mockAttendees} />);
+    const dashes = screen.getAllByText("—");
+    expect(dashes.length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders empty table when no attendees", () => {

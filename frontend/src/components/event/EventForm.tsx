@@ -40,6 +40,12 @@ const schema = z.object({
     .refine((v) => !isNaN(new Date(v).getTime()), "Invalid date"),
   location: z.string(),
   description: z.string(),
+  rsvpCapacity: z
+    .string()
+    .refine(
+      (v) => v === "" || (/^\d+$/.test(v) && parseInt(v, 10) >= 1),
+      "Must be a positive whole number",
+    ),
   themeColor: z.enum(["peach", "blue", "pink", "green", "purple", "beige"]),
   themeBackground: z.enum(["none", "default", "stars", "both"]),
 });
@@ -53,6 +59,7 @@ interface EventFormProps {
     eventDate: string;
     location: string | null;
     description: string | null;
+    rsvpCapacity: number | null;
     themeColor: string;
     themeBackground: string;
   }) => void;
@@ -97,6 +104,7 @@ export function EventForm({
       eventDate: defaultValues?.eventDate ? toDateTimeLocal(defaultValues.eventDate) : "",
       location: defaultValues?.location ?? "",
       description: defaultValues?.description ?? "",
+      rsvpCapacity: defaultValues?.rsvpCapacity != null ? String(defaultValues.rsvpCapacity) : "",
       themeColor: (defaultValues?.themeColor ?? "peach") as ThemeColorValue,
       themeBackground: (defaultValues?.themeBackground ?? "none") as ThemeBackgroundValue,
     },
@@ -128,6 +136,7 @@ export function EventForm({
           eventDate: toIsoString(values.eventDate),
           location: values.location && values.location.trim().length > 0 ? values.location : null,
           description: values.description.trim().length > 0 ? values.description.trim() : null,
+          rsvpCapacity: values.rsvpCapacity !== "" ? parseInt(values.rsvpCapacity, 10) : null,
           themeColor: values.themeColor,
           themeBackground: values.themeBackground,
         }),
@@ -149,6 +158,17 @@ export function EventForm({
           autoComplete="off"
           {...register("location")}
         />
+      </FormField>
+
+      <FormField label="RSVP capacity" htmlFor="rsvpCapacity" error={errors.rsvpCapacity?.message}>
+        <Input
+          id="rsvpCapacity"
+          type="number"
+          min={1}
+          placeholder="Unlimited"
+          {...register("rsvpCapacity")}
+        />
+        <p className="text-muted-foreground text-xs">Leave blank for unlimited</p>
       </FormField>
 
       <div className="space-y-2">

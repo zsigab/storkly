@@ -68,7 +68,7 @@ class RsvpControllerIntegrationTest {
 
     @Test
     void submitRsvp_anonymous_returns200() {
-        RsvpSubmitRequest request = new RsvpSubmitRequest("John Doe", "john@example.com", true, "test-token");
+        RsvpSubmitRequest request = new RsvpSubmitRequest("John Doe", "john@example.com", true, "test-token", null);
 
         restTestClient
                 .post()
@@ -83,7 +83,7 @@ class RsvpControllerIntegrationTest {
     void submitRsvp_authenticated_returns200() {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-        RsvpSubmitRequest request = new RsvpSubmitRequest("ignored", "ignored@example.com", false, "test-token");
+        RsvpSubmitRequest request = new RsvpSubmitRequest("ignored", "ignored@example.com", false, "test-token", null);
 
         restTestClient
                 .post()
@@ -97,7 +97,7 @@ class RsvpControllerIntegrationTest {
 
     @Test
     void submitRsvp_invalidToken_returnsUnauthorized() {
-        RsvpSubmitRequest request = new RsvpSubmitRequest("John Doe", "john@example.com", true, "test-token");
+        RsvpSubmitRequest request = new RsvpSubmitRequest("John Doe", "john@example.com", true, "test-token", null);
 
         restTestClient
                 .post()
