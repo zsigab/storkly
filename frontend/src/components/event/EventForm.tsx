@@ -313,7 +313,7 @@ export function EventForm({
               <EventTimeSlotsSection
                 eventId={eventId}
                 slots={slots}
-                eventDate={eventDateValue.length >= 10 ? eventDateValue.slice(0, 10) : undefined}
+                {...(eventDateValue.length >= 10 ? { eventDate: eventDateValue.slice(0, 10) } : {})}
               />
             </Collapsible>
           </div>

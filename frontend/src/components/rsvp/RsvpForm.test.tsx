@@ -141,9 +141,14 @@ describe("RsvpForm", () => {
     const eventWithSlots = {
       ...eventFixture,
       timeSlots: [
-        { id: "slot-1", slotTime: "2024-06-15T08:00:00Z", spotsLeft: 5 },
-        { id: "slot-2", slotTime: "2024-06-16T08:00:00Z", spotsLeft: null },
-        { id: "slot-3", slotTime: "2024-06-17T08:00:00Z", spotsLeft: 0 },
+        { id: "slot-1", slotTime: "2024-06-15T08:00:00Z", spotsLeft: 5, slotOffsetSeconds: null },
+        {
+          id: "slot-2",
+          slotTime: "2024-06-16T08:00:00Z",
+          spotsLeft: null,
+          slotOffsetSeconds: null,
+        },
+        { id: "slot-3", slotTime: "2024-06-17T08:00:00Z", spotsLeft: 0, slotOffsetSeconds: null },
       ],
     };
     renderWithProviders(<RsvpForm rsvpToken="token-abc" event={eventWithSlots} />);
@@ -160,7 +165,9 @@ describe("RsvpForm", () => {
   it("hides time slot buttons when attending is no", () => {
     const eventWithSlots = {
       ...eventFixture,
-      timeSlots: [{ id: "slot-1", slotTime: "2024-06-15T08:00:00Z", spotsLeft: 5 }],
+      timeSlots: [
+        { id: "slot-1", slotTime: "2024-06-15T08:00:00Z", spotsLeft: 5, slotOffsetSeconds: null },
+      ],
     };
     renderWithProviders(<RsvpForm rsvpToken="token-abc" event={eventWithSlots} />);
 

@@ -15,8 +15,9 @@ ADR-NNN: short decision summary (when applicable)
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 ```
 
+- Always run `npm run build` before every commit
 - Backend: run `./gradlew spotlessApply` before every commit
-- Frontend: run `npx prettier --write src/`, `npm run build`, and `npm test` before every commit
+- Frontend: run `npx prettier --write src/` and `npm test` before every commit
 
 ## Architecture Decision Records
 

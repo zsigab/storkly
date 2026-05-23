@@ -41,6 +41,7 @@ const baseEvent = {
       attending: true,
       confirmedAt: "2024-01-01T00:00:00Z",
       timeSlotLabel: null,
+      timeSlotTime: null,
     },
     {
       id: "rsvp-2",
@@ -49,6 +50,7 @@ const baseEvent = {
       attending: false,
       confirmedAt: "2024-01-01T00:00:00Z",
       timeSlotLabel: null,
+      timeSlotTime: null,
     },
   ],
   description: null,
