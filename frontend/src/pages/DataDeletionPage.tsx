@@ -15,8 +15,7 @@ export function DataDeletionPage(): React.ReactElement {
         </p>
         {code !== null && (
           <p className="text-muted-foreground text-sm">
-            Confirmation code:{" "}
-            <span className="text-foreground font-mono">{code}</span>
+            Confirmation code: <span className="text-foreground font-mono">{code}</span>
           </p>
         )}
         <p className="text-muted-foreground text-sm">

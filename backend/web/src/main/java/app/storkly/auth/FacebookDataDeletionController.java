@@ -38,7 +38,11 @@ public class FacebookDataDeletionController {
 
     @PostMapping(path = "/data-deletion", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     @Operation(summary = "Facebook data deletion callback")
-    public Map<String, String> handleDataDeletion(@RequestParam("signed_request") String signedRequest) {
+    public Map<String, String> handleDataDeletion(
+            @RequestParam(name = "signed_request", required = false) String signedRequest) {
+        if (signedRequest == null || signedRequest.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing signed_request parameter");
+        }
         String facebookUserId = verifyAndExtract(signedRequest);
         DeletionOutcome outcome = deletionService.process(facebookUserId);
         return Map.of(
