@@ -276,11 +276,12 @@ Item
   price_captured_at,
   quantity_desired (default: 1),
   flag (enum: EXACT_ONLY | SIMILAR_OK | SIMILAR_CHEAPER),
-  item_type (enum: PRODUCT | FUND | EVENT),
+  item_type (enum: PRODUCT | FUND),
   notes, sort_order, created_at, updated_at
 
-  -- EVENT items are only visible to users with a confirmed RSVP for at least one linked event.
-  -- Unauthenticated users never see EVENT items. EVENT items cannot be claimed directly.
+  -- The item_type Postgres enum still carries an unused 'EVENT' value (added in V17,
+  -- cannot be dropped). Events attach to *claims* via a delivery option, not to items —
+  -- see ADR-017 and the delivery_option.event_id column.
 
 ItemMarketplaceHit  -- Phase 2: cross-marketplace search results
   id, item_id → Item, site (enum), url, price, currency, found_at
@@ -304,14 +305,10 @@ Event
   -- Events are standalone: they can exist without any registry link.
   -- The rsvp_token never changes after creation (no token rotation).
 
-EventRegistryItem  -- N:N join: links an EVENT-type item in a registry to an Event
-  event_id → Event  ON DELETE CASCADE,
-  item_id  → Item   ON DELETE CASCADE,
-  PRIMARY KEY (event_id, item_id)
-
-  -- When an item is created/updated with itemType=EVENT and an eventId is provided,
-  -- the existing link for that item is replaced (delete-then-insert pattern: one item →
-  -- one event at a time via the UI, but the table is N:N for future flexibility).
+-- Events attach to claims, not items: a delivery_option (claim type) of type 'EVENT'
+-- carries an event_id → Event ON DELETE CASCADE (V29). Picking that claim type means
+-- "I'll hand the gift over at this event." See ADR-017. (The old event_registry_item
+-- join table was dropped in V28.)
 
 Rsvp
   id (UUID), event_id → Event ON DELETE CASCADE,
@@ -703,7 +700,9 @@ services:
 
 #### Overview
 
-Events are first-class entities owned by a user (independent of registries). They appear on the dashboard alongside registries. An event can optionally be linked to registry items of type `EVENT` via a join table; those items are only visible to confirmed attendees. The RSVP flow uses email confirmation (Turnstile-protected submission), with authenticated users auto-confirmed.
+Events are first-class entities owned by a user (independent of registries). They appear on the dashboard alongside registries. The RSVP flow uses email confirmation (Turnstile-protected submission), with authenticated users auto-confirmed.
+
+> **Superseded:** This section originally linked events to registry *items* of type `EVENT` via a join table, visible only to confirmed attendees. That approach was removed (V28). Events now attach to *claims* through an `EVENT` delivery option (claim type) — see ADR-017. The 1V-F and 1V-K notes below describe the removed item-level approach and are kept only for historical context.
 
 #### URL structure
 
@@ -720,15 +719,15 @@ React Router: define `/rsvp/confirm` **before** `/rsvp/:token` to prevent "confi
 
 #### Database migrations (V17–V20)
 
-**V17** — `ALTER TYPE item_type ADD VALUE IF NOT EXISTS 'EVENT';`
+**V17** — `ALTER TYPE item_type ADD VALUE IF NOT EXISTS 'EVENT';` *(The `EVENT` enum value is now unused — events attach to claims, not items — but the value cannot be dropped from a Postgres enum, so it remains. See ADR-017.)*
 
-PostgreSQL 16 allows this inside a transaction. After running V17, re-run JOOQ DDL codegen (`./gradlew :domain:jooqGenerate`) before building other modules — the generated `ItemType` enum must include `EVENT`.
+The JOOQ codegen task is `:domain:jooqCodegen` (DDL-based, no database required).
 
 **V18** — `event` table (see Data Model section 7).
 
 **V19** — `rsvp` table (see Data Model section 7). Unique constraint on `(event_id, email)` — use `INSERT ... ON CONFLICT (event_id, email) DO UPDATE` (JOOQ `.onConflict(...).doUpdate()`) so re-submissions upsert cleanly.
 
-**V20** — `event_registry_item` join table (see Data Model section 7).
+**V20** — `event_registry_item` join table. *Dropped in V28; superseded by the `EVENT` claim type (V29 adds `delivery_option.event_id`). See ADR-017.*
 
 #### Backend module layout
 

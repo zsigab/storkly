@@ -9,6 +9,7 @@ export interface DeliveryOption {
   description?: string | null;
   enabled: boolean;
   sortOrder: number;
+  eventId?: string | null;
 }
 
 export function useDeliveryOptions(registrySlug: string) {
@@ -36,6 +37,7 @@ export function useSaveDeliveryOption(registrySlug: string) {
         enabled: option.enabled,
         sortOrder: option.sortOrder,
         ...(option.description !== null && { description: option.description }),
+        ...(option.eventId != null && { eventId: option.eventId }),
       };
 
       if (option.id) {

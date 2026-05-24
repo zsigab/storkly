@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { getApiErrorMessage } from "@/api/helpers";
+import { useMyEvents } from "@/hooks/useEvents";
 import {
   useDeliveryOptions,
   useSaveDeliveryOption,
@@ -24,6 +25,7 @@ const DELIVERY_TYPES = [
     label: "Send money",
     instructions: "Enter payment info that claimers should send their contribution to.",
   },
+  { type: "EVENT", label: "", instructions: "" },
 ] as const;
 
 type DeliveryType = (typeof DELIVERY_TYPES)[number]["type"];
@@ -32,7 +34,12 @@ const TYPE_LABELS: Record<string, string> = {
   IN_PERSON: "In person",
   SHIP_TO_ADDRESS: "Ship to address",
   MONEY_TRANSFER: "Money transfer",
+  EVENT: "Event",
 };
+
+function eventInstructions(title: string): string {
+  return `Handover at ${title}`;
+}
 
 function typeLabel(type: string): string {
   return TYPE_LABELS[type] ?? type;
@@ -61,11 +68,14 @@ function OptionRow({
 }): React.ReactElement {
   const save = useSaveDeliveryOption(slug);
   const del = useDeleteDeliveryOption(slug);
+  const { data: myEvents = [] } = useMyEvents();
 
   const isMarkdownType = option.type === "MONEY_TRANSFER" || option.type === "SHIP_TO_ADDRESS";
+  const isEventType = option.type === "EVENT";
   const [editing, setEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(option.label);
   const [editDesc, setEditDesc] = useState(option.description ?? "");
+  const [editEventId, setEditEventId] = useState(option.eventId ?? "");
   const [labelError, setLabelError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -78,18 +88,35 @@ function OptionRow({
       ...(option.description !== undefined ? { description: option.description } : {}),
       enabled: !option.enabled,
       sortOrder,
+      ...(option.eventId != null ? { eventId: option.eventId } : {}),
     });
   };
 
   const startEdit = (): void => {
     setEditLabel(option.label);
     setEditDesc(option.description ?? "");
+    setEditEventId(option.eventId ?? "");
     setLabelError("");
     setEditing(true);
   };
 
+  const handleEditEventChange = (id: string): void => {
+    setEditEventId(id);
+    const ev = myEvents.find((e) => e.id === id);
+    if (ev) {
+      setEditLabel(ev.title);
+      setEditDesc(eventInstructions(ev.title));
+    }
+    setLabelError("");
+  };
+
   const saveEdit = (): void => {
-    if (!editLabel.trim()) {
+    if (isEventType) {
+      if (!editEventId) {
+        setLabelError("Please select an event");
+        return;
+      }
+    } else if (!editLabel.trim()) {
       setLabelError("Label is required");
       return;
     }
@@ -101,6 +128,7 @@ function OptionRow({
         description: editDesc.trim() || null,
         enabled: option.enabled,
         sortOrder,
+        eventId: isEventType ? editEventId : null,
       },
       { onSuccess: () => setEditing(false) },
     );
@@ -173,35 +201,70 @@ function OptionRow({
       >
         <div className="overflow-hidden">
           <div className="space-y-3 border-t px-4 pt-3 pb-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium" htmlFor={`edit-label-${option.id}`}>
-                Label
-              </label>
-              <Input
-                id={`edit-label-${option.id}`}
-                value={editLabel}
-                onChange={(e) => {
-                  setEditLabel(e.target.value);
-                  setLabelError("");
-                }}
-              />
-              {labelError && <p className="text-destructive text-xs">{labelError}</p>}
-            </div>
+            {isEventType ? (
+              <div className="space-y-1">
+                <label className="text-sm font-medium" htmlFor={`edit-event-${option.id}`}>
+                  Event
+                </label>
+                <select
+                  id={`edit-event-${option.id}`}
+                  className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                  value={editEventId}
+                  onChange={(e) => handleEditEventChange(e.target.value)}
+                >
+                  <option value="">
+                    {myEvents.length === 0
+                      ? "No events yet — create one first"
+                      : "— Select event —"}
+                  </option>
+                  {myEvents.map((ev) => (
+                    <option key={ev.id} value={ev.id}>
+                      {ev.title}
+                    </option>
+                  ))}
+                </select>
+                {labelError && <p className="text-destructive text-xs">{labelError}</p>}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <label className="text-sm font-medium" htmlFor={`edit-label-${option.id}`}>
+                  Label
+                </label>
+                <Input
+                  id={`edit-label-${option.id}`}
+                  value={editLabel}
+                  onChange={(e) => {
+                    setEditLabel(e.target.value);
+                    setLabelError("");
+                  }}
+                />
+                {labelError && <p className="text-destructive text-xs">{labelError}</p>}
+              </div>
+            )}
 
             <div className="space-y-1">
               <div className="flex flex-wrap items-baseline gap-1">
                 <label className="text-sm font-medium" htmlFor={`edit-desc-${option.id}`}>
-                  {isMarkdownType ? "Instructions" : "Description"}{" "}
-                  <span className="text-muted-foreground font-normal">(optional)</span>
+                  {isMarkdownType || isEventType ? "Instructions" : "Description"}{" "}
+                  {!isEventType && (
+                    <span className="text-muted-foreground font-normal">(optional)</span>
+                  )}
                 </label>
-                {isMarkdownType && (
+                {(isMarkdownType || isEventType) && (
                   <span className="text-muted-foreground text-xs">
                     — shown to the claimer after they claim
                     {isPublic && "; for guests, sent by email after confirmation"}
                   </span>
                 )}
               </div>
-              {isMarkdownType ? (
+              {isEventType ? (
+                <Input
+                  id={`edit-desc-${option.id}`}
+                  value={editDesc}
+                  readOnly
+                  className="opacity-70"
+                />
+              ) : isMarkdownType ? (
                 <textarea
                   id={`edit-desc-${option.id}`}
                   value={editDesc}
@@ -273,23 +336,45 @@ function AddOptionForm({
   isPublic: boolean;
 }): React.ReactElement {
   const save = useSaveDeliveryOption(slug);
+  const { data: myEvents = [] } = useMyEvents();
   const [type, setType] = useState<DeliveryType>("IN_PERSON");
   const [label, setLabel] = useState(defaultLabelFor("IN_PERSON"));
   const [description, setDescription] = useState(defaultInstructionsFor("IN_PERSON"));
+  const [eventId, setEventId] = useState("");
   const [labelError, setLabelError] = useState("");
 
   const isMarkdownType = type === "MONEY_TRANSFER" || type === "SHIP_TO_ADDRESS";
+  const isEventType = type === "EVENT";
 
   const handleTypeChange = (next: DeliveryType): void => {
     setType(next);
     setLabel(defaultLabelFor(next));
     setDescription(defaultInstructionsFor(next));
+    setEventId("");
+    setLabelError("");
+  };
+
+  const handleEventChange = (id: string): void => {
+    setEventId(id);
+    const ev = myEvents.find((e) => e.id === id);
+    if (ev) {
+      setLabel(ev.title);
+      setDescription(eventInstructions(ev.title));
+    } else {
+      setLabel("");
+      setDescription("");
+    }
     setLabelError("");
   };
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    if (!label.trim()) {
+    if (isEventType) {
+      if (!eventId) {
+        setLabelError("Please select an event");
+        return;
+      }
+    } else if (!label.trim()) {
       setLabelError("Label is required");
       return;
     }
@@ -300,6 +385,7 @@ function AddOptionForm({
         description: description.trim() || null,
         enabled: true,
         sortOrder: nextSortOrder,
+        eventId: isEventType ? eventId : null,
       },
       { onSuccess: onDone },
     );
@@ -327,36 +413,62 @@ function AddOptionForm({
         </select>
       </div>
 
-      <div className="space-y-1">
-        <label className="text-sm font-medium" htmlFor="add-label">
-          Label
-        </label>
-        <Input
-          id="add-label"
-          value={label}
-          onChange={(e) => {
-            setLabel(e.target.value);
-            setLabelError("");
-          }}
-          placeholder="e.g. Give in person"
-        />
-        {labelError && <p className="text-destructive text-xs">{labelError}</p>}
-      </div>
+      {isEventType ? (
+        <div className="space-y-1">
+          <label className="text-sm font-medium" htmlFor="add-event">
+            Event
+          </label>
+          <select
+            id="add-event"
+            className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+            value={eventId}
+            onChange={(e) => handleEventChange(e.target.value)}
+          >
+            <option value="">
+              {myEvents.length === 0 ? "No events yet — create one first" : "— Select event —"}
+            </option>
+            {myEvents.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.title}
+              </option>
+            ))}
+          </select>
+          {labelError && <p className="text-destructive text-xs">{labelError}</p>}
+        </div>
+      ) : (
+        <div className="space-y-1">
+          <label className="text-sm font-medium" htmlFor="add-label">
+            Label
+          </label>
+          <Input
+            id="add-label"
+            value={label}
+            onChange={(e) => {
+              setLabel(e.target.value);
+              setLabelError("");
+            }}
+            placeholder="e.g. Give in person"
+          />
+          {labelError && <p className="text-destructive text-xs">{labelError}</p>}
+        </div>
+      )}
 
       <div className="space-y-1">
         <div className="flex flex-wrap items-baseline gap-1">
           <label className="text-sm font-medium" htmlFor="add-desc">
-            {isMarkdownType ? "Instructions" : "Description"}{" "}
-            <span className="text-muted-foreground font-normal">(optional)</span>
+            {isMarkdownType || isEventType ? "Instructions" : "Description"}{" "}
+            {!isEventType && <span className="text-muted-foreground font-normal">(optional)</span>}
           </label>
-          {isMarkdownType && (
+          {(isMarkdownType || isEventType) && (
             <span className="text-muted-foreground text-xs">
               — shown to the claimer after they claim
               {isPublic && "; for guests, sent by email after confirmation"}
             </span>
           )}
         </div>
-        {isMarkdownType ? (
+        {isEventType ? (
+          <Input id="add-desc" value={description} readOnly className="opacity-70" />
+        ) : isMarkdownType ? (
           <textarea
             id="add-desc"
             value={description}

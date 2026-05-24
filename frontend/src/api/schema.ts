@@ -131,6 +131,7 @@ export interface DeliveryOptionResponse {
   description: string | null;
   enabled: boolean;
   sortOrder: number;
+  eventId: string | null;
 }
 
 export interface EventTimeSlotResponse {
@@ -512,6 +513,7 @@ export type paths = {
             description?: string | null;
             enabled: boolean;
             sortOrder: number;
+            eventId?: string | null;
           };
         };
       };
@@ -529,6 +531,7 @@ export type paths = {
             description?: string | null;
             enabled: boolean;
             sortOrder: number;
+            eventId?: string | null;
           };
         };
       };
