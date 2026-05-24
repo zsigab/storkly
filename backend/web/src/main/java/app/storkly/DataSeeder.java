@@ -3,7 +3,6 @@ package app.storkly;
 import static app.storkly.domain.generated.Tables.CATEGORY;
 import static app.storkly.domain.generated.Tables.CLAIM;
 import static app.storkly.domain.generated.Tables.EVENT;
-import static app.storkly.domain.generated.Tables.EVENT_REGISTRY_ITEM;
 import static app.storkly.domain.generated.Tables.ITEM;
 import static app.storkly.domain.generated.Tables.REGISTRY;
 import static app.storkly.domain.generated.Tables.RSVP;
@@ -282,27 +281,6 @@ public class DataSeeder {
                 .set(CLAIM.CLAIM_TOKEN, "seed-claim-token-00000000000000000000001")
                 .set(CLAIM.CLAIMED_AT, OffsetDateTime.now())
                 .execute();
-
-        // EVENT-type item — visible only to confirmed RSVP attendees, cannot be claimed
-        dsl.insertInto(ITEM)
-                .set(ITEM.ID, UUID.fromString("00000000-0000-0000-0000-000000000038"))
-                .set(ITEM.REGISTRY_ID, registryId)
-                .set(ITEM.CATEGORY_ID, defaultCategoryId)
-                .set(ITEM.ADDED_BY_USER_ID, ownerId)
-                .set(ITEM.SOURCE_SITE, SourceSite.MANUAL)
-                .set(ITEM.TITLE, "Baby Shower Party Games Kit")
-                .set(
-                        ITEM.DESCRIPTION,
-                        "Organizing materials for shower activities — revealed only to confirmed attendees")
-                .set(ITEM.PRICE_REFERENCE, new BigDecimal("35.00"))
-                .set(ITEM.CURRENCY, "USD")
-                .set(ITEM.QUANTITY_DESIRED, 1)
-                .set(ITEM.FLAG, ItemFlag.EXACT_ONLY)
-                .set(ITEM.ITEM_TYPE, ItemType.EVENT)
-                .set(ITEM.SORT_ORDER, 7)
-                .set(ITEM.CREATED_AT, OffsetDateTime.now())
-                .set(ITEM.UPDATED_AT, OffsetDateTime.now())
-                .execute();
     }
 
     private void seedEvent() {
@@ -310,11 +288,8 @@ public class DataSeeder {
         // 1. RSVP form: http://localhost:5173/rsvp/seed-rsvp-token-event001
         // 2. Event edit (owner only): http://localhost:5173/e/00000000-0000-0000-0000-000000000050/edit
         // 3. Public event: http://localhost:5173/e/00000000-0000-0000-0000-000000000050
-        // Test visibility:
-        // - Login owner@example.com: sees event in dashboard, sees EVENT item in registry
-        // - Login gifter@example.com: sees event on public page, but NOT the EVENT item (no RSVP)
-        // - Anonymous users attendee1@example.com / attendee2@example.com: would see EVENT item if account created +
-        // confirmed RSVP
+        // The seeded event also backs an EVENT-type claim type on the baby-shower registry
+        // (see seedDeliveryOptions): claimers can choose to hand the gift over at this event.
 
         UUID ownerId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         UUID eventId = UUID.fromString("00000000-0000-0000-0000-000000000050");
@@ -353,13 +328,6 @@ public class DataSeeder {
                 .set(RSVP.CONFIRMATION_TOKEN, "seed-confirm-token-rsvp0002")
                 .set(RSVP.CONFIRMED_AT, OffsetDateTime.now())
                 .set(RSVP.CREATED_AT, OffsetDateTime.now())
-                .execute();
-
-        // Link the EVENT item to this event (visible only to confirmed attendees)
-        UUID eventItemId = UUID.fromString("00000000-0000-0000-0000-000000000038");
-        dsl.insertInto(EVENT_REGISTRY_ITEM)
-                .set(EVENT_REGISTRY_ITEM.EVENT_ID, eventId)
-                .set(EVENT_REGISTRY_ITEM.ITEM_ID, eventItemId)
                 .execute();
     }
 }

@@ -67,9 +67,6 @@ public class ClaimService {
         if (item.alreadyOwned()) {
             throw new ItemAlreadyOwnedException();
         }
-        if (item.itemType() == ItemType.EVENT) {
-            throw new AccessDeniedException("Event items cannot be claimed directly");
-        }
         Registry registry = registryRepository
                 .findById(item.registryId())
                 .orElseThrow(

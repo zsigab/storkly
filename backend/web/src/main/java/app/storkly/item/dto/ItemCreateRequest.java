@@ -21,5 +21,4 @@ public record ItemCreateRequest(
         @Min(1) int quantityDesired,
         @Nullable String notes,
         boolean alreadyOwned,
-        @NotNull ItemType itemType,
-        @Nullable UUID eventId) {}
+        @NotNull ItemType itemType) {}
