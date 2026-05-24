@@ -21,3 +21,4 @@ This index provides a quick summary and links.
 | [014](decisions/014-slug-redirect-by-registry-id.md) | Slug redirect via registry_id, not slug chain | Accepted | 2026-05-09 |
 | [015](decisions/015-glass-inner-blur-not-backdrop-filter.md) | Glass cards use inner `filter: blur` layer, not `backdrop-filter` | Accepted | 2026-05-17 |
 | [016](decisions/016-link-preview-ssrf-guard.md) | SSRF guard for link preview scraper (IP + scheme + port + redirect validation) | Accepted | 2026-05-17 |
+| [017](decisions/017-event-as-claim-type.md) | Event as a claim type (delivery option), not an item type | Accepted | 2026-05-24 |

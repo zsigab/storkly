@@ -2,6 +2,7 @@ package app.storkly;
 
 import static app.storkly.domain.generated.Tables.CATEGORY;
 import static app.storkly.domain.generated.Tables.CLAIM;
+import static app.storkly.domain.generated.Tables.DELIVERY_OPTION;
 import static app.storkly.domain.generated.Tables.EVENT;
 import static app.storkly.domain.generated.Tables.ITEM;
 import static app.storkly.domain.generated.Tables.REGISTRY;
@@ -328,6 +329,20 @@ public class DataSeeder {
                 .set(RSVP.CONFIRMATION_TOKEN, "seed-confirm-token-rsvp0002")
                 .set(RSVP.CONFIRMED_AT, OffsetDateTime.now())
                 .set(RSVP.CREATED_AT, OffsetDateTime.now())
+                .execute();
+
+        // EVENT-type claim type on the baby-shower registry: gifters can choose to hand
+        // the gift over at this event. Label and instructions are derived from the event.
+        UUID registryId = UUID.fromString("00000000-0000-0000-0000-000000000010");
+        dsl.insertInto(DELIVERY_OPTION)
+                .set(DELIVERY_OPTION.ID, UUID.fromString("00000000-0000-0000-0000-000000000070"))
+                .set(DELIVERY_OPTION.REGISTRY_ID, registryId)
+                .set(DELIVERY_OPTION.TYPE, "EVENT")
+                .set(DELIVERY_OPTION.LABEL, "Baby Shower Celebration")
+                .set(DELIVERY_OPTION.DESCRIPTION, "Handover at Baby Shower Celebration")
+                .set(DELIVERY_OPTION.ENABLED, true)
+                .set(DELIVERY_OPTION.SORT_ORDER, 0)
+                .set(DELIVERY_OPTION.EVENT_ID, eventId)
                 .execute();
     }
 }

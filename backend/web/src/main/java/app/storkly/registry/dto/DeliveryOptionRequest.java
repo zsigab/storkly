@@ -1,6 +1,7 @@
 package app.storkly.registry.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
 public record DeliveryOptionRequest(
@@ -8,4 +9,5 @@ public record DeliveryOptionRequest(
         @NotBlank String label,
         @Nullable String description,
         boolean enabled,
-        int sortOrder) {}
+        int sortOrder,
+        @Nullable UUID eventId) {}

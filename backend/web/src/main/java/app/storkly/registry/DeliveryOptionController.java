@@ -49,6 +49,7 @@ public class DeliveryOptionController {
                 .description(request.description())
                 .enabled(request.enabled())
                 .sortOrder(request.sortOrder())
+                .eventId(request.eventId())
                 .build();
         DeliveryOption saved = deliveryOptionService.save(option, currentUser.id());
         return toResponse(saved);
@@ -69,6 +70,7 @@ public class DeliveryOptionController {
                 .description(request.description())
                 .enabled(request.enabled())
                 .sortOrder(request.sortOrder())
+                .eventId(request.eventId())
                 .build();
         DeliveryOption saved = deliveryOptionService.save(option, currentUser.id());
         return toResponse(saved);
@@ -88,6 +90,7 @@ public class DeliveryOptionController {
                 option.label(),
                 option.description(),
                 option.enabled(),
-                option.sortOrder());
+                option.sortOrder(),
+                option.eventId());
     }
 }

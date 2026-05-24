@@ -1,7 +1,10 @@
 package app.storkly.service.item;
 
+import app.storkly.domain.event.Event;
+import app.storkly.domain.event.EventRepository;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
+import app.storkly.domain.exception.EventNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.item.ClaimRepository;
 import app.storkly.domain.item.DeliveryOption;
@@ -21,10 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class DeliveryOptionService {
 
+    public static final String EVENT_TYPE = "EVENT";
+
     private final DeliveryOptionRepository deliveryOptionRepository;
     private final ClaimRepository claimRepository;
     private final RegistryRepository registryRepository;
     private final RegistryCoOwnerRepository coOwnerRepository;
+    private final EventRepository eventRepository;
 
     public List<DeliveryOption> findByRegistry(UUID registryId) {
         return deliveryOptionRepository.findByRegistryId(registryId);
@@ -55,12 +61,41 @@ public class DeliveryOptionService {
             throw new AccessDeniedException("Only the registry owner can manage delivery options");
         }
 
-        if ("CUSTOM".equals(option.type())
-                && (option.label() == null || option.label().isBlank())) {
+        DeliveryOption toSave = normalizeForType(option, currentUserId);
+
+        if ("CUSTOM".equals(toSave.type())
+                && (toSave.label() == null || toSave.label().isBlank())) {
             throw new IllegalArgumentException("Custom delivery options must have a label");
         }
 
-        return deliveryOptionRepository.save(option);
+        return deliveryOptionRepository.save(toSave);
+    }
+
+    /**
+     * EVENT claim types derive their label and (read-only) instructions from the linked event; any other type never
+     * carries an event reference.
+     */
+    private DeliveryOption normalizeForType(DeliveryOption option, UUID currentUserId) {
+        if (!EVENT_TYPE.equals(option.type())) {
+            if (option.eventId() == null) {
+                return option;
+            }
+            return option.toBuilder().eventId(null).build();
+        }
+
+        if (option.eventId() == null) {
+            throw new IllegalArgumentException("Event claim types must reference an event");
+        }
+        Event event = eventRepository
+                .findById(option.eventId())
+                .orElseThrow(() -> new EventNotFoundException(option.eventId()));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("You can only link claim types to your own events");
+        }
+        return option.toBuilder()
+                .label(event.title())
+                .description("Handover at " + event.title())
+                .build();
     }
 
     @Transactional

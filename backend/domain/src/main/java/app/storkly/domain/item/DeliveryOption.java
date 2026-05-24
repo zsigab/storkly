@@ -4,7 +4,7 @@ import java.util.UUID;
 import lombok.Builder;
 import org.jspecify.annotations.Nullable;
 
-@Builder
+@Builder(toBuilder = true)
 public record DeliveryOption(
         @Nullable UUID id,
         UUID registryId,
@@ -12,4 +12,5 @@ public record DeliveryOption(
         String label,
         @Nullable String description,
         boolean enabled,
-        int sortOrder) {}
+        int sortOrder,
+        @Nullable UUID eventId) {}

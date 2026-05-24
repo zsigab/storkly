@@ -10,4 +10,5 @@ public record DeliveryOptionResponse(
         String label,
         @Nullable String description,
         boolean enabled,
-        int sortOrder) {}
+        int sortOrder,
+        @Nullable UUID eventId) {}

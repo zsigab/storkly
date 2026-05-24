@@ -29,11 +29,13 @@ public class DeliveryOptionRepositoryImpl implements DeliveryOptionRepository {
                 .set(DELIVERY_OPTION.DESCRIPTION, option.description())
                 .set(DELIVERY_OPTION.ENABLED, option.enabled())
                 .set(DELIVERY_OPTION.SORT_ORDER, option.sortOrder())
+                .set(DELIVERY_OPTION.EVENT_ID, option.eventId())
                 .onDuplicateKeyUpdate()
                 .set(DELIVERY_OPTION.LABEL, option.label())
                 .set(DELIVERY_OPTION.DESCRIPTION, option.description())
                 .set(DELIVERY_OPTION.ENABLED, option.enabled())
                 .set(DELIVERY_OPTION.SORT_ORDER, option.sortOrder())
+                .set(DELIVERY_OPTION.EVENT_ID, option.eventId())
                 .execute();
         return option.id() != null
                 ? option
@@ -45,6 +47,7 @@ public class DeliveryOptionRepositoryImpl implements DeliveryOptionRepository {
                         .description(option.description())
                         .enabled(option.enabled())
                         .sortOrder(option.sortOrder())
+                        .eventId(option.eventId())
                         .build();
     }
 
@@ -86,6 +89,7 @@ public class DeliveryOptionRepositoryImpl implements DeliveryOptionRepository {
                 .description(r.getDescription())
                 .enabled(r.getEnabled())
                 .sortOrder(r.getSortOrder())
+                .eventId(r.getEventId())
                 .build();
     }
 }
