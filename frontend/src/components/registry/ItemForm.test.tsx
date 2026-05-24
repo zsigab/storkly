@@ -17,30 +17,6 @@ vi.mock("@/hooks/useImageUpload", () => ({
     isPending: false,
   }),
 }));
-vi.mock("@/hooks/useEvents", () => ({
-  useMyEvents: () => ({
-    data: [
-      {
-        id: "event-1",
-        title: "Baby Shower",
-        eventDate: "2024-05-01",
-        location: "Home",
-        rsvpToken: "token123",
-        attendees: [],
-        createdAt: "2024-01-01T00:00:00Z",
-      },
-      {
-        id: "event-2",
-        title: "Birthday Party",
-        eventDate: "2024-06-01",
-        location: "Park",
-        rsvpToken: "token456",
-        attendees: [],
-        createdAt: "2024-01-01T00:00:00Z",
-      },
-    ],
-  }),
-}));
 
 const defaultCategory: CategoryResponse = {
   id: "cat-1",
@@ -78,21 +54,14 @@ beforeEach(() => {
 });
 
 describe("ItemForm", () => {
-  it("renders all three type buttons: Product, Fund, Event", () => {
+  it("renders the Product and Fund type buttons", () => {
     renderForm();
     expect(screen.getByRole("button", { name: /product/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /fund/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /event/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^event$/i })).not.toBeInTheDocument();
   });
 
-  it("EVENT type is available in type selector", async () => {
-    renderForm();
-    const buttons = screen.getAllByRole("button");
-    const eventButton = buttons.find((btn) => btn.textContent?.includes("Event"));
-    expect(eventButton).toBeDefined();
-  });
-
-  it("submitting PRODUCT form excludes eventId", async () => {
+  it("submits a PRODUCT item with the entered title", async () => {
     const onSubmit = vi.fn();
     renderForm({ onSubmit });
 
@@ -103,7 +72,9 @@ describe("ItemForm", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ eventId: null }));
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "Test Product", itemType: "PRODUCT" }),
+      );
     });
   });
 });

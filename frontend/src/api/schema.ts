@@ -49,7 +49,7 @@ export interface CategoryResponse {
 }
 
 export type ItemFlag = "EXACT_ONLY" | "SIMILAR_OK" | "SIMILAR_CHEAPER";
-export type ItemType = "PRODUCT" | "FUND" | "EVENT";
+export type ItemType = "PRODUCT" | "FUND";
 export type SourceSite = "LAZADA_PH" | "SHOPEE_PH" | "AMAZON" | "GALAXUS" | "SM" | "ROBINSONS" | "MANUAL";
 
 export interface LinkPreviewResponse {
@@ -86,7 +86,6 @@ export interface ItemResponse {
   sortOrder: number;
   alreadyOwned: boolean;
   itemType: ItemType;
-  linkedEventIds: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -375,7 +374,6 @@ export type paths = {
             notes?: string | null;
             alreadyOwned?: boolean;
             itemType?: ItemType;
-            eventId?: string | null;
           };
         };
       };
@@ -405,7 +403,6 @@ export type paths = {
             sortOrder?: number | null;
             alreadyOwned?: boolean | null;
             itemType?: ItemType | null;
-            eventId?: string | null;
           };
         };
       };

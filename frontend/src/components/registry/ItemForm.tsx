@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/api/helpers";
 import { useLinkPreview } from "@/hooks/useLinkPreview";
 import { useImageUpload } from "@/hooks/useImageUpload";
-import { useMyEvents } from "@/hooks/useEvents";
 import { useViewTransitionToggle } from "@/hooks/useViewTransitionToggle";
 import type { CategoryResponse, ItemFlag, ItemType } from "@/api/schema";
 
@@ -33,8 +32,7 @@ const schema = z.object({
     .refine((v) => Number.isInteger(Number(v)) && Number(v) >= 1, "Quantity must be at least 1"),
   notes: z.string(),
   alreadyOwned: z.boolean(),
-  itemType: z.enum(["PRODUCT", "FUND", "EVENT"]),
-  eventId: z.string(),
+  itemType: z.enum(["PRODUCT", "FUND"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -70,11 +68,10 @@ interface ItemFormValues {
   notes: string | null;
   alreadyOwned: boolean;
   itemType: ItemType;
-  eventId: string | null;
 }
 
 interface ItemFormProps {
-  defaultValues?: Partial<FormValues> & { eventId?: string };
+  defaultValues?: Partial<FormValues>;
   categories: CategoryResponse[];
   onSubmit: (values: ItemFormValues) => void;
   isPending: boolean;
@@ -231,7 +228,6 @@ export function ItemForm({
 }: ItemFormProps): React.ReactElement {
   const { mutateAsync: fetchPreview, isPending: isFetching } = useLinkPreview();
   const { mutateAsync: uploadImage, isPending: isUploading } = useImageUpload();
-  const { data: myEvents = [] } = useMyEvents();
 
   const initialImageSource: ImageSource =
     defaultValues?.imageUrl !== undefined && defaultValues.imageUrl !== "" ? "url" : "none";
@@ -281,7 +277,6 @@ export function ItemForm({
       notes: "",
       alreadyOwned: false,
       itemType: "PRODUCT" as const,
-      eventId: "",
       ...defaultValues,
     },
   });
@@ -307,7 +302,6 @@ export function ItemForm({
   const descriptionValue = watch("description");
   const itemTypeValue = watch("itemType");
   const isFundForm = itemTypeValue === "FUND";
-  const isEventForm = itemTypeValue === "EVENT";
   const urlOriginalValue = watch("urlOriginal");
 
   // FLIP: animate wrapper height after imageSource causes a content change.
@@ -612,30 +606,24 @@ export function ItemForm({
           notes: values.notes.length > 0 ? values.notes : null,
           alreadyOwned: values.alreadyOwned,
           itemType: values.itemType,
-          eventId: isEventForm && values.eventId.length > 0 ? values.eventId : null,
         });
       })}
     >
       <div className="space-y-2">
         <span className="text-sm leading-none font-medium">Type</span>
-        <div className="bg-muted relative grid w-fit grid-cols-3 rounded-lg p-1">
+        <div className="bg-muted relative grid w-fit grid-cols-2 rounded-lg p-1">
           <div
             className="bg-primary absolute inset-y-1 left-1 rounded-md shadow-sm transition-transform duration-150 ease-in-out"
             style={{
-              width: "calc((100% - 8px) / 3)",
-              transform: `translateX(${["PRODUCT", "FUND", "EVENT"].indexOf(itemTypeValue) * 100}%)`,
+              width: "calc((100% - 8px) / 2)",
+              transform: `translateX(${["PRODUCT", "FUND"].indexOf(itemTypeValue) * 100}%)`,
             }}
           />
-          {(["PRODUCT", "FUND", "EVENT"] as const).map((type) => (
+          {(["PRODUCT", "FUND"] as const).map((type) => (
             <button
               key={type}
               type="button"
-              onClick={() => {
-                if (itemTypeValue === "EVENT") {
-                  setValue("eventId", "");
-                }
-                setValue("itemType", type);
-              }}
+              onClick={() => setValue("itemType", type)}
               className={cn(
                 "relative z-10 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
                 itemTypeValue === type
@@ -643,61 +631,34 @@ export function ItemForm({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {type === "PRODUCT" ? "Product" : type === "FUND" ? "Fund" : "Event"}
+              {type === "PRODUCT" ? "Product" : "Fund"}
             </button>
           ))}
         </div>
       </div>
 
       <FormField label="Title" htmlFor="title" error={errors.title?.message}>
-        {!isEventForm && (
-          <div
-            className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showTitleToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
-            aria-hidden={!showTitleToggle}
-          >
-            <div className="overflow-hidden">
-              <div className="pb-1.5">
-                <SourcePill
-                  source={fieldSources.title}
-                  onChange={(s) => handleFieldSourceChange("title", s)}
-                  disabled={isFetching}
-                />
-              </div>
+        <div
+          className={`grid overflow-hidden transition-all duration-200 ease-in-out ${showTitleToggle ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}
+          aria-hidden={!showTitleToggle}
+        >
+          <div className="overflow-hidden">
+            <div className="pb-1.5">
+              <SourcePill
+                source={fieldSources.title}
+                onChange={(s) => handleFieldSourceChange("title", s)}
+                disabled={isFetching}
+              />
             </div>
           </div>
-        )}
-        {isEventForm ? (
-          <select
-            id="title"
-            className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-            value={getValues("eventId") ?? ""}
-            onChange={(e) => {
-              const selectedId = e.target.value;
-              const selectedEvent = myEvents.find((ev) => ev.id === selectedId);
-              if (selectedEvent) {
-                setValue("title", selectedEvent.title);
-                setValue("eventId", selectedEvent.id);
-              }
-            }}
-          >
-            <option value="">
-              {myEvents.length === 0 ? "No events yet — create one first" : "— Select event —"}
-            </option>
-            {myEvents.map((event) => (
-              <option key={event.id} value={event.id}>
-                {event.title}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <Input
-            id="title"
-            type="text"
-            autoComplete="off"
-            disabled={fieldSources.title === "url"}
-            {...register("title")}
-          />
-        )}
+        </div>
+        <Input
+          id="title"
+          type="text"
+          autoComplete="off"
+          disabled={fieldSources.title === "url"}
+          {...register("title")}
+        />
       </FormField>
 
       <FormField label="Notes for gifters" htmlFor="notes" error={errors.notes?.message}>

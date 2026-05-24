@@ -124,8 +124,6 @@ export const ItemCard = memo(function ItemCard({
   const myAuthenticatedClaim =
     user !== null ? claims.find((c) => c.claimerUserId === user.id) : undefined;
 
-  const isEvent = item.itemType === "EVENT";
-
   const handleViewClaim = (): void => {
     if (myAuthenticatedClaim === undefined) return;
     if (onViewClaim !== undefined) {
@@ -308,9 +306,8 @@ export const ItemCard = memo(function ItemCard({
             <p className="text-muted-foreground text-xs italic">{item.notes}</p>
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            {!isFund && !isEvent && <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>}
+            {!isFund && <Badge variant="outline">{FLAG_LABELS[item.flag]}</Badge>}
             {isFund && <Badge variant="secondary">Fund</Badge>}
-            {isEvent && <Badge variant="secondary">Event</Badge>}
             {item.priceReference !== null && (
               <span className="text-muted-foreground text-sm">
                 {item.currency ?? ""} {formatPrice(item.priceReference)}
