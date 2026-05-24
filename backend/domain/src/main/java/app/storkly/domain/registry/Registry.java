@@ -13,6 +13,7 @@ public record Registry(
         String slug,
         @Nullable String description,
         RegistryVisibility visibility,
+        ContributorAccess contributorAccess,
         String themeColor,
         String themeBackground,
         OffsetDateTime createdAt) {}
