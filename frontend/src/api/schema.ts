@@ -23,6 +23,7 @@ export interface RegistryResponse {
   slug: string;
   description: string | null;
   visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+  contributorAccess: "ANYONE" | "AUTHENTICATED" | "INVITE_ONLY";
   ownerId: string;
   themeColor: string;
   themeBackground: string;
@@ -304,6 +305,7 @@ export type paths = {
             name: string;
             description?: string | null;
             visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+            contributorAccess: "ANYONE" | "AUTHENTICATED" | "INVITE_ONLY";
             themeColor?: string | null;
             themeBackground?: string | null;
           };
@@ -325,6 +327,7 @@ export type paths = {
             name?: string | null;
             description?: string | null;
             visibility?: "PUBLIC" | "PRIVATE" | "HIDDEN" | null;
+            contributorAccess?: "ANYONE" | "AUTHENTICATED" | "INVITE_ONLY" | null;
             themeColor?: string | null;
             themeBackground?: string | null;
           };
@@ -338,6 +341,10 @@ export type paths = {
     };
   };
   "/api/registries/{slug}/subscription": {
+    post: {
+      parameters: { path: { slug: string } };
+      responses: { 204: Empty; 401: Err; 403: Err; 404: Err };
+    };
     delete: {
       parameters: { path: { slug: string } };
       responses: { 204: Empty; 403: Err; 404: Err };

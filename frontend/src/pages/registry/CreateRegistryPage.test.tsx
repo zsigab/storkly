@@ -99,6 +99,7 @@ describe("CreateRegistryPage", () => {
           name: "My Registry",
           description: null,
           visibility: "PUBLIC",
+          contributorAccess: "ANYONE",
           themeColor: "peach",
           themeBackground: "both",
         },

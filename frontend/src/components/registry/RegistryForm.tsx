@@ -35,6 +35,7 @@ const schema = z.object({
   name: z.string().min(1, "Name is required").max(64, "Name must be 64 characters or fewer"),
   description: z.string(),
   visibility: z.enum(["PUBLIC", "PRIVATE", "HIDDEN"]),
+  contributorAccess: z.enum(["ANYONE", "AUTHENTICATED", "INVITE_ONLY"]),
   themeColor: z.enum(["peach", "blue", "pink", "green", "purple", "beige"]),
   themeBackground: z.enum(["none", "default", "stars", "both"]),
 });
@@ -47,6 +48,7 @@ interface RegistryFormProps {
     name: string;
     description: string | null;
     visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+    contributorAccess: "ANYONE" | "AUTHENTICATED" | "INVITE_ONLY";
     themeColor: string;
     themeBackground: string;
   }) => void;
@@ -87,6 +89,7 @@ export function RegistryForm({
       name: "",
       description: "",
       visibility: "PUBLIC",
+      contributorAccess: "ANYONE",
       themeColor: "peach" as ThemeColorValue,
       themeBackground: "both" as ThemeBackgroundValue,
       ...defaultValues,
@@ -96,6 +99,8 @@ export function RegistryForm({
   const descriptionValue = watch("description");
   const themeColor = watch("themeColor");
   const themeBackground = watch("themeBackground");
+  const visibility = watch("visibility");
+  const contributorAccess = watch("contributorAccess");
   const { ref: descriptionRegisterRef, ...descriptionRegistration } = register("description");
 
   const { setRegistryOverride, clearRegistryOverride } = useTheme();
@@ -117,6 +122,7 @@ export function RegistryForm({
           name: values.name,
           description: values.description.length > 0 ? values.description : null,
           visibility: values.visibility,
+          contributorAccess: values.contributorAccess,
           themeColor: values.themeColor,
           themeBackground: values.themeBackground,
         }),
@@ -197,6 +203,31 @@ export function RegistryForm({
           <option value="HIDDEN">Hidden — only you can see it</option>
         </select>
       </FormField>
+
+      <FormField
+        label="Who can contribute"
+        htmlFor="contributorAccess"
+        error={errors.contributorAccess?.message}
+      >
+        <select
+          id="contributorAccess"
+          className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
+          {...register("contributorAccess")}
+        >
+          <option value="ANYONE">Anyone — no auth required</option>
+          <option value="AUTHENTICATED">Authenticated — registered users only</option>
+          <option value="INVITE_ONLY">Invite only — token required</option>
+        </select>
+      </FormField>
+
+      {(visibility === "PRIVATE" || visibility === "HIDDEN") && contributorAccess === "ANYONE" && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+          <p className="text-sm text-amber-900">
+            The invite link will be the only barrier to contribution — anyone with the link can
+            claim items.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-2">
         <p className="text-sm leading-none font-medium">Theme color</p>

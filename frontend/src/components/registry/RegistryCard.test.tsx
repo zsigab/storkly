@@ -33,6 +33,7 @@ const base = {
   slug: "baby-registry",
   description: null,
   visibility: "PUBLIC" as const,
+  contributorAccess: "ANYONE" as const,
   ownerId: "u1",
   createdAt: "2024-01-01T00:00:00Z",
   themeColor: "peach",

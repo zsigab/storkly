@@ -40,6 +40,7 @@ const registryFixture = {
   slug: "my-registry",
   description: "A great registry",
   visibility: "PUBLIC" as const,
+  contributorAccess: "ANYONE" as const,
   ownerId: "owner-uuid",
   themeColor: "peach",
   themeBackground: "none",
@@ -220,9 +221,18 @@ describe("RegistryPage", () => {
     );
   });
 
-  it("reveals share link for public registry owner only after button click", async () => {
+  it("reveals share link for private registry owner only after button click", async () => {
     const { api } = await import("@/api");
-    vi.mocked(api.GET).mockImplementation(mockGetSuccess());
+    vi.mocked(api.GET).mockImplementation((path: string) => {
+      if (path === "/api/registries/{slug}") {
+        return Promise.resolve({
+          data: { ...registryFixture, visibility: "PRIVATE" as const },
+          error: undefined,
+          response: new Response(),
+        });
+      }
+      return Promise.resolve({ data: [], error: undefined, response: new Response() });
+    });
     vi.mocked(api.POST).mockResolvedValueOnce({
       data: { token: "abc123" },
       error: undefined,

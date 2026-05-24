@@ -24,8 +24,11 @@ interface Props {
   generateInviteError: unknown;
   onJoin: (token: string) => void;
   isJoining: boolean;
+  onSubscribe?: () => void;
+  isSubscribing?: boolean;
   onUnsubscribe: () => void;
   isUnsubscribing: boolean;
+  isAuthenticated: boolean;
 }
 
 export function RegistryHeader({
@@ -44,8 +47,11 @@ export function RegistryHeader({
   generateInviteError,
   onJoin,
   isJoining,
+  onSubscribe,
+  isSubscribing = false,
   onUnsubscribe,
   isUnsubscribing,
+  isAuthenticated,
 }: Props): React.ReactElement {
   const [showGetLink, setShowGetLink] = useState(false);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
@@ -89,7 +95,7 @@ export function RegistryHeader({
               Edit
             </Link>
           </Button>
-          {registry.visibility !== "HIDDEN" && (
+          {(registry.visibility === "PRIVATE" || registry.contributorAccess === "INVITE_ONLY") && (
             <Button
               variant="outline"
               size="sm"
@@ -125,27 +131,44 @@ export function RegistryHeader({
           </Button>
         </>
       )}
-      {(isSubscriber || hasUnsubscribed) &&
-        (hasUnsubscribed ? (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onJoin(inviteToken ?? "")}
-            disabled={isJoining}
-          >
-            {isJoining ? "Subscribing…" : "Re-subscribe"}
+      {isSubscriber && !hasUnsubscribed && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onUnsubscribe}
+          disabled={isUnsubscribing || userHasClaims}
+          title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
+        >
+          {isUnsubscribing ? "Unsubscribing…" : "Unsubscribe"}
+        </Button>
+      )}
+      {hasUnsubscribed && (
+        <>
+          {registry.contributorAccess === "INVITE_ONLY" ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onJoin(inviteToken ?? "")}
+              disabled={isJoining}
+            >
+              {isJoining ? "Subscribing…" : "Re-subscribe"}
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm" onClick={onSubscribe} disabled={isSubscribing}>
+              {isSubscribing ? "Subscribing…" : "Subscribe"}
+            </Button>
+          )}
+        </>
+      )}
+      {!isOwner &&
+        !isSubscriber &&
+        !hasUnsubscribed &&
+        isAuthenticated &&
+        registry.contributorAccess !== "INVITE_ONLY" && (
+          <Button variant="outline" size="sm" onClick={onSubscribe} disabled={isSubscribing}>
+            {isSubscribing ? "Subscribing…" : "Subscribe"}
           </Button>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onUnsubscribe}
-            disabled={isUnsubscribing || userHasClaims}
-            title={userHasClaims ? "Release your claims before unsubscribing" : undefined}
-          >
-            {isUnsubscribing ? "Unsubscribing…" : "Unsubscribe"}
-          </Button>
-        ))}
+        )}
     </div>
   );
 
@@ -161,35 +184,36 @@ export function RegistryHeader({
         <div className="mt-1">{visibilityBadge}</div>
       </div>
 
-      {isOwner && registry.visibility !== "HIDDEN" && (
-        <Collapsible open={showGetLink}>
-          <div className="space-y-2 pt-1">
-            {inviteUrl === null ? (
-              <div className="bg-muted h-9 animate-pulse rounded-md" />
-            ) : (
-              <div className="flex gap-2">
-                <Input value={inviteUrl} readOnly className="h-9 text-xs" />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    void navigator.clipboard.writeText(inviteUrl);
-                    setCopiedLink(true);
-                    setTimeout(() => setCopiedLink(false), 2000);
-                  }}
-                >
-                  {copiedLink ? "Copied!" : "Copy"}
-                </Button>
-              </div>
-            )}
-            {isGenerateInviteError && (
-              <Alert variant="destructive">
-                <AlertDescription>{getApiErrorMessage(generateInviteError)}</AlertDescription>
-              </Alert>
-            )}
-          </div>
-        </Collapsible>
-      )}
+      {isOwner &&
+        (registry.visibility === "PRIVATE" || registry.contributorAccess === "INVITE_ONLY") && (
+          <Collapsible open={showGetLink}>
+            <div className="space-y-2 pt-1">
+              {inviteUrl === null ? (
+                <div className="bg-muted h-9 animate-pulse rounded-md" />
+              ) : (
+                <div className="flex gap-2">
+                  <Input value={inviteUrl} readOnly className="h-9 text-xs" />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(inviteUrl);
+                      setCopiedLink(true);
+                      setTimeout(() => setCopiedLink(false), 2000);
+                    }}
+                  >
+                    {copiedLink ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
+              )}
+              {isGenerateInviteError && (
+                <Alert variant="destructive">
+                  <AlertDescription>{getApiErrorMessage(generateInviteError)}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </Collapsible>
+        )}
     </>
   );
 }

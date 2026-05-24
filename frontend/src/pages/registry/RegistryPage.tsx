@@ -22,6 +22,7 @@ import {
   useRegistrySubscribers,
   useUnsubscribeRegistry,
   useGenerateInvite,
+  useSubscribeRegistry,
 } from "@/hooks/useRegistries";
 import { useRegistryItemClaims, useRegistryClaimHistory } from "@/hooks/useClaims";
 import type { ClaimResponse, ItemResponse } from "@/api/schema";
@@ -54,6 +55,7 @@ export function RegistryPage(): React.ReactElement {
   const { data: categories = [] } = useRegistryCategories(safeSlug);
   const { data: items = [] } = useRegistryItems(safeSlug);
   const joinRegistry = useJoinRegistry(safeSlug);
+  const subscribeRegistry = useSubscribeRegistry(safeSlug);
   const unsubscribeRegistry = useUnsubscribeRegistry();
   const isOwner = user !== null && registry !== undefined && user.id === registry.ownerId;
   const { data: subscribers = [] } = useRegistrySubscribers(safeSlug, isOwner);
@@ -289,11 +291,14 @@ export function RegistryPage(): React.ReactElement {
               generateInviteError={generateInvite.error}
               onJoin={(token) => joinRegistry.mutate(token)}
               isJoining={joinRegistry.isPending}
+              onSubscribe={() => subscribeRegistry.mutate()}
+              isSubscribing={subscribeRegistry.isPending}
               onUnsubscribe={() => {
                 unsubscribeRegistry.mutate(registry.slug);
                 setHasUnsubscribed(true);
               }}
               isUnsubscribing={unsubscribeRegistry.isPending}
+              isAuthenticated={user !== null}
             />
 
             {registry.description !== null &&

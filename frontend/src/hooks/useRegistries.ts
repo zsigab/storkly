@@ -56,6 +56,7 @@ export function useCreateRegistry() {
       name: string;
       description: string | null;
       visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+      contributorAccess: "ANYONE" | "AUTHENTICATED" | "INVITE_ONLY";
       themeColor: string;
       themeBackground: string;
     }): Promise<RegistryResponse> => {
@@ -80,6 +81,7 @@ export function useUpdateRegistry(slug: string) {
       name: string;
       description: string | null;
       visibility: "PUBLIC" | "PRIVATE" | "HIDDEN";
+      contributorAccess?: "ANYONE" | "AUTHENTICATED" | "INVITE_ONLY" | null;
       themeColor: string;
       themeBackground: string;
     }): Promise<RegistryResponse> => {
@@ -154,6 +156,25 @@ export function useJoinRegistry(slug: string) {
       const { error } = await api.POST("/api/registries/{slug}/join", {
         params: { path: { slug } },
         body: { token },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["registry", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["registries"] });
+      void queryClient.invalidateQueries({ queryKey: ["items", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["categories", slug] });
+    },
+  });
+}
+
+export function useSubscribeRegistry(slug: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const { error } = await api.POST("/api/registries/{slug}/subscription", {
+        params: { path: { slug } },
       });
       if (error !== undefined) throw error;
     },
