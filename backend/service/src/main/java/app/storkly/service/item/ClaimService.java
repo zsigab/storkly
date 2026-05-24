@@ -72,6 +72,7 @@ public class ClaimService {
                 .orElseThrow(
                         () -> new RegistryNotFoundException(item.registryId().toString()));
         assertReadAccess(registry, currentUserId);
+        registryAccessService.assertContributionAccess(registry, currentUserId);
 
         // Fund items require contributions; skip the fullClaimByPercentage optimization
         boolean isFund = item.itemType() == ItemType.FUND;

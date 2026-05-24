@@ -1,6 +1,7 @@
 package app.storkly.service.registry;
 
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.registry.ContributorAccess;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistrySubscriptionRepository;
@@ -33,6 +34,18 @@ public class RegistryAccessService {
                     || subscriptionRepository.exists(currentUserId, registry.id());
             if (!hasAccess) {
                 throw new AccessDeniedException("Registry is private");
+            }
+        }
+    }
+
+    public void assertContributionAccess(Registry registry, @Nullable UUID currentUserId) {
+        if (registry.contributorAccess() == ContributorAccess.AUTHENTICATED) {
+            if (currentUserId == null) {
+                throw new AccessDeniedException("Authentication required to contribute");
+            }
+        } else if (registry.contributorAccess() == ContributorAccess.INVITE_ONLY) {
+            if (currentUserId == null || !subscriptionRepository.exists(currentUserId, registry.id())) {
+                throw new AccessDeniedException("Invite required to contribute");
             }
         }
     }

@@ -6,6 +6,7 @@ import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.item.ClaimRepository;
+import app.storkly.domain.registry.ContributorAccess;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryInvite;
@@ -46,7 +47,8 @@ public class RegistryService {
             RegistryVisibility visibility,
             @Nullable String themeColor,
             @Nullable String themeBackground,
-            UUID ownerId) {
+            UUID ownerId,
+            ContributorAccess contributorAccess) {
         String slug = generateUniqueSlug(name);
         Registry registry = Registry.builder()
                 .ownerId(ownerId)
@@ -54,6 +56,7 @@ public class RegistryService {
                 .slug(slug)
                 .description(description)
                 .visibility(visibility)
+                .contributorAccess(contributorAccess)
                 .themeColor(themeColor != null ? themeColor : "peach")
                 .themeBackground(themeBackground != null ? themeBackground : "none")
                 .createdAt(OffsetDateTime.now())
@@ -88,6 +91,7 @@ public class RegistryService {
             @Nullable String name,
             @Nullable String description,
             @Nullable RegistryVisibility visibility,
+            @Nullable ContributorAccess contributorAccess,
             @Nullable String themeColor,
             @Nullable String themeBackground,
             UUID currentUserId) {
@@ -110,6 +114,7 @@ public class RegistryService {
                 .slug(newSlug)
                 .description(description != null ? description : registry.description())
                 .visibility(visibility != null ? visibility : registry.visibility())
+                .contributorAccess(contributorAccess != null ? contributorAccess : registry.contributorAccess())
                 .themeColor(themeColor != null ? themeColor : registry.themeColor())
                 .themeBackground(themeBackground != null ? themeBackground : registry.themeBackground())
                 .createdAt(registry.createdAt())
@@ -147,6 +152,18 @@ public class RegistryService {
                 .orElseThrow(() -> new InvalidTokenException("Invalid invite token"));
         if (!invite.registryId().equals(registry.id())) {
             throw new InvalidTokenException("Invite token does not belong to this registry");
+        }
+        if (subscriptionRepository.exists(currentUserId, registry.id())) {
+            throw new AlreadySubscribedException();
+        }
+        subscriptionRepository.save(currentUserId, registry.id());
+    }
+
+    @Transactional
+    public void subscribe(String slug, UUID currentUserId) {
+        Registry registry = resolveBySlug(slug);
+        if (registry.contributorAccess() == ContributorAccess.INVITE_ONLY) {
+            throw new AccessDeniedException("Use invite link to join this registry");
         }
         if (subscriptionRepository.exists(currentUserId, registry.id())) {
             throw new AlreadySubscribedException();

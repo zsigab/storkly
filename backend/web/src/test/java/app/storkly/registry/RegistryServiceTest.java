@@ -13,6 +13,7 @@ import app.storkly.domain.exception.InvalidTokenException;
 import app.storkly.domain.exception.RegistryNotFoundException;
 import app.storkly.domain.exception.SubscriberHasClaimsException;
 import app.storkly.domain.item.ClaimRepository;
+import app.storkly.domain.registry.ContributorAccess;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryCoOwnerRepository;
 import app.storkly.domain.registry.RegistryInvite;
@@ -84,6 +85,7 @@ class RegistryServiceTest {
                 .name("Test Registry")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .contributorAccess(ContributorAccess.ANYONE)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -116,6 +118,7 @@ class RegistryServiceTest {
                 .name("Test Registry")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .contributorAccess(ContributorAccess.ANYONE)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -149,6 +152,7 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .contributorAccess(ContributorAccess.ANYONE)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -173,6 +177,7 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .contributorAccess(ContributorAccess.ANYONE)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -199,6 +204,7 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PRIVATE)
+                .contributorAccess(ContributorAccess.INVITE_ONLY)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -230,6 +236,7 @@ class RegistryServiceTest {
                 .name("Test")
                 .slug(slug)
                 .visibility(RegistryVisibility.PRIVATE)
+                .contributorAccess(ContributorAccess.INVITE_ONLY)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -263,6 +270,7 @@ class RegistryServiceTest {
                 .name("A")
                 .slug(slug)
                 .visibility(RegistryVisibility.PRIVATE)
+                .contributorAccess(ContributorAccess.INVITE_ONLY)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -293,6 +301,7 @@ class RegistryServiceTest {
                 .name("Baby Registry")
                 .slug(oldSlug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .contributorAccess(ContributorAccess.ANYONE)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -302,7 +311,7 @@ class RegistryServiceTest {
         when(registryRepository.existsBySlug(newSlug)).thenReturn(false);
         when(registryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        registryService.update(oldSlug, newName, null, null, null, null, ownerId);
+        registryService.update(oldSlug, newName, null, null, null, null, null, ownerId);
 
         verify(slugRedirectRepository).save(oldSlug, registryId);
     }
@@ -319,6 +328,7 @@ class RegistryServiceTest {
                 .name("Baby Registry")
                 .slug(slug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .contributorAccess(ContributorAccess.ANYONE)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
@@ -327,7 +337,7 @@ class RegistryServiceTest {
         when(registryRepository.findBySlug(slug)).thenReturn(Optional.of(registry));
         when(registryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        registryService.update(slug, "Baby Registry", null, null, null, null, ownerId);
+        registryService.update(slug, "Baby Registry", null, null, null, null, null, ownerId);
 
         verify(slugRedirectRepository, never()).save(any(), any());
     }
@@ -344,6 +354,7 @@ class RegistryServiceTest {
                 .name("Mikey's Registry")
                 .slug(newSlug)
                 .visibility(RegistryVisibility.PUBLIC)
+                .contributorAccess(ContributorAccess.ANYONE)
                 .themeColor("peach")
                 .themeBackground("none")
                 .createdAt(OffsetDateTime.now())
