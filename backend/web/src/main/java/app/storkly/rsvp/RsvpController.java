@@ -55,6 +55,9 @@ public class RsvpController {
                 event.eventDate(),
                 event.eventDateOffsetSeconds(),
                 event.location(),
+                event.description(),
+                event.themeColor(),
+                event.themeBackground(),
                 eventSpotsLeft,
                 slotResponses);
     }

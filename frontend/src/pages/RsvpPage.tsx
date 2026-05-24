@@ -1,13 +1,16 @@
 import { useParams } from "react-router";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
+import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { RsvpForm } from "@/components/rsvp/RsvpForm";
 import { useRsvpEventInfo } from "@/hooks/useRsvp";
+import { useThemeOverride } from "@/hooks/useEventTheme";
 import { formatEventDate } from "@/lib/utils";
 
 export function RsvpPage(): React.ReactElement {
   const { token } = useParams<{ token: string }>();
   const safeToken = token ?? "";
   const { data: event, isPending, isError } = useRsvpEventInfo(safeToken);
+  useThemeOverride(event?.themeColor ?? "peach", event?.themeBackground ?? "none");
 
   if (isPending) {
     return (
@@ -38,6 +41,12 @@ export function RsvpPage(): React.ReactElement {
             <p className="text-muted-foreground text-lg">{event.location}</p>
           )}
         </div>
+
+        {event.description !== null && (
+          <div className="border-t pt-4">
+            <MarkdownContent content={event.description} className="text-muted-foreground" />
+          </div>
+        )}
 
         <div>
           <RsvpForm rsvpToken={safeToken} event={event} />

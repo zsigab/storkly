@@ -69,6 +69,20 @@ export function RsvpForm({ rsvpToken, event }: RsvpFormProps): React.ReactElemen
   };
 
   if (submitted) {
+    if (user !== null) {
+      return (
+        <div className="bg-card rounded-lg p-6 text-center">
+          <h2 className="text-xl font-semibold">
+            {attending ? "You're going!" : "Response recorded"}
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            {attending
+              ? `Your RSVP for ${event.eventTitle} is confirmed. See you there!`
+              : `Thanks for letting us know you can't make it to ${event.eventTitle}.`}
+          </p>
+        </div>
+      );
+    }
     return (
       <div className="bg-card rounded-lg p-6 text-center">
         <h2 className="text-xl font-semibold">Check your email</h2>
@@ -122,22 +136,30 @@ export function RsvpForm({ rsvpToken, event }: RsvpFormProps): React.ReactElemen
       <div className="space-y-2">
         <label className="text-sm font-medium">Will you be attending?</label>
         <div className="flex gap-2">
-          <Button
+          <button
             type="button"
-            variant={attending ? "default" : "outline"}
             onClick={() => setValue("attending", true, { shouldValidate: true })}
-            className="flex-1"
+            className={[
+              "flex-1 rounded-lg border px-4 py-3 text-center text-sm transition-colors",
+              attending
+                ? "border-primary bg-primary/10 font-medium"
+                : "border-border hover:border-primary/50",
+            ].join(" ")}
           >
             Yes, I'll be there
-          </Button>
-          <Button
+          </button>
+          <button
             type="button"
-            variant={!attending ? "default" : "outline"}
             onClick={() => setValue("attending", false, { shouldValidate: true })}
-            className="flex-1"
+            className={[
+              "flex-1 rounded-lg border px-4 py-3 text-center text-sm transition-colors",
+              !attending
+                ? "border-primary bg-primary/10 font-medium"
+                : "border-border hover:border-primary/50",
+            ].join(" ")}
           >
             No, I can't make it
-          </Button>
+          </button>
         </div>
       </div>
       <input type="hidden" {...register("attending")} />

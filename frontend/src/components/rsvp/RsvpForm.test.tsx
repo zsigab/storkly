@@ -20,6 +20,9 @@ const eventFixture = {
   eventDate: "2024-06-15T14:00:00Z",
   eventDateOffsetSeconds: null,
   location: "123 Main St",
+  description: null,
+  themeColor: "peach",
+  themeBackground: "none",
   spotsLeft: null,
   timeSlots: [],
 };
@@ -93,11 +96,11 @@ describe("RsvpForm", () => {
     const yesButton = screen.getByRole("button", { name: /yes, i'll be there/i });
     const noButton = screen.getByRole("button", { name: /no, i can't make it/i });
 
-    expect(yesButton).toHaveClass("bg-primary");
+    expect(yesButton).toHaveClass("border-primary");
     fireEvent.click(noButton);
 
-    expect(noButton).toHaveClass("bg-primary");
-    expect(yesButton).not.toHaveClass("bg-primary");
+    expect(noButton).toHaveClass("border-primary");
+    expect(yesButton).not.toHaveClass("border-primary");
   });
 
   it("shows confirmation message after successful submit", async () => {
@@ -117,6 +120,34 @@ describe("RsvpForm", () => {
       expect(screen.getByText(/check your email/i)).toBeInTheDocument();
       expect(screen.getByText(/confirmation link/i)).toBeInTheDocument();
     });
+  });
+
+  it("shows immediate confirmation (no email message) for authenticated users", async () => {
+    Object.defineProperty(window, "localStorage", {
+      value: {
+        getItem: vi
+          .fn()
+          .mockReturnValue(
+            JSON.stringify({ id: "u1", email: "jane@example.com", displayName: "Jane" }),
+          ),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      },
+      writable: true,
+    });
+    const { api } = await import("@/api");
+    vi.mocked(api.POST).mockResolvedValue({ data: undefined, error: undefined });
+
+    renderWithProviders(<RsvpForm rsvpToken="token-abc" event={eventFixture} />);
+
+    expect(screen.queryByLabelText(/display name/i)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId("turnstile"));
+    fireEvent.click(screen.getByRole("button", { name: /submit rsvp/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/you're going/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/check your email/i)).not.toBeInTheDocument();
   });
 
   it("displays error alert on submit failure", async () => {

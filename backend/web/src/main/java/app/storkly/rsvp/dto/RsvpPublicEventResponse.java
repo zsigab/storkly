@@ -12,5 +12,8 @@ public record RsvpPublicEventResponse(
         OffsetDateTime eventDate,
         @Nullable Integer eventDateOffsetSeconds,
         @Nullable String location,
+        @Nullable String description,
+        String themeColor,
+        String themeBackground,
         @Nullable Integer spotsLeft,
         List<EventTimeSlotPublicResponse> timeSlots) {}

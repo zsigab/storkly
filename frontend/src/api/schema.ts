@@ -193,6 +193,9 @@ export interface RsvpPublicEventResponse {
   eventDate: string;
   eventDateOffsetSeconds: number | null;
   location: string | null;
+  description: string | null;
+  themeColor: string;
+  themeBackground: string;
   spotsLeft: number | null;
   timeSlots: EventTimeSlotPublicResponse[];
 }

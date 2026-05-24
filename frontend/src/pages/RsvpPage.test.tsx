@@ -22,7 +22,11 @@ const eventFixture = {
   eventId: "event-1",
   eventTitle: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
+  eventDateOffsetSeconds: null,
   location: "123 Main St",
+  description: "Join us to celebrate!",
+  themeColor: "blue",
+  themeBackground: "stars",
   spotsLeft: null,
   timeSlots: [],
 };
@@ -82,6 +86,7 @@ describe("RsvpPage", () => {
     await waitFor(() => {
       expect(screen.getByText(/you're invited/i)).toBeInTheDocument();
       expect(screen.getByText(eventFixture.eventTitle)).toBeInTheDocument();
+      expect(screen.getByText(/join us to celebrate/i)).toBeInTheDocument();
       expect(screen.getByTestId("turnstile")).toBeInTheDocument();
     });
   });
