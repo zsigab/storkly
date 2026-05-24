@@ -4,6 +4,7 @@ import static app.storkly.domain.generated.Tables.REGISTRY;
 import static app.storkly.domain.generated.Tables.REGISTRY_SUBSCRIPTION;
 
 import app.storkly.domain.generated.tables.records.RegistryRecord;
+import app.storkly.domain.registry.ContributorAccess;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistryVisibility;
@@ -32,6 +33,7 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                     .set(REGISTRY.SLUG, registry.slug())
                     .set(REGISTRY.DESCRIPTION, registry.description())
                     .set(REGISTRY.VISIBILITY, mapVisibility(registry.visibility()))
+                    .set(REGISTRY.CONTRIBUTOR_ACCESS, mapContributorAccess(registry.contributorAccess()))
                     .set(REGISTRY.THEME_COLOR, registry.themeColor())
                     .set(REGISTRY.THEME_BACKGROUND, registry.themeBackground())
                     .set(REGISTRY.CREATED_AT, registry.createdAt())
@@ -43,6 +45,7 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                     .slug(registry.slug())
                     .description(registry.description())
                     .visibility(registry.visibility())
+                    .contributorAccess(registry.contributorAccess())
                     .themeColor(registry.themeColor())
                     .themeBackground(registry.themeBackground())
                     .createdAt(registry.createdAt())
@@ -53,6 +56,7 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                     .set(REGISTRY.SLUG, registry.slug())
                     .set(REGISTRY.DESCRIPTION, registry.description())
                     .set(REGISTRY.VISIBILITY, mapVisibility(registry.visibility()))
+                    .set(REGISTRY.CONTRIBUTOR_ACCESS, mapContributorAccess(registry.contributorAccess()))
                     .set(REGISTRY.THEME_COLOR, registry.themeColor())
                     .set(REGISTRY.THEME_BACKGROUND, registry.themeBackground())
                     .where(REGISTRY.ID.eq(registry.id()))
@@ -122,6 +126,7 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                 .slug(r.getSlug())
                 .description(r.getDescription())
                 .visibility(mapVisibility(r.getVisibility()))
+                .contributorAccess(mapContributorAccess(r.getContributorAccess()))
                 .themeColor(r.getThemeColor())
                 .themeBackground(r.getThemeBackground())
                 .createdAt(r.getCreatedAt())
@@ -134,5 +139,13 @@ public class RegistryRepositoryImpl implements RegistryRepository {
 
     private RegistryVisibility mapVisibility(app.storkly.domain.generated.enums.RegistryVisibility v) {
         return RegistryVisibility.valueOf(v.name());
+    }
+
+    private app.storkly.domain.generated.enums.ContributorAccess mapContributorAccess(ContributorAccess a) {
+        return app.storkly.domain.generated.enums.ContributorAccess.valueOf(a.name());
+    }
+
+    private ContributorAccess mapContributorAccess(app.storkly.domain.generated.enums.ContributorAccess a) {
+        return ContributorAccess.valueOf(a.name());
     }
 }

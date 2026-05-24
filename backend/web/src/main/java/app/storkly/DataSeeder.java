@@ -9,6 +9,7 @@ import static app.storkly.domain.generated.Tables.REGISTRY;
 import static app.storkly.domain.generated.Tables.RSVP;
 import static app.storkly.domain.generated.Tables.USER;
 
+import app.storkly.domain.generated.enums.ContributorAccess;
 import app.storkly.domain.generated.enums.ItemFlag;
 import app.storkly.domain.generated.enums.ItemType;
 import app.storkly.domain.generated.enums.RegistryVisibility;
@@ -93,6 +94,7 @@ public class DataSeeder {
                 .set(REGISTRY.SLUG, "baby-shower")
                 .set(REGISTRY.DESCRIPTION, "Our wishlist for the new arrival!")
                 .set(REGISTRY.VISIBILITY, RegistryVisibility.PUBLIC)
+                .set(REGISTRY.CONTRIBUTOR_ACCESS, ContributorAccess.ANYONE)
                 .set(REGISTRY.CREATED_AT, OffsetDateTime.now())
                 .execute();
 

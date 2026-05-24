@@ -54,7 +54,8 @@ public class RegistryController {
                 request.visibility(),
                 request.themeColor(),
                 request.themeBackground(),
-                currentUser.id());
+                currentUser.id(),
+                request.contributorAccess());
         return toResponse(registry);
     }
 
@@ -74,6 +75,7 @@ public class RegistryController {
                 request.name(),
                 request.description(),
                 request.visibility(),
+                request.contributorAccess(),
                 request.themeColor(),
                 request.themeBackground(),
                 currentUser.id());
@@ -99,6 +101,12 @@ public class RegistryController {
             @RequestBody @Valid JoinRequest request,
             @AuthenticationPrincipal User currentUser) {
         registryService.join(slug, request.token(), currentUser.id());
+    }
+
+    @PostMapping("/{slug}/subscription")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void subscribe(@PathVariable String slug, @AuthenticationPrincipal User currentUser) {
+        registryService.subscribe(slug, currentUser.id());
     }
 
     @DeleteMapping("/{slug}/subscription")
@@ -138,6 +146,7 @@ public class RegistryController {
                 registry.slug(),
                 registry.description(),
                 registry.visibility(),
+                registry.contributorAccess(),
                 registry.ownerId(),
                 registry.themeColor(),
                 registry.themeBackground(),

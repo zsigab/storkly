@@ -89,6 +89,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/registries/{slug}/join")
                         .authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/registries/{slug}/subscription")
+                        .authenticated()
                         .requestMatchers("/api/docs/**", "/swagger-ui/**")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**")

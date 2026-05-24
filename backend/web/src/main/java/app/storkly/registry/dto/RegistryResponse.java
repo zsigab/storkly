@@ -1,5 +1,6 @@
 package app.storkly.registry.dto;
 
+import app.storkly.domain.registry.ContributorAccess;
 import app.storkly.domain.registry.RegistryVisibility;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -11,6 +12,7 @@ public record RegistryResponse(
         String slug,
         @Nullable String description,
         RegistryVisibility visibility,
+        ContributorAccess contributorAccess,
         UUID ownerId,
         String themeColor,
         String themeBackground,

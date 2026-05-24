@@ -1,6 +1,7 @@
 package app.storkly.registry;
 
 import app.storkly.auth.dto.LoginRequest;
+import app.storkly.domain.registry.ContributorAccess;
 import app.storkly.domain.registry.RegistryVisibility;
 import app.storkly.registry.dto.RegistryCreateRequest;
 import java.util.concurrent.atomic.AtomicReference;
@@ -82,8 +83,8 @@ class RegistryControllerIntegrationTest {
     void createRegistry_authenticated_returnsCreated() {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-        RegistryCreateRequest request =
-                new RegistryCreateRequest("My New Registry", null, RegistryVisibility.PUBLIC, null, null);
+        RegistryCreateRequest request = new RegistryCreateRequest(
+                "My New Registry", null, RegistryVisibility.PUBLIC, ContributorAccess.ANYONE, null, null);
 
         restTestClient
                 .post()
@@ -104,8 +105,8 @@ class RegistryControllerIntegrationTest {
     void createHiddenRegistry_andFetchAsGuest_returnsForbidden() {
         String authCookie = loginAndGetCookie("owner@example.com", "password");
 
-        RegistryCreateRequest request =
-                new RegistryCreateRequest("Secret", null, RegistryVisibility.HIDDEN, null, null);
+        RegistryCreateRequest request = new RegistryCreateRequest(
+                "Secret", null, RegistryVisibility.HIDDEN, ContributorAccess.ANYONE, null, null);
         AtomicReference<String> slugRef = new AtomicReference<>();
 
         restTestClient
