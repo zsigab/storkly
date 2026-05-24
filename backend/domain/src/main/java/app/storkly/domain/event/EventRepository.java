@@ -12,9 +12,13 @@ public interface EventRepository {
 
     Optional<Event> findByRsvpToken(String rsvpToken);
 
+    Optional<Event> findByRsvpShortCode(String rsvpShortCode);
+
     List<Event> findByOwnerId(UUID ownerId);
 
     List<Event> findByIds(Collection<UUID> ids);
+
+    void saveShortCode(UUID id, String shortCode);
 
     void deleteById(UUID id);
 }

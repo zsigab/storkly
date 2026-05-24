@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Link, useParams, useLocation, useViewTransitionState } from "react-router";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
+import { Collapsible } from "@/components/common/Collapsible";
 import { EventAttendeesTable } from "@/components/event/EventAttendeesTable";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { usePublicEvent, useEvent } from "@/hooks/useEvents";
@@ -12,6 +14,8 @@ export function PublicEventPage(): React.ReactElement {
   const safeId = id ?? "";
   const { user } = useAuth();
   const isAuthenticated = user !== null;
+  const [rsvpLinkOpen, setRsvpLinkOpen] = useState(false);
+  const [copiedRsvpLink, setCopiedRsvpLink] = useState(false);
   useEventTheme(safeId);
   const { state: navState } = useLocation();
   const fromEventCard =
@@ -25,6 +29,15 @@ export function PublicEventPage(): React.ReactElement {
 
   const { data: event, isPending, isError } = usePublicEvent(safeId);
   const { data: eventFull } = useEvent(safeId, { enabled: isAuthenticated });
+
+  const copyRsvpLink = (): void => {
+    if (eventFull?.rsvpShortCode === null || eventFull?.rsvpShortCode === undefined) return;
+    const link = `${window.location.origin}/i/${eventFull.rsvpShortCode}`;
+    void navigator.clipboard.writeText(link).then(() => {
+      setCopiedRsvpLink(true);
+      setTimeout(() => setCopiedRsvpLink(false), 2000);
+    });
+  };
 
   if (isPending) {
     return (
@@ -94,8 +107,45 @@ export function PublicEventPage(): React.ReactElement {
       </GlassCardLayout>
 
       {eventFull !== undefined && (
-        <div className="mx-auto max-w-2xl pb-10">
+        <div className="mx-auto max-w-2xl space-y-6 pb-10">
           <EventAttendeesTable attendees={eventFull.attendees} ownerEventId={safeId} />
+          {eventFull.rsvpShortCode !== null && (
+            <div className="space-y-3">
+              <button
+                type="button"
+                className="text-foreground flex items-center gap-1 text-left"
+                onClick={() => setRsvpLinkOpen((o) => !o)}
+              >
+                <h2 className="text-lg font-semibold">RSVP Link</h2>
+                <span className="text-muted-foreground text-sm">{rsvpLinkOpen ? "▲" : "▼"}</span>
+              </button>
+              <div className="relative">
+                <div
+                  className={`from-primary/10 via-background to-secondary/15 pointer-events-none absolute -inset-4 rounded-2xl bg-gradient-to-br blur-xl transition-opacity duration-200 ${rsvpLinkOpen ? "opacity-100" : "opacity-0"}`}
+                  aria-hidden="true"
+                />
+                <Collapsible open={rsvpLinkOpen}>
+                  <div className="pt-1">
+                    <div className="border-border/50 bg-card/80 relative flex gap-2 overflow-hidden rounded-lg border p-3 shadow-md backdrop-blur-sm">
+                      <input
+                        type="text"
+                        readOnly
+                        value={`${window.location.origin}/i/${eventFull.rsvpShortCode}`}
+                        className="border-input bg-background/60 flex h-10 flex-1 rounded-md border px-3 py-2 text-sm backdrop-blur-sm"
+                      />
+                      <button
+                        type="button"
+                        onClick={copyRsvpLink}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                      >
+                        {copiedRsvpLink ? "Copied!" : "Copy"}
+                      </button>
+                    </div>
+                  </div>
+                </Collapsible>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </>

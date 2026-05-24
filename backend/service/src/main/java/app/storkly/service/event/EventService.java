@@ -3,14 +3,17 @@ package app.storkly.service.event;
 import app.storkly.domain.event.Event;
 import app.storkly.domain.event.EventRepository;
 import app.storkly.domain.exception.AccessDeniedException;
+import app.storkly.domain.exception.ConflictException;
 import app.storkly.domain.exception.EventNotFoundException;
 import app.storkly.util.TokenUtil;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class EventService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final String CHARSET = "abcdefghijklmnopqrstuvwxyz0123456789";
+    private static final int SHORT_CODE_LENGTH = 6;
+    private static final int COLLISION_RETRIES = 5;
 
     private final EventRepository eventRepository;
 
@@ -105,5 +113,59 @@ public class EventService {
             throw new AccessDeniedException("Only the owner can delete this event");
         }
         eventRepository.deleteById(id);
+    }
+
+    @Transactional
+    public Event generateRsvpShortCode(UUID id, UUID currentUserId) {
+        Event event = eventRepository.findById(id).orElseThrow(() -> new EventNotFoundException(id));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can generate a short code");
+        }
+        if (event.rsvpShortCode() != null) {
+            throw new ConflictException("RSVP short code already generated for this event");
+        }
+
+        String shortCode = generateShortCode();
+        for (int attempt = 0; attempt < COLLISION_RETRIES; attempt++) {
+            try {
+                eventRepository.saveShortCode(id, shortCode);
+                return Event.builder()
+                        .id(event.id())
+                        .ownerId(event.ownerId())
+                        .title(event.title())
+                        .eventDate(event.eventDate())
+                        .eventDateOffsetSeconds(event.eventDateOffsetSeconds())
+                        .location(event.location())
+                        .description(event.description())
+                        .rsvpToken(event.rsvpToken())
+                        .rsvpShortCode(shortCode)
+                        .rsvpCapacity(event.rsvpCapacity())
+                        .themeColor(event.themeColor())
+                        .themeBackground(event.themeBackground())
+                        .createdAt(event.createdAt())
+                        .build();
+            } catch (DataIntegrityViolationException e) {
+                if (attempt < COLLISION_RETRIES - 1) {
+                    shortCode = generateShortCode();
+                } else {
+                    throw e;
+                }
+            }
+        }
+        throw new RuntimeException("Failed to generate unique short code after retries");
+    }
+
+    public Event findByRsvpShortCode(String rsvpShortCode) {
+        return eventRepository
+                .findByRsvpShortCode(rsvpShortCode)
+                .orElseThrow(() -> new EventNotFoundException("Event with short code not found"));
+    }
+
+    private String generateShortCode() {
+        StringBuilder sb = new StringBuilder(SHORT_CODE_LENGTH);
+        for (int i = 0; i < SHORT_CODE_LENGTH; i++) {
+            sb.append(CHARSET.charAt(RANDOM.nextInt(CHARSET.length())));
+        }
+        return sb.toString();
     }
 }

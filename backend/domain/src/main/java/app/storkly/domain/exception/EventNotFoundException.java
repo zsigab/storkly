@@ -7,4 +7,8 @@ public class EventNotFoundException extends DomainException {
     public EventNotFoundException(UUID id) {
         super("Event not found: " + id);
     }
+
+    public EventNotFoundException(String message) {
+        super(message);
+    }
 }

@@ -32,6 +32,7 @@ public class EventRepositoryImpl implements EventRepository {
                     .set(EVENT.LOCATION, event.location())
                     .set(EVENT.DESCRIPTION, event.description())
                     .set(EVENT.RSVP_TOKEN, event.rsvpToken())
+                    .set(EVENT.RSVP_SHORT_CODE, event.rsvpShortCode())
                     .set(EVENT.RSVP_CAPACITY, event.rsvpCapacity())
                     .set(EVENT.THEME_COLOR, event.themeColor())
                     .set(EVENT.THEME_BACKGROUND, event.themeBackground())
@@ -46,6 +47,7 @@ public class EventRepositoryImpl implements EventRepository {
                     .location(event.location())
                     .description(event.description())
                     .rsvpToken(event.rsvpToken())
+                    .rsvpShortCode(event.rsvpShortCode())
                     .rsvpCapacity(event.rsvpCapacity())
                     .themeColor(event.themeColor())
                     .themeBackground(event.themeBackground())
@@ -81,6 +83,14 @@ public class EventRepositoryImpl implements EventRepository {
     }
 
     @Override
+    public Optional<Event> findByRsvpShortCode(String rsvpShortCode) {
+        EventRecord record = dsl.selectFrom(EVENT)
+                .where(EVENT.RSVP_SHORT_CODE.eq(rsvpShortCode))
+                .fetchOne();
+        return Optional.ofNullable(record).map(this::toDomain);
+    }
+
+    @Override
     public List<Event> findByOwnerId(UUID ownerId) {
         return dsl.selectFrom(EVENT).where(EVENT.OWNER_ID.eq(ownerId)).fetch().map(this::toDomain);
     }
@@ -89,6 +99,14 @@ public class EventRepositoryImpl implements EventRepository {
     public List<Event> findByIds(Collection<UUID> ids) {
         if (ids.isEmpty()) return List.of();
         return dsl.selectFrom(EVENT).where(EVENT.ID.in(ids)).fetch().map(this::toDomain);
+    }
+
+    @Override
+    public void saveShortCode(UUID id, String shortCode) {
+        dsl.update(EVENT)
+                .set(EVENT.RSVP_SHORT_CODE, shortCode)
+                .where(EVENT.ID.eq(id))
+                .execute();
     }
 
     @Override
@@ -106,6 +124,7 @@ public class EventRepositoryImpl implements EventRepository {
                 .location(record.getLocation())
                 .description(record.getDescription())
                 .rsvpToken(record.getRsvpToken())
+                .rsvpShortCode(record.getRsvpShortCode())
                 .rsvpCapacity(record.getRsvpCapacity())
                 .themeColor(record.getThemeColor())
                 .themeBackground(record.getThemeBackground())

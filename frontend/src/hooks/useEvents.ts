@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { api } from "@/api";
-import type { EventPublicResponse, EventResponse } from "@/api/schema";
+import type {
+  EventPublicResponse,
+  EventResponse,
+  RsvpShortLinkLookupResponse,
+  RsvpShortLinkResponse,
+} from "@/api/schema";
 
 export function useMyEvents() {
   return useQuery({
@@ -225,5 +230,37 @@ export function useDeleteEvent() {
       void queryClient.invalidateQueries({ queryKey: ["events"] });
       void navigate("/dashboard");
     },
+  });
+}
+
+export function useGenerateRsvpShortLink(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<RsvpShortLinkResponse> => {
+      const { data, error } = await api.POST("/api/events/{id}/rsvp-link", {
+        params: { path: { id: eventId } },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+  });
+}
+
+export function useRsvpShortLink(code: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["rsvp", "short-link", code],
+    queryFn: async (): Promise<RsvpShortLinkLookupResponse> => {
+      const { data, error } = await api.GET("/api/rsvp-link/{code}", {
+        params: { path: { code } },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    enabled: code.length > 0 && (options?.enabled ?? true),
   });
 }

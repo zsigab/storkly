@@ -6,6 +6,7 @@ import app.storkly.domain.exception.CategoryNotFoundException;
 import app.storkly.domain.exception.ClaimAlreadyReceivedException;
 import app.storkly.domain.exception.ClaimNotFoundException;
 import app.storkly.domain.exception.ClaimNotReceivedException;
+import app.storkly.domain.exception.ConflictException;
 import app.storkly.domain.exception.ContributionExceedsRemainingException;
 import app.storkly.domain.exception.DeliveryOptionHasClaimsException;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
@@ -65,7 +66,8 @@ public class GlobalExceptionHandler {
         ClaimAlreadyReceivedException.class,
         DeliveryOptionHasClaimsException.class,
         SlotAtCapacityException.class,
-        EventAtCapacityException.class
+        EventAtCapacityException.class,
+        ConflictException.class
     })
     public ProblemDetail handleConflict(RuntimeException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());

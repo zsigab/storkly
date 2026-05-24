@@ -26,6 +26,7 @@ import { CreateEventPage } from "@/pages/event/CreateEventPage";
 import { EditEventPage } from "@/pages/event/EditEventPage";
 import { RsvpPage } from "@/pages/RsvpPage";
 import { RsvpConfirmPage } from "@/pages/RsvpConfirmPage";
+import { RsvpShortLinkPage } from "@/pages/RsvpShortLinkPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
 import { DataDeletionPage } from "@/pages/DataDeletionPage";
 
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
           { path: "reset-password", element: <ResetPasswordPage /> },
           { path: "r/:slug", element: <RegistryPage /> },
           { path: "e/:id", element: <PublicEventPage /> },
+          { path: "i/:code", element: <RsvpShortLinkPage /> },
           { path: "rsvp/confirm", element: <RsvpConfirmPage /> },
           { path: "rsvp/:token", element: <RsvpPage /> },
           { path: "privacy", element: <PrivacyPolicyPage /> },

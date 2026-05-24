@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router";
 import { EventForm } from "@/components/event/EventForm";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
-import { useEvent, useUpdateEvent } from "@/hooks/useEvents";
+import { useEvent, useUpdateEvent, useGenerateRsvpShortLink } from "@/hooks/useEvents";
 import type { ProblemDetail } from "@/api/schema";
 
 export function EditEventPage(): React.ReactElement {
@@ -11,14 +11,20 @@ export function EditEventPage(): React.ReactElement {
   const safeId = id ?? "";
   const { data: event, isPending, isError, error } = useEvent(safeId);
   const updateEvent = useUpdateEvent(safeId);
-  const [copiedRsvp, setCopiedRsvp] = useState(false);
+  const generateShortLink = useGenerateRsvpShortLink(safeId);
+  const [copiedShortLink, setCopiedShortLink] = useState(false);
 
-  const copyRsvpLink = (): void => {
-    const link = `${window.location.origin}/rsvp/${event?.rsvpToken}`;
+  const copyShortLink = (): void => {
+    if (event?.rsvpShortCode === null || event?.rsvpShortCode === undefined) return;
+    const link = `${window.location.origin}/i/${event.rsvpShortCode}`;
     void navigator.clipboard.writeText(link).then(() => {
-      setCopiedRsvp(true);
-      setTimeout(() => setCopiedRsvp(false), 2000);
+      setCopiedShortLink(true);
+      setTimeout(() => setCopiedShortLink(false), 2000);
     });
+  };
+
+  const handleGenerateShortLink = (): void => {
+    generateShortLink.mutate();
   };
 
   const handleBack = (): void => {
@@ -86,21 +92,41 @@ export function EditEventPage(): React.ReactElement {
         <div className="space-y-4">
           <div>
             <p className="text-sm font-medium">RSVP Link</p>
-            <div className="mt-2 flex gap-2">
-              <input
-                type="text"
-                readOnly
-                value={`${window.location.origin}/rsvp/${event.rsvpToken}`}
-                className="border-input bg-background flex h-10 flex-1 rounded-md border px-3 py-2 text-sm"
-              />
-              <button
-                type="button"
-                onClick={copyRsvpLink}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-              >
-                {copiedRsvp ? "Copied!" : "Copy"}
-              </button>
-            </div>
+            {event.rsvpShortCode === null ? (
+              <div className="mt-2">
+                <button
+                  type="button"
+                  onClick={handleGenerateShortLink}
+                  disabled={generateShortLink.isPending}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  {generateShortLink.isPending ? "Generating…" : "Generate RSVP link"}
+                </button>
+                {generateShortLink.isError && (
+                  <p className="text-destructive mt-2 text-sm">
+                    {generateShortLink.error instanceof Error
+                      ? generateShortLink.error.message
+                      : "Failed to generate link"}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/i/${event.rsvpShortCode}`}
+                  className="border-input bg-muted/50 text-muted-foreground flex h-10 flex-1 rounded-md border px-3 py-2 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={copyShortLink}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  {copiedShortLink ? "Copied!" : "Copy"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

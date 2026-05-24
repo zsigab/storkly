@@ -13,6 +13,7 @@ public record EventResponse(
         @Nullable String location,
         @Nullable String description,
         String rsvpToken,
+        @Nullable String rsvpShortCode,
         @Nullable Integer rsvpCapacity,
         List<RsvpResponse> attendees,
         List<EventTimeSlotResponse> timeSlots,

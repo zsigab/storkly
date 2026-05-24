@@ -96,7 +96,7 @@ export function EventAttendeesTable({
     <div className="space-y-3">
       <button
         type="button"
-        className="flex items-center gap-1 text-left"
+        className="text-foreground flex items-center gap-1 text-left"
         onClick={() => setOpen((o) => !o)}
       >
         <h2 className="text-lg font-semibold">
@@ -106,101 +106,103 @@ export function EventAttendeesTable({
         <span className="text-muted-foreground text-sm">{open ? "▲" : "▼"}</span>
       </button>
 
-      <Collapsible open={open}>
-        <div className="relative pt-1">
-          <div
-            className="from-primary/10 via-background to-secondary/15 pointer-events-none absolute -inset-4 rounded-2xl bg-gradient-to-br blur-xl"
-            aria-hidden="true"
-          />
-          <div className="border-border/50 bg-card/80 relative overflow-hidden rounded-lg border shadow-md backdrop-blur-sm">
-            {attendees.length === 0 ? (
-              <p className="text-muted-foreground px-4 py-6 text-sm">No RSVPs yet.</p>
-            ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-border bg-muted/40 border-b">
-                    <SortableHeader
-                      label="Name"
-                      col="name"
-                      sortCol={sortCol}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    />
-                    <SortableHeader
-                      label="Email"
-                      col="email"
-                      sortCol={sortCol}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    />
-                    <SortableHeader
-                      label="Attending"
-                      col="attending"
-                      sortCol={sortCol}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    />
-                    <SortableHeader
-                      label="Time Slot"
-                      col="timeSlot"
-                      sortCol={sortCol}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    />
-                    <SortableHeader
-                      label="Status"
-                      col="status"
-                      sortCol={sortCol}
-                      sortDir={sortDir}
-                      onSort={handleSort}
-                    />
-                    {isOwner && <th className="px-4 py-3" />}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sorted.map((attendee) => (
-                    <tr key={attendee.id} className="border-border border-b last:border-b-0">
-                      <td className="min-w-24 px-4 py-3 text-sm break-words">
-                        {attendee.displayName}
-                      </td>
-                      <td className="min-w-28 px-4 py-3 text-sm break-words">
-                        {breakEmail(attendee.email)}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Badge variant={attendee.attending ? "default" : "secondary"}>
-                          {attendee.attending ? "Yes" : "No"}
-                        </Badge>
-                      </td>
-                      <td className="text-muted-foreground px-4 py-3 text-sm">
-                        {attendee.timeSlotTime !== null
-                          ? formatSlotDate(attendee.timeSlotTime, attendee.timeSlotOffsetSeconds)
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-sm">
-                        <Badge variant={attendee.confirmedAt !== null ? "default" : "outline"}>
-                          {attendee.confirmedAt !== null ? "Confirmed" : "Pending"}
-                        </Badge>
-                      </td>
-                      {isOwner && (
-                        <td className="px-4 py-3 text-sm">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive h-7 px-2 text-xs"
-                            onClick={() => setPendingDeleteId(attendee.id)}
-                          >
-                            Delete
-                          </Button>
-                        </td>
-                      )}
+      <div className="relative">
+        <div
+          className={`from-primary/10 via-background to-secondary/15 pointer-events-none absolute -inset-4 rounded-2xl bg-gradient-to-br blur-xl transition-opacity duration-200 ${open ? "opacity-100" : "opacity-0"}`}
+          aria-hidden="true"
+        />
+        <Collapsible open={open}>
+          <div className="pt-1">
+            <div className="border-border/50 bg-card/80 relative overflow-hidden rounded-lg border shadow-md backdrop-blur-sm">
+              {attendees.length === 0 ? (
+                <p className="text-muted-foreground px-4 py-6 text-sm">No RSVPs yet.</p>
+              ) : (
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-border bg-muted/40 border-b">
+                      <SortableHeader
+                        label="Name"
+                        col="name"
+                        sortCol={sortCol}
+                        sortDir={sortDir}
+                        onSort={handleSort}
+                      />
+                      <SortableHeader
+                        label="Email"
+                        col="email"
+                        sortCol={sortCol}
+                        sortDir={sortDir}
+                        onSort={handleSort}
+                      />
+                      <SortableHeader
+                        label="Attending"
+                        col="attending"
+                        sortCol={sortCol}
+                        sortDir={sortDir}
+                        onSort={handleSort}
+                      />
+                      <SortableHeader
+                        label="Time Slot"
+                        col="timeSlot"
+                        sortCol={sortCol}
+                        sortDir={sortDir}
+                        onSort={handleSort}
+                      />
+                      <SortableHeader
+                        label="Status"
+                        col="status"
+                        sortCol={sortCol}
+                        sortDir={sortDir}
+                        onSort={handleSort}
+                      />
+                      {isOwner && <th className="px-4 py-3" />}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {sorted.map((attendee) => (
+                      <tr key={attendee.id} className="border-border border-b last:border-b-0">
+                        <td className="min-w-24 px-4 py-3 text-sm break-words">
+                          {attendee.displayName}
+                        </td>
+                        <td className="min-w-28 px-4 py-3 text-sm break-words">
+                          {breakEmail(attendee.email)}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant={attendee.attending ? "default" : "secondary"}>
+                            {attendee.attending ? "Yes" : "No"}
+                          </Badge>
+                        </td>
+                        <td className="text-muted-foreground px-4 py-3 text-sm">
+                          {attendee.timeSlotTime !== null
+                            ? formatSlotDate(attendee.timeSlotTime, attendee.timeSlotOffsetSeconds)
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <Badge variant={attendee.confirmedAt !== null ? "default" : "outline"}>
+                            {attendee.confirmedAt !== null ? "Confirmed" : "Pending"}
+                          </Badge>
+                        </td>
+                        {isOwner && (
+                          <td className="px-4 py-3 text-sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-destructive hover:text-destructive h-7 px-2 text-xs"
+                              onClick={() => setPendingDeleteId(attendee.id)}
+                            >
+                              Delete
+                            </Button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
-        </div>
-      </Collapsible>
+        </Collapsible>
+      </div>
 
       <ConfirmDialog
         open={pendingDeleteId !== null}

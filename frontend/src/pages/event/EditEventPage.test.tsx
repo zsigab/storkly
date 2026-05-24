@@ -38,6 +38,7 @@ const eventFixture = {
   location: "123 Main St",
   description: null,
   rsvpToken: "token-abc",
+  rsvpShortCode: null,
   rsvpCapacity: null,
   timeSlots: [],
   attendees: [
@@ -161,7 +162,7 @@ describe("EditEventPage", () => {
     );
   });
 
-  it("renders RSVP link with copy button", async () => {
+  it("renders generate RSVP link button when not generated", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValueOnce({
       data: eventFixture,
@@ -170,21 +171,20 @@ describe("EditEventPage", () => {
     });
     renderPage();
     await waitFor(() =>
-      expect(screen.getByDisplayValue("http://localhost:3000/rsvp/token-abc")).toBeInTheDocument(),
+      expect(screen.getByRole("button", { name: /generate rsvp link/i })).toBeInTheDocument(),
     );
-    expect(screen.getByRole("button", { name: /copy/i })).toBeInTheDocument();
   });
 
-  it("renders the RSVP link", async () => {
+  it("renders short link when already generated", async () => {
     const { api } = await import("@/api");
     vi.mocked(api.GET).mockResolvedValueOnce({
-      data: eventFixture,
+      data: { ...eventFixture, rsvpShortCode: "abc123" },
       error: undefined,
       response: new Response(),
     });
     renderPage();
     await waitFor(() =>
-      expect(screen.getByDisplayValue("http://localhost:3000/rsvp/token-abc")).toBeInTheDocument(),
+      expect(screen.getByDisplayValue("http://localhost:3000/i/abc123")).toBeInTheDocument(),
     );
   });
 

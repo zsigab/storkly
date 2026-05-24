@@ -34,6 +34,7 @@ const baseEvent = {
   eventDateOffsetSeconds: null,
   location: "123 Main St",
   rsvpToken: "token-abc",
+  rsvpShortCode: null,
   attendees: [
     {
       id: "rsvp-1",

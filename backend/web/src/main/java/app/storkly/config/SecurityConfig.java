@@ -101,6 +101,8 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/rsvp/confirm/{confirmToken}")
                         .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/rsvp-link/{code}")
+                        .permitAll()
                         .anyRequest()
                         .authenticated())
                 .oauth2Login(oauth2 -> oauth2.authorizationEndpoint(endpoint -> endpoint.authorizationRequestRepository(

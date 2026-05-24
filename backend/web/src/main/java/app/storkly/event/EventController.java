@@ -10,6 +10,8 @@ import app.storkly.event.dto.EventResponse;
 import app.storkly.event.dto.EventTimeSlotResponse;
 import app.storkly.event.dto.EventUpdateRequest;
 import app.storkly.event.dto.RsvpResponse;
+import app.storkly.event.dto.RsvpShortLinkLookupResponse;
+import app.storkly.event.dto.RsvpShortLinkResponse;
 import app.storkly.service.event.EventService;
 import app.storkly.service.event.EventTimeSlotService;
 import app.storkly.service.event.RsvpService;
@@ -109,6 +111,19 @@ public class EventController {
         rsvpService.deleteRsvp(rsvpId, id, currentUser.id());
     }
 
+    @PostMapping("/api/events/{id}/rsvp-link")
+    public RsvpShortLinkResponse generateRsvpShortLink(
+            @PathVariable UUID id, @AuthenticationPrincipal User currentUser) {
+        Event event = eventService.generateRsvpShortCode(id, currentUser.id());
+        return new RsvpShortLinkResponse(event.rsvpShortCode());
+    }
+
+    @GetMapping("/api/rsvp-link/{code}")
+    public RsvpShortLinkLookupResponse lookupRsvpShortLink(@PathVariable String code) {
+        Event event = eventService.findByRsvpShortCode(code);
+        return new RsvpShortLinkLookupResponse(event.rsvpToken());
+    }
+
     @GetMapping("/api/events/{id}/public")
     public EventPublicResponse getPublic(@PathVariable UUID id) {
         Event event = eventService.findPublicById(id);
@@ -165,6 +180,7 @@ public class EventController {
                 event.location(),
                 event.description(),
                 event.rsvpToken(),
+                event.rsvpShortCode(),
                 event.rsvpCapacity(),
                 attendees,
                 timeSlotResponses,

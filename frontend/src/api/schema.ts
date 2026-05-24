@@ -157,6 +157,7 @@ export interface EventResponse {
   location: string | null;
   description: string | null;
   rsvpToken: string;
+  rsvpShortCode: string | null;
   rsvpCapacity: number | null;
   attendees: RsvpResponse[];
   timeSlots: EventTimeSlotResponse[];
@@ -198,6 +199,14 @@ export interface RsvpPublicEventResponse {
 
 export interface RsvpConfirmResponse {
   eventId: string;
+}
+
+export interface RsvpShortLinkResponse {
+  shortCode: string;
+}
+
+export interface RsvpShortLinkLookupResponse {
+  rsvpToken: string;
 }
 
 /** Used for endpoints that return 200/201 with no body. */
@@ -657,6 +666,18 @@ export type paths = {
     delete: {
       parameters: { path: { id: string; rsvpId: string } };
       responses: { 204: Empty; 401: Err; 403: Err; 404: Err };
+    };
+  };
+  "/api/events/{id}/rsvp-link": {
+    post: {
+      parameters: { path: { id: string } };
+      responses: { 200: Ok<RsvpShortLinkResponse>; 401: Err; 403: Err; 404: Err; 409: Err };
+    };
+  };
+  "/api/rsvp-link/{code}": {
+    get: {
+      parameters: { path: { code: string } };
+      responses: { 200: Ok<RsvpShortLinkLookupResponse>; 404: Err };
     };
   };
   "/api/rsvp/{rsvpToken}": {

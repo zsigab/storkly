@@ -15,6 +15,7 @@ public record Event(
         @Nullable String location,
         @Nullable String description,
         String rsvpToken,
+        @Nullable String rsvpShortCode,
         @Nullable Integer rsvpCapacity,
         String themeColor,
         String themeBackground,
