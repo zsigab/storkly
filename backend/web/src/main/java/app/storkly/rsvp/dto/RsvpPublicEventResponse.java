@@ -1,6 +1,7 @@
 package app.storkly.rsvp.dto;
 
 import app.storkly.event.dto.EventTimeSlotPublicResponse;
+import app.storkly.event.dto.LinkedRegistryResponse;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -16,4 +17,5 @@ public record RsvpPublicEventResponse(
         String themeColor,
         String themeBackground,
         @Nullable Integer spotsLeft,
-        List<EventTimeSlotPublicResponse> timeSlots) {}
+        List<EventTimeSlotPublicResponse> timeSlots,
+        List<LinkedRegistryResponse> linkedRegistries) {}

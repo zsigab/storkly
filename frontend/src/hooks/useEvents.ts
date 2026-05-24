@@ -264,3 +264,19 @@ export function useRsvpShortLink(code: string, options?: { enabled?: boolean }) 
     enabled: code.length > 0 && (options?.enabled ?? true),
   });
 }
+
+export function useLinkEventRegistries(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (registryIds: string[]) => {
+      const { error } = await api.PUT("/api/events/{id}/registry-links", {
+        params: { path: { id: eventId } },
+        body: { registryIds },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+  });
+}

@@ -7,6 +7,7 @@ import app.storkly.domain.generated.tables.records.RegistryRecord;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistryVisibility;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -95,6 +96,12 @@ public class RegistryRepositoryImpl implements RegistryRepository {
                 .orderBy(REGISTRY_SUBSCRIPTION.JOINED_AT.desc())
                 .fetch()
                 .map(r -> toRegistry(r.into(REGISTRY)));
+    }
+
+    @Override
+    public List<Registry> findByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) return List.of();
+        return dsl.selectFrom(REGISTRY).where(REGISTRY.ID.in(ids)).fetch().map(this::toRegistry);
     }
 
     @Override

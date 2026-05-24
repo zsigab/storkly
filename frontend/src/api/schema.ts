@@ -134,6 +134,12 @@ export interface DeliveryOptionResponse {
   eventId: string | null;
 }
 
+export interface LinkedRegistryResponse {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export interface EventTimeSlotResponse {
   id: string;
   slotTime: string;
@@ -164,6 +170,7 @@ export interface EventResponse {
   themeColor: string;
   themeBackground: string;
   createdAt: string;
+  linkedRegistries: LinkedRegistryResponse[];
 }
 
 export interface EventPublicResponse {
@@ -198,6 +205,7 @@ export interface RsvpPublicEventResponse {
   themeBackground: string;
   spotsLeft: number | null;
   timeSlots: EventTimeSlotPublicResponse[];
+  linkedRegistries: LinkedRegistryResponse[];
 }
 
 export interface RsvpConfirmResponse {
@@ -622,6 +630,19 @@ export type paths = {
     };
     delete: {
       parameters: { path: { id: string } };
+      responses: { 204: Empty; 401: Err; 403: Err; 404: Err };
+    };
+  };
+  "/api/events/{id}/registry-links": {
+    put: {
+      parameters: { path: { id: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            registryIds: string[];
+          };
+        };
+      };
       responses: { 204: Empty; 401: Err; 403: Err; 404: Err };
     };
   };

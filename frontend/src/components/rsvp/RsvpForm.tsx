@@ -69,38 +69,82 @@ export function RsvpForm({ rsvpToken, event }: RsvpFormProps): React.ReactElemen
   };
 
   if (submitted) {
+    const hasLinkedRegistries = event.linkedRegistries.length > 0;
+
     if (user !== null) {
       return (
-        <div className="bg-card rounded-lg p-6 text-center">
-          <h2 className="text-xl font-semibold">
-            {attending ? "You're going!" : "Response recorded"}
-          </h2>
-          <p className="text-muted-foreground mt-2">
-            {attending
-              ? `Your RSVP for ${event.eventTitle} is confirmed. See you there!`
-              : `Thanks for letting us know you can't make it to ${event.eventTitle}.`}
-          </p>
+        <div className="bg-card space-y-4 rounded-lg p-6 text-center">
+          <div>
+            <h2 className="text-xl font-semibold">
+              {attending ? "You're going!" : "Response recorded"}
+            </h2>
+            <p className="text-muted-foreground mt-2">
+              {attending
+                ? `Your RSVP for ${event.eventTitle} is confirmed. See you there!`
+                : `Thanks for letting us know you can't make it to ${event.eventTitle}.`}
+            </p>
+          </div>
+
+          {hasLinkedRegistries && (
+            <div className="border-t pt-4">
+              <p className="text-foreground text-sm font-medium">
+                Check out the wish list{event.linkedRegistries.length > 1 ? "s" : ""}:
+              </p>
+              <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
+                {event.linkedRegistries.map((registry) => (
+                  <li key={registry.id}>
+                    <a href={`/r/${registry.slug}`} className="text-primary hover:underline">
+                      {registry.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       );
     }
+
     return (
-      <div className="bg-card rounded-lg p-6 text-center">
-        <h2 className="text-xl font-semibold">Check your email</h2>
-        <p className="text-muted-foreground mt-2">
-          We've sent a confirmation link to your email. Click it to confirm your RSVP for{" "}
-          {event.eventTitle}.
-        </p>
-        <p className="text-muted-foreground mt-4">
-          Don't have an account?{" "}
-          <a
-            href="/register"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline"
-          >
-            Create one here
-          </a>
-        </p>
+      <div className="bg-card space-y-4 rounded-lg p-6 text-center">
+        <div>
+          <h2 className="text-xl font-semibold">Check your email</h2>
+          <p className="text-muted-foreground mt-2">
+            We've sent a confirmation link to your email. Click it to confirm your RSVP for{" "}
+            {event.eventTitle}.
+          </p>
+        </div>
+
+        {hasLinkedRegistries && (
+          <div className="border-t pt-4">
+            <p className="text-foreground text-sm font-medium">
+              Check out the wish list{event.linkedRegistries.length > 1 ? "s" : ""}:
+            </p>
+            <ul className="text-muted-foreground mt-3 space-y-2 text-sm">
+              {event.linkedRegistries.map((registry) => (
+                <li key={registry.id}>
+                  <a href={`/r/${registry.slug}`} className="text-primary hover:underline">
+                    {registry.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="border-t pt-4">
+          <p className="text-muted-foreground mt-4">
+            Don't have an account?{" "}
+            <a
+              href="/register"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              Create one here
+            </a>
+          </p>
+        </div>
       </div>
     );
   }

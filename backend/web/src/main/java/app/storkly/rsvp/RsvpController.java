@@ -2,11 +2,14 @@ package app.storkly.rsvp;
 
 import app.storkly.domain.event.Event;
 import app.storkly.domain.event.EventTimeSlot;
+import app.storkly.domain.registry.Registry;
 import app.storkly.domain.user.User;
 import app.storkly.event.dto.EventTimeSlotPublicResponse;
+import app.storkly.event.dto.LinkedRegistryResponse;
 import app.storkly.rsvp.dto.RsvpConfirmResponse;
 import app.storkly.rsvp.dto.RsvpPublicEventResponse;
 import app.storkly.rsvp.dto.RsvpSubmitRequest;
+import app.storkly.service.event.EventService;
 import app.storkly.service.event.EventTimeSlotService;
 import app.storkly.service.event.RsvpService;
 import jakarta.validation.Valid;
@@ -28,6 +31,7 @@ public class RsvpController {
 
     private final RsvpService rsvpService;
     private final EventTimeSlotService eventTimeSlotService;
+    private final EventService eventService;
 
     @GetMapping("/api/rsvp/{rsvpToken}")
     public RsvpPublicEventResponse getEventInfo(@PathVariable String rsvpToken) {
@@ -49,6 +53,11 @@ public class RsvpController {
             eventSpotsLeft = Math.max(0, event.rsvpCapacity() - rsvpService.countAttendingByEventId(event.id()));
         }
 
+        List<Registry> linkedRegistries = eventService.findLinkedRegistries(event.id(), true);
+        List<LinkedRegistryResponse> linkedRegistryResponses = linkedRegistries.stream()
+                .map(r -> new LinkedRegistryResponse(r.id(), r.name(), r.slug()))
+                .toList();
+
         return new RsvpPublicEventResponse(
                 event.id(),
                 event.title(),
@@ -59,7 +68,8 @@ public class RsvpController {
                 event.themeColor(),
                 event.themeBackground(),
                 eventSpotsLeft,
-                slotResponses);
+                slotResponses,
+                linkedRegistryResponses);
     }
 
     @PostMapping("/api/rsvp/{rsvpToken}")

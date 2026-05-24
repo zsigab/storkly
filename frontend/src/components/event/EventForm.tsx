@@ -77,6 +77,8 @@ interface EventFormProps {
   submitLabel: string;
   eventId?: string;
   slots?: EventTimeSlotResponse[];
+  formId?: string;
+  hideSubmit?: boolean;
 }
 
 function toDateTimeLocal(isoString: string, offsetSeconds: number): string {
@@ -102,6 +104,8 @@ export function EventForm({
   submitLabel,
   eventId,
   slots,
+  formId,
+  hideSubmit = false,
 }: EventFormProps): React.ReactElement {
   const defaultIso = defaultValues?.eventDate ?? "";
   const defaultFullDay = defaultIso.length > 0 && isAllDayIso(defaultIso);
@@ -189,7 +193,7 @@ export function EventForm({
   };
 
   return (
-    <form className="space-y-8" noValidate onSubmit={handleSubmit(handleSubmitForm)}>
+    <form id={formId} className="space-y-8" noValidate onSubmit={handleSubmit(handleSubmitForm)}>
       {/* General */}
       <div className="space-y-4">
         <h2 className="text-base font-semibold">General</h2>
@@ -403,13 +407,15 @@ export function EventForm({
         </Alert>
       )}
 
-      <Button
-        type="submit"
-        className="bg-success text-success-foreground hover:bg-success/90 w-full"
-        disabled={isPending}
-      >
-        {isPending ? "Saving…" : submitLabel}
-      </Button>
+      {!hideSubmit && (
+        <Button
+          type="submit"
+          className="bg-success text-success-foreground hover:bg-success/90 w-full"
+          disabled={isPending}
+        >
+          {isPending ? "Saving…" : submitLabel}
+        </Button>
+      )}
     </form>
   );
 }

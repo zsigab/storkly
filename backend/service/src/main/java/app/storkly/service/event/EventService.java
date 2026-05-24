@@ -1,10 +1,15 @@
 package app.storkly.service.event;
 
 import app.storkly.domain.event.Event;
+import app.storkly.domain.event.EventRegistryLinkRepository;
 import app.storkly.domain.event.EventRepository;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ConflictException;
 import app.storkly.domain.exception.EventNotFoundException;
+import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.registry.Registry;
+import app.storkly.domain.registry.RegistryRepository;
+import app.storkly.domain.registry.RegistryVisibility;
 import app.storkly.util.TokenUtil;
 import java.security.SecureRandom;
 import java.time.OffsetDateTime;
@@ -28,6 +33,8 @@ public class EventService {
     private static final int COLLISION_RETRIES = 5;
 
     private final EventRepository eventRepository;
+    private final EventRegistryLinkRepository eventRegistryLinkRepository;
+    private final RegistryRepository registryRepository;
 
     @Transactional
     public Event create(
@@ -159,6 +166,43 @@ public class EventService {
         return eventRepository
                 .findByRsvpShortCode(rsvpShortCode)
                 .orElseThrow(() -> new EventNotFoundException("Event with short code not found"));
+    }
+
+    @Transactional
+    public void updateRegistryLinks(UUID eventId, List<UUID> registryIds, UUID currentUserId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can update this event");
+        }
+
+        if (!registryIds.isEmpty()) {
+            List<Registry> registries = registryRepository.findByIds(registryIds);
+            if (registries.size() != registryIds.size()) {
+                throw new RegistryNotFoundException("One or more registries not found");
+            }
+            for (Registry r : registries) {
+                if (!r.ownerId().equals(currentUserId)) {
+                    throw new AccessDeniedException("All registries must belong to the current user");
+                }
+            }
+        }
+
+        eventRegistryLinkRepository.setLinks(eventId, registryIds);
+    }
+
+    public List<Registry> findLinkedRegistries(UUID eventId, boolean excludeHidden) {
+        List<UUID> registryIds = eventRegistryLinkRepository.findRegistryIdsByEventId(eventId);
+        if (registryIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<Registry> registries = registryRepository.findByIds(registryIds);
+        if (excludeHidden) {
+            return registries.stream()
+                    .filter(r -> r.visibility() != RegistryVisibility.HIDDEN)
+                    .toList();
+        }
+        return registries;
     }
 
     private String generateShortCode() {

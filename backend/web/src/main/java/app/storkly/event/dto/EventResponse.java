@@ -19,4 +19,5 @@ public record EventResponse(
         List<EventTimeSlotResponse> timeSlots,
         String themeColor,
         String themeBackground,
-        OffsetDateTime createdAt) {}
+        OffsetDateTime createdAt,
+        List<LinkedRegistryResponse> linkedRegistries) {}

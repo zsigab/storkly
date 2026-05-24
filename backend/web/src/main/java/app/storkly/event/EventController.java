@@ -3,12 +3,15 @@ package app.storkly.event;
 import app.storkly.domain.event.Event;
 import app.storkly.domain.event.EventTimeSlot;
 import app.storkly.domain.event.Rsvp;
+import app.storkly.domain.registry.Registry;
 import app.storkly.domain.user.User;
 import app.storkly.event.dto.EventCreateRequest;
 import app.storkly.event.dto.EventPublicResponse;
+import app.storkly.event.dto.EventRegistryLinksRequest;
 import app.storkly.event.dto.EventResponse;
 import app.storkly.event.dto.EventTimeSlotResponse;
 import app.storkly.event.dto.EventUpdateRequest;
+import app.storkly.event.dto.LinkedRegistryResponse;
 import app.storkly.event.dto.RsvpResponse;
 import app.storkly.event.dto.RsvpShortLinkLookupResponse;
 import app.storkly.event.dto.RsvpShortLinkResponse;
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -104,6 +108,15 @@ public class EventController {
         eventService.delete(id, currentUser.id());
     }
 
+    @PutMapping("/api/events/{id}/registry-links")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateRegistryLinks(
+            @PathVariable UUID id,
+            @RequestBody @Valid EventRegistryLinksRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        eventService.updateRegistryLinks(id, request.registryIds(), currentUser.id());
+    }
+
     @DeleteMapping("/api/events/{id}/rsvps/{rsvpId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteRsvp(
@@ -172,6 +185,11 @@ public class EventController {
                     slot.id(), slot.slotTime(), slot.slotOffsetSeconds(), slot.capacity(), count));
         }
 
+        List<Registry> linkedRegistries = eventService.findLinkedRegistries(event.id(), false);
+        List<LinkedRegistryResponse> linkedRegistryResponses = linkedRegistries.stream()
+                .map(r -> new LinkedRegistryResponse(r.id(), r.name(), r.slug()))
+                .toList();
+
         return new EventResponse(
                 event.id(),
                 event.title(),
@@ -186,10 +204,16 @@ public class EventController {
                 timeSlotResponses,
                 event.themeColor(),
                 event.themeBackground(),
-                event.createdAt());
+                event.createdAt(),
+                linkedRegistryResponses);
     }
 
     private EventPublicResponse toPublicResponse(Event event) {
+        List<Registry> linkedRegistries = eventService.findLinkedRegistries(event.id(), false);
+        List<LinkedRegistryResponse> linkedRegistryResponses = linkedRegistries.stream()
+                .map(r -> new LinkedRegistryResponse(r.id(), r.name(), r.slug()))
+                .toList();
+
         return new EventPublicResponse(
                 event.id(),
                 event.title(),

@@ -1,8 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router";
 import { EventForm } from "@/components/event/EventForm";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
-import { useEvent, useUpdateEvent, useGenerateRsvpShortLink } from "@/hooks/useEvents";
+import { Button } from "@/components/ui/button";
+import {
+  useEvent,
+  useUpdateEvent,
+  useGenerateRsvpShortLink,
+  useLinkEventRegistries,
+} from "@/hooks/useEvents";
+import { useMyRegistries } from "@/hooks/useRegistries";
 import type { ProblemDetail } from "@/api/schema";
 
 export function EditEventPage(): React.ReactElement {
@@ -10,9 +17,12 @@ export function EditEventPage(): React.ReactElement {
   const navigate = useNavigate();
   const safeId = id ?? "";
   const { data: event, isPending, isError, error } = useEvent(safeId);
+  const { data: registries = [] } = useMyRegistries();
   const updateEvent = useUpdateEvent(safeId);
   const generateShortLink = useGenerateRsvpShortLink(safeId);
+  const linkRegistries = useLinkEventRegistries(safeId);
   const [copiedShortLink, setCopiedShortLink] = useState(false);
+  const [selectedRegistryIds, setSelectedRegistryIds] = useState<Set<string>>(new Set());
 
   const copyShortLink = (): void => {
     if (event?.rsvpShortCode === null || event?.rsvpShortCode === undefined) return;
@@ -23,12 +33,30 @@ export function EditEventPage(): React.ReactElement {
     });
   };
 
+  useEffect(() => {
+    if (event?.linkedRegistries) {
+      setSelectedRegistryIds(new Set(event.linkedRegistries.map((r) => r.id)));
+    }
+  }, [event?.linkedRegistries]);
+
   const handleGenerateShortLink = (): void => {
     generateShortLink.mutate();
   };
 
   const handleBack = (): void => {
     void navigate(`/e/${safeId}`, { viewTransition: true });
+  };
+
+  const handleToggleRegistry = (registryId: string): void => {
+    setSelectedRegistryIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(registryId)) {
+        newSet.delete(registryId);
+      } else {
+        newSet.add(registryId);
+      }
+      return newSet;
+    });
   };
 
   const is403 =
@@ -79,17 +107,64 @@ export function EditEventPage(): React.ReactElement {
 
       <EventForm
         defaultValues={event}
-        onSubmit={(values) => updateEvent.mutate(values)}
-        isPending={updateEvent.isPending}
-        isError={updateEvent.isError}
-        error={updateEvent.error}
+        onSubmit={(values) => {
+          updateEvent.mutate(values);
+          linkRegistries.mutate(Array.from(selectedRegistryIds));
+        }}
+        isPending={updateEvent.isPending || linkRegistries.isPending}
+        isError={updateEvent.isError || linkRegistries.isError}
+        error={updateEvent.error || linkRegistries.error}
         submitLabel="Save changes"
         eventId={safeId}
         slots={event.timeSlots}
+        formId="edit-event-form"
+        hideSubmit
       />
 
       <div className="border-t pt-6">
         <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium">Linked Registries</p>
+            {registries.length === 0 ? (
+              <p className="text-muted-foreground mt-2 text-sm">No registries available to link.</p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {registries.map((registry) => (
+                  <button
+                    key={registry.id}
+                    type="button"
+                    onClick={() => handleToggleRegistry(registry.id)}
+                    className={[
+                      "flex w-full items-center justify-between rounded-lg border px-4 py-3 text-sm transition-colors",
+                      selectedRegistryIds.has(registry.id)
+                        ? "border-primary bg-primary/10 font-medium"
+                        : "border-border hover:border-primary/50",
+                    ].join(" ")}
+                  >
+                    <span>
+                      {registry.name}
+                      {registry.visibility === "PRIVATE" && (
+                        <span className="text-muted-foreground ml-2 text-xs">(private)</span>
+                      )}
+                      {registry.visibility === "HIDDEN" && (
+                        <span className="text-muted-foreground ml-2 text-xs">(hidden)</span>
+                      )}
+                    </span>
+                    <span
+                      className={
+                        selectedRegistryIds.has(registry.id)
+                          ? "text-primary font-bold"
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {selectedRegistryIds.has(registry.id) ? "✓" : "○"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div>
             <p className="text-sm font-medium">RSVP Link</p>
             {event.rsvpShortCode === null ? (
@@ -130,6 +205,15 @@ export function EditEventPage(): React.ReactElement {
           </div>
         </div>
       </div>
+
+      <Button
+        type="submit"
+        form="edit-event-form"
+        className="bg-success text-success-foreground hover:bg-success/90 w-full"
+        disabled={updateEvent.isPending || linkRegistries.isPending}
+      >
+        {updateEvent.isPending || linkRegistries.isPending ? "Saving…" : "Save changes"}
+      </Button>
     </GlassCardLayout>
   );
 }

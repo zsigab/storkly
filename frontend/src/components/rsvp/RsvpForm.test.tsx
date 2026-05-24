@@ -25,6 +25,7 @@ const eventFixture = {
   themeBackground: "none",
   spotsLeft: null,
   timeSlots: [],
+  linkedRegistries: [],
 };
 
 function makeClient() {
