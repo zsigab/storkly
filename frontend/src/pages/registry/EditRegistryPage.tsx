@@ -57,6 +57,7 @@ export function EditRegistryPage(): React.ReactElement {
             name: registry.name,
             description: registry.description ?? "",
             visibility: registry.visibility,
+            contributorAccess: registry.contributorAccess,
             themeColor: isThemeColor(registry.themeColor) ? registry.themeColor : "peach",
             themeBackground: isThemeBackground(registry.themeBackground)
               ? registry.themeBackground
