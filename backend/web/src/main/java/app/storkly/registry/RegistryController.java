@@ -1,5 +1,7 @@
 package app.storkly.registry;
 
+import app.storkly.domain.event.EventRegistryLinkRepository;
+import app.storkly.domain.event.RsvpRepository;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.user.User;
 import app.storkly.registry.dto.CoOwnerRequest;
@@ -34,6 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class RegistryController {
 
     private final RegistryService registryService;
+    private final EventRegistryLinkRepository eventRegistryLinkRepository;
+    private final RsvpRepository rsvpRepository;
 
     @GetMapping
     public List<RegistryResponse> listMine(@AuthenticationPrincipal User currentUser) {
@@ -62,7 +66,12 @@ public class RegistryController {
     @GetMapping("/{slug}")
     public RegistryResponse get(@PathVariable String slug, @AuthenticationPrincipal @Nullable User currentUser) {
         UUID userId = currentUser != null ? currentUser.id() : null;
-        return toResponse(registryService.findBySlug(slug, userId));
+        Registry registry = registryService.findBySlug(slug, userId);
+        boolean hasLinkedEvent = eventRegistryLinkRepository.hasLinkedEvent(registry.id());
+        Boolean userRsvpedYes = userId != null && hasLinkedEvent
+                ? rsvpRepository.userHasConfirmedRsvpForRegistry(registry.id(), userId)
+                : null;
+        return toResponse(registry, hasLinkedEvent, userRsvpedYes);
     }
 
     @PatchMapping("/{slug}")
@@ -140,6 +149,10 @@ public class RegistryController {
     }
 
     private RegistryResponse toResponse(Registry registry) {
+        return toResponse(registry, false, null);
+    }
+
+    private RegistryResponse toResponse(Registry registry, boolean hasLinkedEvent, @Nullable Boolean userRsvpedYes) {
         return new RegistryResponse(
                 registry.id(),
                 registry.name(),
@@ -150,6 +163,8 @@ public class RegistryController {
                 registry.ownerId(),
                 registry.themeColor(),
                 registry.themeBackground(),
-                registry.createdAt());
+                registry.createdAt(),
+                hasLinkedEvent,
+                userRsvpedYes);
     }
 }

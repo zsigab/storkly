@@ -7,4 +7,6 @@ public interface EventRegistryLinkRepository {
     void setLinks(UUID eventId, List<UUID> registryIds);
 
     List<UUID> findRegistryIdsByEventId(UUID eventId);
+
+    boolean hasLinkedEvent(UUID registryId);
 }

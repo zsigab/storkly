@@ -38,6 +38,8 @@ const base = {
   createdAt: "2024-01-01T00:00:00Z",
   themeColor: "peach",
   themeBackground: "both",
+  hasLinkedEvent: false,
+  userRsvpedYes: null,
 };
 
 describe("RegistryCard", () => {

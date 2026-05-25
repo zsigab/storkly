@@ -16,4 +16,6 @@ public record RegistryResponse(
         UUID ownerId,
         String themeColor,
         String themeBackground,
-        OffsetDateTime createdAt) {}
+        OffsetDateTime createdAt,
+        boolean hasLinkedEvent,
+        @Nullable Boolean userRsvpedYes) {}

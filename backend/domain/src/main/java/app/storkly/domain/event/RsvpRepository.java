@@ -22,6 +22,8 @@ public interface RsvpRepository {
 
     Set<UUID> findConfirmedEventIdsByUserId(UUID userId);
 
+    boolean userHasConfirmedRsvpForRegistry(UUID registryId, UUID userId);
+
     int countAttendingByEventIdExcluding(UUID eventId, @Nullable UUID excludeRsvpId);
 
     int countAttendingBySlotIdExcluding(UUID slotId, @Nullable UUID excludeRsvpId);

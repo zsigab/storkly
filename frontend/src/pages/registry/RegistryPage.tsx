@@ -111,9 +111,15 @@ export function RegistryPage(): React.ReactElement {
     useViewTransitionToggle(setClaimDialogOpen);
   const canClaim = useMemo(() => {
     if (registry === undefined || isOwner) return false;
-    if (registry.contributorAccess === "ANYONE") return true;
-    if (registry.contributorAccess === "AUTHENTICATED") return user !== null;
-    return isSubscriber; // INVITE_ONLY
+    const hasBaseAccess =
+      registry.contributorAccess === "ANYONE" ||
+      (registry.contributorAccess === "AUTHENTICATED" && user !== null) ||
+      isSubscriber;
+    if (!hasBaseAccess) return false;
+    if (user !== null && registry.hasLinkedEvent) {
+      return registry.userRsvpedYes === true;
+    }
+    return true;
   }, [registry, isOwner, user, isSubscriber]);
 
   // Warm the delivery-options cache before any claim dialog opens so the view

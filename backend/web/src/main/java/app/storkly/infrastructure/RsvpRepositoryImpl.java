@@ -1,5 +1,6 @@
 package app.storkly.infrastructure;
 
+import static app.storkly.domain.generated.Tables.EVENT_REGISTRY_LINK;
 import static app.storkly.domain.generated.Tables.RSVP;
 
 import app.storkly.domain.event.Rsvp;
@@ -167,6 +168,20 @@ public class RsvpRepositoryImpl implements RsvpRepository {
                         .and(RSVP.CONFIRMED_AT.isNotNull())
                         .and(RSVP.ATTENDING.isTrue()))
                 .fetchSet(RSVP.EVENT_ID);
+    }
+
+    @Override
+    public boolean userHasConfirmedRsvpForRegistry(UUID registryId, UUID userId) {
+        return dsl.fetchExists(dsl.selectOne()
+                .from(RSVP)
+                .join(EVENT_REGISTRY_LINK)
+                .on(RSVP.EVENT_ID.eq(EVENT_REGISTRY_LINK.EVENT_ID))
+                .where(EVENT_REGISTRY_LINK
+                        .REGISTRY_ID
+                        .eq(registryId)
+                        .and(RSVP.USER_ID.eq(userId))
+                        .and(RSVP.ATTENDING.isTrue())
+                        .and(RSVP.CONFIRMED_AT.isNotNull())));
     }
 
     private RsvpRecord toRecord(Rsvp rsvp) {

@@ -28,6 +28,8 @@ export interface RegistryResponse {
   themeColor: string;
   themeBackground: string;
   createdAt: string;
+  hasLinkedEvent: boolean;
+  userRsvpedYes: boolean | null;
 }
 
 export interface RegistryInviteResponse {

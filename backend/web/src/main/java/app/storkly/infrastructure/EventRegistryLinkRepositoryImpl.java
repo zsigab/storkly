@@ -37,4 +37,10 @@ public class EventRegistryLinkRepositoryImpl implements EventRegistryLinkReposit
                 .fetch()
                 .map(record -> record.value1());
     }
+
+    @Override
+    public boolean hasLinkedEvent(UUID registryId) {
+        return dsl.fetchExists(
+                dsl.selectOne().from(EVENT_REGISTRY_LINK).where(EVENT_REGISTRY_LINK.REGISTRY_ID.eq(registryId)));
+    }
 }
