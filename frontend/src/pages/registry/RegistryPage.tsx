@@ -27,6 +27,7 @@ import {
 import { useRegistryItemClaims, useRegistryClaimHistory } from "@/hooks/useClaims";
 import type { ClaimResponse, ItemResponse } from "@/api/schema";
 import { useRegistryItems } from "@/hooks/useItems";
+import { useDeliveryOptions } from "@/hooks/useDeliveryOptions";
 import { useRegistryTheme } from "@/hooks/useRegistryTheme";
 import { RegistryHeader } from "@/components/registry/RegistryHeader";
 import { useViewTransitionToggle } from "@/hooks/useViewTransitionToggle";
@@ -114,6 +115,11 @@ export function RegistryPage(): React.ReactElement {
     if (registry.contributorAccess === "AUTHENTICATED") return user !== null;
     return isSubscriber; // INVITE_ONLY
   }, [registry, isOwner, user, isSubscriber]);
+
+  // Warm the delivery-options cache before any claim dialog opens so the view
+  // transition morphs a full-height dialog rather than springing once data lands.
+  const { data: deliveryOptions } = useDeliveryOptions(safeSlug, canClaim);
+  const deliveryOptionsReady = deliveryOptions !== undefined;
 
   const userHasClaims = useMemo(
     () => user !== null && allClaims.some((c) => c.claimerUserId === user.id),
@@ -439,7 +445,10 @@ export function RegistryPage(): React.ReactElement {
                     claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
                   }
                   isClaimTransitioning={
-                    claimTarget !== null && claimTarget.item.id === item.id && claimTransitioning
+                    claimTarget !== null &&
+                    claimTarget.item.id === item.id &&
+                    claimTransitioning &&
+                    deliveryOptionsReady
                   }
                 />
               ))}
@@ -466,7 +475,10 @@ export function RegistryPage(): React.ReactElement {
                     claimTarget !== null && claimTarget.item.id === item.id && claimDialogOpen
                   }
                   isClaimTransitioning={
-                    claimTarget !== null && claimTarget.item.id === item.id && claimTransitioning
+                    claimTarget !== null &&
+                    claimTarget.item.id === item.id &&
+                    claimTransitioning &&
+                    deliveryOptionsReady
                   }
                 />
               ))}
@@ -546,7 +558,9 @@ export function RegistryPage(): React.ReactElement {
             ? { existingClaim: claimTarget.existingClaim }
             : {})}
           viewTransitionName={
-            claimTransitioning && claimDialogOpen ? `claim-item-${claimTarget.item.id}` : undefined
+            claimTransitioning && claimDialogOpen && deliveryOptionsReady
+              ? `claim-item-${claimTarget.item.id}`
+              : undefined
           }
         />
       )}

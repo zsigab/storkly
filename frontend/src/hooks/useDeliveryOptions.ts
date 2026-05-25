@@ -12,7 +12,7 @@ export interface DeliveryOption {
   eventId?: string | null;
 }
 
-export function useDeliveryOptions(registrySlug: string) {
+export function useDeliveryOptions(registrySlug: string, enabled = true) {
   return useQuery({
     queryKey: ["deliveryOptions", registrySlug],
     queryFn: async (): Promise<DeliveryOption[]> => {
@@ -22,7 +22,7 @@ export function useDeliveryOptions(registrySlug: string) {
       if (error !== undefined) throw error;
       return data ?? [];
     },
-    enabled: registrySlug.length > 0,
+    enabled: registrySlug.length > 0 && enabled,
   });
 }
 
