@@ -97,6 +97,7 @@ function renderCard(
           item={base}
           slug="baby-shower"
           isOwner={false}
+          canClaim={true}
           onOpenClaim={vi.fn()}
           isClaimDialogOpen={false}
           isClaimTransitioning={false}

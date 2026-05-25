@@ -51,6 +51,7 @@ interface ItemCardProps {
   item: ItemResponse;
   slug: string;
   isOwner: boolean;
+  canClaim: boolean;
   categoryName?: string | null;
   subscriberNames?: Record<string, string>;
   claims?: ClaimResponse[];
@@ -65,6 +66,7 @@ export const ItemCard = memo(function ItemCard({
   item,
   slug,
   isOwner,
+  canClaim,
   categoryName = null,
   subscriberNames = {},
   claims = [],
@@ -235,6 +237,7 @@ export const ItemCard = memo(function ItemCard({
           </Button>
         );
       }
+      if (!canClaim) return null;
       return (
         <Button
           size="sm"
@@ -270,6 +273,7 @@ export const ItemCard = memo(function ItemCard({
     if (isClaimed) {
       return <Badge variant="secondary">Claimed</Badge>;
     }
+    if (!canClaim) return null;
     return (
       <Button
         size="sm"

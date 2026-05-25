@@ -107,6 +107,13 @@ export function RegistryPage(): React.ReactElement {
   const [claimDialogOpen, setClaimDialogOpen] = useState(false);
   const { toggle: toggleClaimDialog, transitioning: claimTransitioning } =
     useViewTransitionToggle(setClaimDialogOpen);
+  const canClaim = useMemo(() => {
+    if (registry === undefined || isOwner) return false;
+    if (registry.contributorAccess === "ANYONE") return true;
+    if (registry.contributorAccess === "AUTHENTICATED") return user !== null;
+    return isSubscriber; // INVITE_ONLY
+  }, [registry, isOwner, user, isSubscriber]);
+
   const userHasClaims = useMemo(
     () => user !== null && allClaims.some((c) => c.claimerUserId === user.id),
     [user, allClaims],
@@ -393,6 +400,7 @@ export function RegistryPage(): React.ReactElement {
                   item={item}
                   slug={safeSlug}
                   isOwner={isOwner}
+                  canClaim={canClaim}
                   categoryName={cat.name}
                   subscriberNames={subscriberNames}
                   claims={claimsMap.get(item.id) ?? []}
@@ -420,6 +428,7 @@ export function RegistryPage(): React.ReactElement {
                   item={item}
                   slug={safeSlug}
                   isOwner={isOwner}
+                  canClaim={canClaim}
                   subscriberNames={subscriberNames}
                   claims={claimsMap.get(item.id) ?? []}
                   claimHistory={historyMap.get(item.id) ?? []}
