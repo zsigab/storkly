@@ -111,15 +111,9 @@ export function RegistryPage(): React.ReactElement {
     useViewTransitionToggle(setClaimDialogOpen);
   const canClaim = useMemo(() => {
     if (registry === undefined || isOwner) return false;
-    const hasBaseAccess =
-      registry.contributorAccess === "ANYONE" ||
-      (registry.contributorAccess === "AUTHENTICATED" && user !== null) ||
-      isSubscriber;
-    if (!hasBaseAccess) return false;
-    if (user !== null && registry.hasLinkedEvent) {
-      return registry.userRsvpedYes === true;
-    }
-    return true;
+    if (registry.contributorAccess === "ANYONE") return true;
+    if (registry.contributorAccess === "AUTHENTICATED") return user !== null;
+    return isSubscriber; // INVITE_ONLY
   }, [registry, isOwner, user, isSubscriber]);
 
   // Warm the delivery-options cache before any claim dialog opens so the view
@@ -556,6 +550,7 @@ export function RegistryPage(): React.ReactElement {
           priceReference={claimTarget.item.priceReference}
           currency={claimTarget.item.currency}
           isAuthenticated={user !== null}
+          userRsvpedYes={registry?.userRsvpedYes ?? null}
           maxAmount={claimTarget.maxAmount}
           isFund={claimTarget.item.itemType === "FUND"}
           quantityDesired={claimTarget.item.quantityDesired}

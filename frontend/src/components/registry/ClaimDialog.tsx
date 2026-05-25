@@ -44,6 +44,7 @@ interface ClaimDialogProps {
   priceReference?: number | null;
   currency?: string | null;
   isAuthenticated?: boolean;
+  userRsvpedYes?: boolean | null;
   viewTransitionName?: string | undefined;
   maxAmount?: number | null;
   isFund?: boolean;
@@ -64,6 +65,7 @@ export function ClaimDialog({
   priceReference,
   currency,
   isAuthenticated = false,
+  userRsvpedYes = null,
   viewTransitionName,
   maxAmount,
   isFund = false,
@@ -155,6 +157,7 @@ export function ClaimDialog({
   const visibleDeliveryOptions = (deliveryOptions.data ?? []).filter((o) => {
     if (!o.enabled) return false;
     if (isFund || partialEnabled) return o.type === "MONEY_TRANSFER";
+    if (isAuthenticated && o.type === "EVENT" && userRsvpedYes !== true) return false;
     return true;
   });
 

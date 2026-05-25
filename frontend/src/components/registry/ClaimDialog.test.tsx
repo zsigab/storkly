@@ -309,4 +309,98 @@ describe("ClaimDialog — delivery option required", () => {
     await waitFor(() => expect(api.POST).toHaveBeenCalled());
     expect(screen.queryByText(/please select a delivery option/i)).not.toBeInTheDocument();
   });
+
+  it("hides EVENT delivery option for authenticated user without RSVP", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({
+      data: [
+        {
+          id: "d1",
+          registryId: "r1",
+          type: "EVENT",
+          label: "Hand over at Baby Shower",
+          description: null,
+          enabled: true,
+          sortOrder: 0,
+        },
+        {
+          id: "d2",
+          registryId: "r1",
+          type: "MONEY_TRANSFER",
+          label: "Bank transfer",
+          description: null,
+          enabled: true,
+          sortOrder: 1,
+        },
+      ],
+      error: undefined,
+      response: new Response(),
+    });
+    renderDialog({ isAuthenticated: true, userRsvpedYes: false });
+    // Wait for delivery options to load — view-mode radios are always disabled,
+    // form radios are enabled. EVENT option should not appear as an enabled radio.
+    await screen.findAllByRole("radio");
+    const radios = screen.getAllByRole("radio") as HTMLInputElement[];
+    const enabledRadios = radios.filter((r) => !r.disabled);
+    expect(enabledRadios.some((r) => r.value === "d1")).toBe(false);
+    expect(enabledRadios.some((r) => r.value === "d2")).toBe(true);
+  });
+
+  it("shows EVENT delivery option for authenticated user with RSVP", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({
+      data: [
+        {
+          id: "d1",
+          registryId: "r1",
+          type: "EVENT",
+          label: "Hand over at Baby Shower",
+          description: null,
+          enabled: true,
+          sortOrder: 0,
+        },
+        {
+          id: "d2",
+          registryId: "r1",
+          type: "MONEY_TRANSFER",
+          label: "Bank transfer",
+          description: null,
+          enabled: true,
+          sortOrder: 1,
+        },
+      ],
+      error: undefined,
+      response: new Response(),
+    });
+    renderDialog({ isAuthenticated: true, userRsvpedYes: true });
+    await screen.findAllByRole("radio");
+    const radios = screen.getAllByRole("radio") as HTMLInputElement[];
+    const enabledRadios = radios.filter((r) => !r.disabled);
+    expect(enabledRadios.some((r) => r.value === "d1")).toBe(true);
+    expect(enabledRadios.some((r) => r.value === "d2")).toBe(true);
+  });
+
+  it("shows EVENT delivery option for unauthenticated user regardless of RSVP", async () => {
+    const { api } = await import("@/api");
+    vi.mocked(api.GET).mockResolvedValue({
+      data: [
+        {
+          id: "d1",
+          registryId: "r1",
+          type: "EVENT",
+          label: "Hand over at Baby Shower",
+          description: null,
+          enabled: true,
+          sortOrder: 0,
+        },
+      ],
+      error: undefined,
+      response: new Response(),
+    });
+    renderDialog({ isAuthenticated: false, userRsvpedYes: null });
+    await screen.findAllByRole("radio");
+    const radios = screen.getAllByRole("radio") as HTMLInputElement[];
+    const enabledRadios = radios.filter((r) => !r.disabled);
+    expect(enabledRadios.some((r) => r.value === "d1")).toBe(true);
+  });
 });
