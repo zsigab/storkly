@@ -214,9 +214,9 @@ export function RegistryForm({
           className="border-input bg-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
           {...register("contributorAccess")}
         >
-          <option value="ANYONE">Anyone — no auth required</option>
+          <option value="ANYONE">Anyone — email address is enough</option>
           <option value="AUTHENTICATED">Authenticated — registered users only</option>
-          <option value="INVITE_ONLY">Invite only — token required</option>
+          <option value="INVITE_ONLY">Invite only — must be invited by owner</option>
         </select>
       </FormField>
 
