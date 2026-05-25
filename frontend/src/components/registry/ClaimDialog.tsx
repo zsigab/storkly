@@ -414,11 +414,11 @@ export function ClaimDialog({
                           <input
                             id="quantitySelector"
                             type="range"
-                            min={1}
+                            min={0}
                             max={remainingQuantity}
                             className="accent-primary w-full"
                             value={field.value}
-                            onChange={(e) => field.onChange(Number(e.target.value))}
+                            onChange={(e) => field.onChange(Math.max(1, Number(e.target.value)))}
                           />
                         )}
                       />
