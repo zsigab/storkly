@@ -98,6 +98,7 @@ export function RegistryPage(): React.ReactElement {
   const [hasUnsubscribed, setHasUnsubscribed] = useState(false);
   const [subscribersOpen, setSubscribersOpen] = useState(false);
   const [descriptionOpen, setDescriptionOpen] = useState(false);
+  const [loginBannerDismissed, setLoginBannerDismissed] = useState(false);
   const [claimTarget, setClaimTarget] = useState<{
     item: ItemResponse;
     maxAmount: number | null;
@@ -379,6 +380,31 @@ export function RegistryPage(): React.ReactElement {
           </>
         )}
       </div>
+
+      {user === null && registry !== undefined && !canClaim && (
+        <Collapsible open={!loginBannerDismissed}>
+          <div className="bg-muted flex items-center justify-between gap-4 rounded-lg px-4 py-3 text-sm">
+            <span>
+              <Link
+                to="/login"
+                state={{ from: { pathname: `/r/${safeSlug}` } }}
+                className="text-primary font-medium hover:underline"
+              >
+                Sign in
+              </Link>{" "}
+              to contribute to this registry.
+            </span>
+            <button
+              type="button"
+              onClick={() => setLoginBannerDismissed(true)}
+              className="text-muted-foreground hover:text-foreground shrink-0"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        </Collapsible>
+      )}
 
       {/* Content */}
       {!isPending && registry !== undefined && (
