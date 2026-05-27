@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useParams, useLocation, useViewTransitionState } from "react-router";
 import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { Collapsible } from "@/components/common/Collapsible";
+import { CopyLinkRow } from "@/components/common/CopyLinkRow";
 import { EventAttendeesTable } from "@/components/event/EventAttendeesTable";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
 import { usePublicEvent, useEvent, useEventSlugLookup } from "@/hooks/useEvents";
@@ -17,7 +18,7 @@ export function PublicEventPage(): React.ReactElement {
   const { user } = useAuth();
   const isAuthenticated = user !== null;
   const [rsvpLinkOpen, setRsvpLinkOpen] = useState(false);
-  const [copiedRsvpLink, setCopiedRsvpLink] = useState(false);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   const isUuid = UUID_REGEX.test(safeId);
   const { data: slugLookup } = useEventSlugLookup(safeId, { enabled: !isUuid });
@@ -37,12 +38,10 @@ export function PublicEventPage(): React.ReactElement {
   const { data: event, isPending, isError } = usePublicEvent(resolvedId);
   const { data: eventFull } = useEvent(resolvedId, { enabled: isAuthenticated && resolvedId.length > 0 });
 
-  const copyRsvpLink = (): void => {
-    if (eventFull?.rsvpShortCode === null || eventFull?.rsvpShortCode === undefined) return;
-    const link = `${window.location.origin}/i/${eventFull.rsvpShortCode}`;
-    void navigator.clipboard.writeText(link).then(() => {
-      setCopiedRsvpLink(true);
-      setTimeout(() => setCopiedRsvpLink(false), 2000);
+  const copyUrl = (url: string): void => {
+    void navigator.clipboard.writeText(url).then(() => {
+      setCopiedUrl(url);
+      setTimeout(() => setCopiedUrl(null), 2000);
     });
   };
 
@@ -116,7 +115,7 @@ export function PublicEventPage(): React.ReactElement {
       {eventFull !== undefined && (
         <div className="mx-auto max-w-2xl space-y-6 pb-10">
           <EventAttendeesTable attendees={eventFull.attendees} ownerEventId={safeId} />
-          {eventFull.rsvpShortCode !== null && (
+          {(eventFull.rsvpShortCode !== null || eventFull.customSlugs.length > 0) && (
             <div className="space-y-3">
               <button
                 type="button"
@@ -132,22 +131,28 @@ export function PublicEventPage(): React.ReactElement {
                   aria-hidden="true"
                 />
                 <Collapsible open={rsvpLinkOpen}>
-                  <div className="pt-1">
-                    <div className="border-border/50 bg-card/80 relative flex gap-2 overflow-hidden rounded-lg border p-3 shadow-md backdrop-blur-sm">
-                      <input
-                        type="text"
-                        readOnly
-                        value={`${window.location.origin}/i/${eventFull.rsvpShortCode}`}
-                        className="border-input bg-background/60 flex h-10 flex-1 rounded-md border px-3 py-2 text-sm backdrop-blur-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={copyRsvpLink}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-                      >
-                        {copiedRsvpLink ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
+                  <div className="border-border/50 bg-card/80 relative mt-1 space-y-2 overflow-hidden rounded-lg border p-3 shadow-md backdrop-blur-sm">
+                    {eventFull.rsvpShortCode !== null && (() => {
+                      const url = `${window.location.origin}/i/${eventFull.rsvpShortCode}`;
+                      return (
+                        <CopyLinkRow
+                          url={url}
+                          copied={copiedUrl === url}
+                          onCopy={() => copyUrl(url)}
+                        />
+                      );
+                    })()}
+                    {eventFull.customSlugs.map((slug) => {
+                      const url = `${window.location.origin}/i/${slug}`;
+                      return (
+                        <CopyLinkRow
+                          key={slug}
+                          url={url}
+                          copied={copiedUrl === url}
+                          onCopy={() => copyUrl(url)}
+                        />
+                      );
+                    })}
                   </div>
                 </Collapsible>
               </div>

@@ -9,6 +9,7 @@ export interface ProblemDetail {
   status: number;
   detail?: string | undefined;
   instance?: string | undefined;
+  errors?: string[] | undefined;
 }
 
 export interface TokenResponse {

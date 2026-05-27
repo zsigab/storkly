@@ -14,6 +14,19 @@ import {
 import { useMyRegistries } from "@/hooks/useRegistries";
 import type { ProblemDetail } from "@/api/schema";
 
+function extractSlugError(err: unknown): string {
+  if (err !== null && typeof err === "object") {
+    const pd = err as ProblemDetail;
+    const firstError = pd.errors?.[0];
+    if (firstError !== undefined) {
+      const sep = firstError.indexOf(": ");
+      return sep >= 0 ? firstError.substring(sep + 2) : firstError;
+    }
+    if (pd.detail) return pd.detail;
+  }
+  return "Failed to add custom URL";
+}
+
 export function EditEventPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -60,11 +73,7 @@ export function EditEventPage(): React.ReactElement {
         setNewSlug("");
       },
       onError: (err) => {
-        if (err instanceof Error) {
-          setSlugError(err.message);
-        } else {
-          setSlugError("Failed to add custom URL");
-        }
+        setSlugError(extractSlugError(err));
       },
     });
   };
@@ -254,11 +263,6 @@ export function EditEventPage(): React.ReactElement {
                   </button>
                 </div>
                 {slugError && <p className="text-destructive mt-2 text-sm">{slugError}</p>}
-                {addSlug.isError && (
-                  <p className="text-destructive mt-2 text-sm">
-                    {addSlug.error instanceof Error ? addSlug.error.message : "Failed to add custom URL"}
-                  </p>
-                )}
               </div>
             )}
           </div>
