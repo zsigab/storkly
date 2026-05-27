@@ -174,6 +174,7 @@ export interface EventResponse {
   themeBackground: string;
   createdAt: string;
   linkedRegistries: LinkedRegistryResponse[];
+  customSlugs: string[];
 }
 
 export interface EventPublicResponse {
@@ -185,6 +186,11 @@ export interface EventPublicResponse {
   description: string | null;
   themeColor: string;
   themeBackground: string;
+}
+
+export interface EventSlugLookupResponse {
+  eventId: string;
+  rsvpToken: string;
 }
 
 export interface RsvpResponse {
@@ -738,6 +744,31 @@ export type paths = {
     get: {
       parameters: { path: { confirmToken: string } };
       responses: { 200: Ok<RsvpConfirmResponse>; 404: Err };
+    };
+  };
+  "/api/events/{id}/custom-slugs": {
+    post: {
+      parameters: { path: { id: string } };
+      requestBody: {
+        content: {
+          "application/json": {
+            slug: string;
+          };
+        };
+      };
+      responses: { 201: Empty; 401: Err; 403: Err; 404: Err; 409: Err; 422: Err };
+    };
+  };
+  "/api/events/{id}/custom-slugs/{slug}": {
+    delete: {
+      parameters: { path: { id: string; slug: string } };
+      responses: { 204: Empty; 401: Err; 403: Err; 404: Err };
+    };
+  };
+  "/api/event-slug/{slug}": {
+    get: {
+      parameters: { path: { slug: string } };
+      responses: { 200: Ok<EventSlugLookupResponse>; 404: Err };
     };
   };
 };

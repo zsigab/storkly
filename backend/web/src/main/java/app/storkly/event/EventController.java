@@ -6,9 +6,11 @@ import app.storkly.domain.event.Rsvp;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.user.User;
 import app.storkly.event.dto.EventCreateRequest;
+import app.storkly.event.dto.EventCustomSlugRequest;
 import app.storkly.event.dto.EventPublicResponse;
 import app.storkly.event.dto.EventRegistryLinksRequest;
 import app.storkly.event.dto.EventResponse;
+import app.storkly.event.dto.EventSlugLookupResponse;
 import app.storkly.event.dto.EventTimeSlotResponse;
 import app.storkly.event.dto.EventUpdateRequest;
 import app.storkly.event.dto.LinkedRegistryResponse;
@@ -49,7 +51,7 @@ public class EventController {
     @GetMapping("/api/events")
     public List<EventResponse> list(@AuthenticationPrincipal User currentUser) {
         return eventService.findByOwner(currentUser.id()).stream()
-                .map(this::toResponse)
+                .map(event -> toResponse(event, eventService.getCustomSlugs(event.id(), currentUser.id())))
                 .toList();
     }
 
@@ -74,13 +76,13 @@ public class EventController {
                 request.themeColor(),
                 request.themeBackground(),
                 currentUser.id());
-        return toResponse(event);
+        return toResponse(event, List.of());
     }
 
     @GetMapping("/api/events/{id}")
     public EventResponse get(@PathVariable UUID id, @AuthenticationPrincipal User currentUser) {
         Event event = eventService.findById(id, currentUser.id());
-        return toResponse(event);
+        return toResponse(event, eventService.getCustomSlugs(id, currentUser.id()));
     }
 
     @PatchMapping("/api/events/{id}")
@@ -99,7 +101,7 @@ public class EventController {
                 request.themeColor(),
                 request.themeBackground(),
                 currentUser.id());
-        return toResponse(event);
+        return toResponse(event, eventService.getCustomSlugs(id, currentUser.id()));
     }
 
     @DeleteMapping("/api/events/{id}")
@@ -143,7 +145,29 @@ public class EventController {
         return toPublicResponse(event);
     }
 
-    private EventResponse toResponse(Event event) {
+    @PostMapping("/api/events/{id}/custom-slugs")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void addCustomSlug(
+            @PathVariable UUID id,
+            @RequestBody @Valid EventCustomSlugRequest request,
+            @AuthenticationPrincipal User currentUser) {
+        eventService.addCustomSlug(id, request.slug(), currentUser.id());
+    }
+
+    @DeleteMapping("/api/events/{id}/custom-slugs/{slug}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeCustomSlug(
+            @PathVariable UUID id, @PathVariable String slug, @AuthenticationPrincipal User currentUser) {
+        eventService.removeCustomSlug(id, slug, currentUser.id());
+    }
+
+    @GetMapping("/api/event-slug/{slug}")
+    public EventSlugLookupResponse lookupSlug(@PathVariable String slug) {
+        Event event = eventService.findEventByCustomSlug(slug);
+        return new EventSlugLookupResponse(event.id(), event.rsvpToken());
+    }
+
+    private EventResponse toResponse(Event event, List<String> customSlugs) {
         List<Rsvp> rsvps = rsvpService.getAttendeesByEventId(event.id());
         List<EventTimeSlot> slots = eventTimeSlotService.findByEventId(event.id());
 
@@ -205,7 +229,8 @@ public class EventController {
                 event.themeColor(),
                 event.themeBackground(),
                 event.createdAt(),
-                linkedRegistryResponses);
+                linkedRegistryResponses,
+                customSlugs);
     }
 
     private EventPublicResponse toPublicResponse(Event event) {

@@ -1,12 +1,15 @@
 package app.storkly.service.event;
 
 import app.storkly.domain.event.Event;
+import app.storkly.domain.event.EventCustomSlugRepository;
 import app.storkly.domain.event.EventRegistryLinkRepository;
 import app.storkly.domain.event.EventRepository;
 import app.storkly.domain.exception.AccessDeniedException;
 import app.storkly.domain.exception.ConflictException;
 import app.storkly.domain.exception.EventNotFoundException;
 import app.storkly.domain.exception.RegistryNotFoundException;
+import app.storkly.domain.exception.SlugLimitExceededException;
+import app.storkly.domain.exception.SlugTakenException;
 import app.storkly.domain.registry.Registry;
 import app.storkly.domain.registry.RegistryRepository;
 import app.storkly.domain.registry.RegistryVisibility;
@@ -35,6 +38,7 @@ public class EventService {
     private final EventRepository eventRepository;
     private final EventRegistryLinkRepository eventRegistryLinkRepository;
     private final RegistryRepository registryRepository;
+    private final EventCustomSlugRepository eventCustomSlugRepository;
 
     @Transactional
     public Event create(
@@ -163,9 +167,12 @@ public class EventService {
     }
 
     public Event findByRsvpShortCode(String rsvpShortCode) {
-        return eventRepository
-                .findByRsvpShortCode(rsvpShortCode)
-                .orElseThrow(() -> new EventNotFoundException("Event with short code not found"));
+        return eventRepository.findByRsvpShortCode(rsvpShortCode).orElseGet(() -> {
+            Event event = eventCustomSlugRepository
+                    .findEventBySlug(rsvpShortCode)
+                    .orElseThrow(() -> new EventNotFoundException("Event with short code or slug not found"));
+            return event;
+        });
     }
 
     @Transactional
@@ -203,6 +210,48 @@ public class EventService {
                     .toList();
         }
         return registries;
+    }
+
+    @Transactional
+    public void addCustomSlug(UUID eventId, String slug, UUID currentUserId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can add custom slugs");
+        }
+
+        List<String> currentSlugs = eventCustomSlugRepository.findSlugsByEventId(eventId);
+        if (currentSlugs.size() >= 3) {
+            throw new SlugLimitExceededException();
+        }
+
+        try {
+            eventCustomSlugRepository.save(slug, eventId);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw new SlugTakenException(slug);
+        }
+    }
+
+    @Transactional
+    public void removeCustomSlug(UUID eventId, String slug, UUID currentUserId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can remove custom slugs");
+        }
+        eventCustomSlugRepository.delete(slug);
+    }
+
+    public List<String> getCustomSlugs(UUID eventId, UUID currentUserId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new EventNotFoundException(eventId));
+        if (!event.ownerId().equals(currentUserId)) {
+            throw new AccessDeniedException("Only the owner can view custom slugs");
+        }
+        return eventCustomSlugRepository.findSlugsByEventId(eventId);
+    }
+
+    public Event findEventByCustomSlug(String slug) {
+        return eventCustomSlugRepository
+                .findEventBySlug(slug)
+                .orElseThrow(() -> new EventNotFoundException("Event with slug not found"));
     }
 
     private String generateShortCode() {

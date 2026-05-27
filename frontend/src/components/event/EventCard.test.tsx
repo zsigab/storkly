@@ -62,6 +62,7 @@ const baseEvent = {
   rsvpCapacity: null,
   timeSlots: [],
   linkedRegistries: [],
+  customSlugs: [],
 };
 
 describe("EventCard", () => {

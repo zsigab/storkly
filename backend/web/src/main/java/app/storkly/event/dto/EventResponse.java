@@ -20,4 +20,5 @@ public record EventResponse(
         String themeColor,
         String themeBackground,
         OffsetDateTime createdAt,
-        List<LinkedRegistryResponse> linkedRegistries) {}
+        List<LinkedRegistryResponse> linkedRegistries,
+        List<String> customSlugs) {}

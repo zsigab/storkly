@@ -8,6 +8,8 @@ import {
   useUpdateEvent,
   useGenerateRsvpShortLink,
   useLinkEventRegistries,
+  useAddEventSlug,
+  useRemoveEventSlug,
 } from "@/hooks/useEvents";
 import { useMyRegistries } from "@/hooks/useRegistries";
 import type { ProblemDetail } from "@/api/schema";
@@ -21,8 +23,12 @@ export function EditEventPage(): React.ReactElement {
   const updateEvent = useUpdateEvent(safeId);
   const generateShortLink = useGenerateRsvpShortLink(safeId);
   const linkRegistries = useLinkEventRegistries(safeId);
+  const addSlug = useAddEventSlug(safeId);
+  const removeSlug = useRemoveEventSlug(safeId);
   const [copiedShortLink, setCopiedShortLink] = useState(false);
   const [selectedRegistryIds, setSelectedRegistryIds] = useState<Set<string>>(new Set());
+  const [newSlug, setNewSlug] = useState("");
+  const [slugError, setSlugError] = useState<string | null>(null);
 
   const copyShortLink = (): void => {
     if (event?.rsvpShortCode === null || event?.rsvpShortCode === undefined) return;
@@ -41,6 +47,30 @@ export function EditEventPage(): React.ReactElement {
 
   const handleGenerateShortLink = (): void => {
     generateShortLink.mutate();
+  };
+
+  const handleAddSlug = (): void => {
+    if (!newSlug.trim()) {
+      setSlugError("Slug cannot be empty");
+      return;
+    }
+    setSlugError(null);
+    addSlug.mutate(newSlug, {
+      onSuccess: () => {
+        setNewSlug("");
+      },
+      onError: (err) => {
+        if (err instanceof Error) {
+          setSlugError(err.message);
+        } else {
+          setSlugError("Failed to add custom URL");
+        }
+      },
+    });
+  };
+
+  const handleRemoveSlug = (slug: string): void => {
+    removeSlug.mutate(slug);
   };
 
   const handleBack = (): void => {
@@ -161,6 +191,74 @@ export function EditEventPage(): React.ReactElement {
                     </span>
                   </button>
                 ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <p className="text-sm font-medium">Custom URLs</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Share shorter links like <code className="bg-muted rounded px-1">e/my-slug</code> and{" "}
+              <code className="bg-muted rounded px-1">i/my-slug</code> (max 3 per event)
+            </p>
+            {event?.customSlugs && event.customSlugs.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {event.customSlugs.map((slug) => (
+                  <div
+                    key={slug}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 p-3"
+                  >
+                    <div className="space-y-1 text-sm">
+                      <div className="font-mono text-xs">
+                        {window.location.origin}/e/{slug}
+                      </div>
+                      <div className="font-mono text-xs">
+                        {window.location.origin}/i/{slug}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSlug(slug)}
+                      disabled={removeSlug.isPending}
+                      className="text-destructive hover:text-destructive/90 disabled:text-muted-foreground shrink-0 text-sm font-medium transition-colors"
+                    >
+                      {removeSlug.isPending ? "Removing…" : "Remove"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {event?.customSlugs && event.customSlugs.length < 3 && (
+              <div className="mt-3">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="e.g., my-event-2026"
+                    value={newSlug}
+                    onChange={(e) => {
+                      setNewSlug(e.target.value);
+                      if (slugError) setSlugError(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleAddSlug();
+                    }}
+                    className="border-input bg-background text-foreground placeholder:text-muted-foreground flex h-10 flex-1 rounded-md border px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddSlug}
+                    disabled={addSlug.isPending || !newSlug.trim()}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+                  >
+                    {addSlug.isPending ? "Adding…" : "Add"}
+                  </button>
+                </div>
+                {slugError && <p className="text-destructive mt-2 text-sm">{slugError}</p>}
+                {addSlug.isError && (
+                  <p className="text-destructive mt-2 text-sm">
+                    {addSlug.error instanceof Error ? addSlug.error.message : "Failed to add custom URL"}
+                  </p>
+                )}
               </div>
             )}
           </div>

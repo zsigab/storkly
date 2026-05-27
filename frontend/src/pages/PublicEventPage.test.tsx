@@ -6,7 +6,7 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { PublicEventPage } from "./PublicEventPage";
 
 vi.mock("@/api", () => ({ api: { GET: vi.fn() } }));
-const mockParams = { id: "event-1" };
+const mockParams = { id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890" };
 vi.mock("react-router", async () => {
   const actual = await vi.importActual<typeof import("react-router")>("react-router");
   return {
@@ -31,7 +31,7 @@ vi.mock("react-router", async () => {
 });
 
 const publicEventFixture = {
-  id: "event-1",
+  id: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   title: "Baby Shower",
   eventDate: "2024-06-15T14:00:00Z",
   eventDateOffsetSeconds: null,
@@ -39,6 +39,9 @@ const publicEventFixture = {
   description: null,
   themeColor: "peach",
   themeBackground: "none",
+  rsvpShortCode: null,
+  customSlugs: [],
+  linkedRegistries: [],
 };
 
 const fullEventFixture = {
@@ -58,6 +61,9 @@ const fullEventFixture = {
   ],
   timeSlots: [],
   createdAt: "2024-01-01T00:00:00Z",
+  customSlugs: [],
+  rsvpShortCode: null,
+  linkedRegistries: [],
 };
 
 const storedUser = JSON.stringify({
@@ -199,7 +205,10 @@ describe("PublicEventPage", () => {
       });
     renderPage();
     await waitFor(() => expect(screen.getByRole("link", { name: /edit/i })).toBeInTheDocument());
-    expect(screen.getByRole("link", { name: /edit/i })).toHaveAttribute("href", "/e/event-1/edit");
+    expect(screen.getByRole("link", { name: /edit/i })).toHaveAttribute(
+      "href",
+      "/e/a1b2c3d4-e5f6-7890-abcd-ef1234567890/edit",
+    );
     await waitFor(() => expect(screen.getByText("Alice")).toBeInTheDocument());
     expect(screen.getByText("alice@example.com")).toBeInTheDocument();
   });

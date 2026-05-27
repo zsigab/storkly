@@ -4,10 +4,12 @@ import { GlassCardLayout } from "@/components/common/GlassCardLayout";
 import { Collapsible } from "@/components/common/Collapsible";
 import { EventAttendeesTable } from "@/components/event/EventAttendeesTable";
 import { MarkdownContent } from "@/components/common/MarkdownContent";
-import { usePublicEvent, useEvent } from "@/hooks/useEvents";
+import { usePublicEvent, useEvent, useEventSlugLookup } from "@/hooks/useEvents";
 import { useEventTheme } from "@/hooks/useEventTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { formatEventDate } from "@/lib/utils";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function PublicEventPage(): React.ReactElement {
   const { id } = useParams<{ id: string }>();
@@ -16,7 +18,12 @@ export function PublicEventPage(): React.ReactElement {
   const isAuthenticated = user !== null;
   const [rsvpLinkOpen, setRsvpLinkOpen] = useState(false);
   const [copiedRsvpLink, setCopiedRsvpLink] = useState(false);
-  useEventTheme(safeId);
+
+  const isUuid = UUID_REGEX.test(safeId);
+  const { data: slugLookup } = useEventSlugLookup(safeId, { enabled: !isUuid });
+  const resolvedId = isUuid ? safeId : slugLookup?.eventId ?? "";
+
+  useEventTheme(resolvedId);
   const { state: navState } = useLocation();
   const fromEventCard =
     navState !== null &&
@@ -27,8 +34,8 @@ export function PublicEventPage(): React.ReactElement {
   const isDashboardTransitioning = useViewTransitionState("/dashboard");
   const isEditTransitioning = useViewTransitionState(`/e/${safeId}/edit`);
 
-  const { data: event, isPending, isError } = usePublicEvent(safeId);
-  const { data: eventFull } = useEvent(safeId, { enabled: isAuthenticated });
+  const { data: event, isPending, isError } = usePublicEvent(resolvedId);
+  const { data: eventFull } = useEvent(resolvedId, { enabled: isAuthenticated && resolvedId.length > 0 });
 
   const copyRsvpLink = (): void => {
     if (eventFull?.rsvpShortCode === null || eventFull?.rsvpShortCode === undefined) return;

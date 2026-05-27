@@ -4,6 +4,7 @@ import { api } from "@/api";
 import type {
   EventPublicResponse,
   EventResponse,
+  EventSlugLookupResponse,
   RsvpShortLinkLookupResponse,
   RsvpShortLinkResponse,
 } from "@/api/schema";
@@ -278,5 +279,51 @@ export function useLinkEventRegistries(eventId: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
     },
+  });
+}
+
+export function useAddEventSlug(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (slug: string) => {
+      const { error } = await api.POST("/api/events/{id}/custom-slugs", {
+        params: { path: { id: eventId } },
+        body: { slug },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+  });
+}
+
+export function useRemoveEventSlug(eventId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (slug: string) => {
+      const { error } = await api.DELETE("/api/events/{id}/custom-slugs/{slug}", {
+        params: { path: { id: eventId, slug } },
+      });
+      if (error !== undefined) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["event", eventId] });
+    },
+  });
+}
+
+export function useEventSlugLookup(slug: string, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: ["event-slug", slug],
+    queryFn: async (): Promise<EventSlugLookupResponse> => {
+      const { data, error } = await api.GET("/api/event-slug/{slug}", {
+        params: { path: { slug } },
+      });
+      if (error !== undefined) throw error;
+      if (data === undefined || data === null) throw new Error("No response from server");
+      return data;
+    },
+    enabled: slug.length > 0 && (options?.enabled ?? true),
   });
 }
