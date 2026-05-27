@@ -113,7 +113,7 @@ export function EventAttendeesTable({
         />
         <Collapsible open={open}>
           <div className="pt-1">
-            <div className="border-border/50 bg-card/80 relative overflow-hidden rounded-lg border shadow-md backdrop-blur-sm">
+            <div className="border-border/50 bg-card relative overflow-hidden rounded-lg border shadow-md">
               {attendees.length === 0 ? (
                 <p className="text-muted-foreground px-4 py-6 text-sm">No RSVPs yet.</p>
               ) : (

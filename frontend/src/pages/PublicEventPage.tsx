@@ -131,7 +131,7 @@ export function PublicEventPage(): React.ReactElement {
                   aria-hidden="true"
                 />
                 <Collapsible open={rsvpLinkOpen}>
-                  <div className="border-border/50 bg-card/80 relative mt-1 space-y-2 overflow-hidden rounded-lg border p-3 shadow-md backdrop-blur-sm">
+                  <div className="border-border/50 bg-card relative mt-1 space-y-2 overflow-hidden rounded-lg border p-3 shadow-md">
                     {eventFull.rsvpShortCode !== null && (() => {
                       const url = `${window.location.origin}/i/${eventFull.rsvpShortCode}`;
                       return (
