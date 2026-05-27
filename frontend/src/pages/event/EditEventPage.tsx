@@ -215,7 +215,7 @@ export function EditEventPage(): React.ReactElement {
                 {event.customSlugs.map((slug) => (
                   <div
                     key={slug}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 p-3"
+                    className="border-border bg-muted/30 flex items-center justify-between gap-2 rounded-lg border p-3"
                   >
                     <div className="space-y-1 text-sm">
                       <div className="font-mono text-xs">

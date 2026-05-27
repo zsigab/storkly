@@ -22,7 +22,7 @@ export function PublicEventPage(): React.ReactElement {
 
   const isUuid = UUID_REGEX.test(safeId);
   const { data: slugLookup } = useEventSlugLookup(safeId, { enabled: !isUuid });
-  const resolvedId = isUuid ? safeId : slugLookup?.eventId ?? "";
+  const resolvedId = isUuid ? safeId : (slugLookup?.eventId ?? "");
 
   useEventTheme(resolvedId);
   const { state: navState } = useLocation();
@@ -36,7 +36,9 @@ export function PublicEventPage(): React.ReactElement {
   const isEditTransitioning = useViewTransitionState(`/e/${safeId}/edit`);
 
   const { data: event, isPending, isError } = usePublicEvent(resolvedId);
-  const { data: eventFull } = useEvent(resolvedId, { enabled: isAuthenticated && resolvedId.length > 0 });
+  const { data: eventFull } = useEvent(resolvedId, {
+    enabled: isAuthenticated && resolvedId.length > 0,
+  });
 
   const copyUrl = (url: string): void => {
     void navigator.clipboard.writeText(url).then(() => {
@@ -132,16 +134,17 @@ export function PublicEventPage(): React.ReactElement {
                 />
                 <Collapsible open={rsvpLinkOpen}>
                   <div className="border-border/50 bg-card relative mt-1 space-y-2 overflow-hidden rounded-lg border p-3 shadow-md">
-                    {eventFull.rsvpShortCode !== null && (() => {
-                      const url = `${window.location.origin}/i/${eventFull.rsvpShortCode}`;
-                      return (
-                        <CopyLinkRow
-                          url={url}
-                          copied={copiedUrl === url}
-                          onCopy={() => copyUrl(url)}
-                        />
-                      );
-                    })()}
+                    {eventFull.rsvpShortCode !== null &&
+                      (() => {
+                        const url = `${window.location.origin}/i/${eventFull.rsvpShortCode}`;
+                        return (
+                          <CopyLinkRow
+                            url={url}
+                            copied={copiedUrl === url}
+                            onCopy={() => copyUrl(url)}
+                          />
+                        );
+                      })()}
                     {eventFull.customSlugs.map((slug) => {
                       const url = `${window.location.origin}/i/${slug}`;
                       return (
