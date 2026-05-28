@@ -49,7 +49,7 @@
     --popover: 30 100% 98%;
     --popover-foreground: 20 14% 20%;
     --primary: 15 85% 68%;
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 0 0% 10%;
     --secondary: 30 40% 94%;
     --secondary-foreground: 20 14% 20%;
     --muted: 30 40% 94%;
@@ -87,7 +87,7 @@
     --popover: 220 15% 19%;
     --popover-foreground: 220 10% 88%;
     --primary: 15 75% 65%;
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 0 0% 10%;
     --secondary: 220 12% 22%;
     --secondary-foreground: 220 10% 88%;
     --muted: 220 12% 22%;
@@ -113,11 +113,13 @@
    * ===================================================== */
   [data-color="blue"] {
     --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 10%;
     --ring: 217 91% 60%;
   }
 
   [data-color="blue"].dark {
     --primary: 217 85% 70%;
+    --primary-foreground: 0 0% 10%;
     --ring: 217 85% 70%;
   }
 
@@ -126,11 +128,13 @@
    * ===================================================== */
   [data-color="pink"] {
     --primary: 340 75% 64%;
+    --primary-foreground: 0 0% 10%;
     --ring: 340 75% 64%;
   }
 
   [data-color="pink"].dark {
     --primary: 340 70% 68%;
+    --primary-foreground: 0 0% 10%;
     --ring: 340 70% 68%;
   }
 
@@ -139,11 +143,13 @@
    * ===================================================== */
   [data-color="green"] {
     --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
     --ring: 160 84% 39%;
   }
 
   [data-color="green"].dark {
     --primary: 160 70% 50%;
+    --primary-foreground: 0 0% 10%;
     --ring: 160 70% 50%;
   }
 
@@ -152,11 +158,13 @@
    * ===================================================== */
   [data-color="purple"] {
     --primary: 271 81% 56%;
+    --primary-foreground: 0 0% 100%;
     --ring: 271 81% 56%;
   }
 
   [data-color="purple"].dark {
     --primary: 271 75% 70%;
+    --primary-foreground: 0 0% 10%;
     --ring: 271 75% 70%;
   }
 
