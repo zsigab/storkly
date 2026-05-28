@@ -37,6 +37,7 @@ const event: EventPublicResponse = {
   description: null,
   themeColor: "peach",
   themeBackground: "none",
+  linkedRegistries: [],
 };
 
 describe("GuestEventCard", () => {

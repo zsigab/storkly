@@ -187,6 +187,7 @@ export interface EventPublicResponse {
   description: string | null;
   themeColor: string;
   themeBackground: string;
+  linkedRegistries?: LinkedRegistryResponse[];
 }
 
 export interface EventSlugLookupResponse {

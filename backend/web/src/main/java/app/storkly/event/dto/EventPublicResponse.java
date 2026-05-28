@@ -1,6 +1,7 @@
 package app.storkly.event.dto;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 
@@ -12,4 +13,5 @@ public record EventPublicResponse(
         String location,
         String description,
         String themeColor,
-        String themeBackground) {}
+        String themeBackground,
+        List<LinkedRegistryResponse> linkedRegistries) {}

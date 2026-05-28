@@ -247,6 +247,7 @@ public class EventController {
                 event.location(),
                 event.description(),
                 event.themeColor(),
-                event.themeBackground());
+                event.themeBackground(),
+                linkedRegistryResponses);
     }
 }

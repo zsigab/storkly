@@ -111,6 +111,26 @@ export function PublicEventPage(): React.ReactElement {
               <MarkdownContent content={event.description} className="text-muted-foreground" />
             </div>
           )}
+
+          {(event.linkedRegistries ?? []).length > 0 && (
+            <div className="space-y-1 border-t pt-4">
+              <p className="text-sm font-medium">
+                {(event.linkedRegistries ?? []).length === 1 ? "Gift registry" : "Gift registries"}
+              </p>
+              <ul className="space-y-1">
+                {(event.linkedRegistries ?? []).map((registry) => (
+                  <li key={registry.id}>
+                    <a
+                      href={`/r/${registry.slug}`}
+                      className="text-primary text-sm hover:underline"
+                    >
+                      {registry.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </GlassCardLayout>
 
