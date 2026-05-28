@@ -29,4 +29,6 @@ public interface RsvpRepository {
     int countAttendingBySlotIdExcluding(UUID slotId, @Nullable UUID excludeRsvpId);
 
     void deleteById(UUID id);
+
+    int claimGuestRsvps(String email, UUID userId);
 }

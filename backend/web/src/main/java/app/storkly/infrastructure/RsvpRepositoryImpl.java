@@ -2,6 +2,7 @@ package app.storkly.infrastructure;
 
 import static app.storkly.domain.generated.Tables.EVENT_REGISTRY_LINK;
 import static app.storkly.domain.generated.Tables.RSVP;
+import static app.storkly.domain.generated.Tables.USER;
 
 import app.storkly.domain.event.Rsvp;
 import app.storkly.domain.event.RsvpRepository;
@@ -14,6 +15,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.impl.DSL;
 import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Repository;
 
@@ -99,7 +101,33 @@ public class RsvpRepositoryImpl implements RsvpRepository {
 
     @Override
     public List<Rsvp> findByEventId(UUID eventId) {
-        return dsl.selectFrom(RSVP).where(RSVP.EVENT_ID.eq(eventId)).fetch().map(this::toDomain);
+        return dsl.select(
+                        RSVP.ID,
+                        RSVP.EVENT_ID,
+                        RSVP.USER_ID,
+                        RSVP.EMAIL,
+                        DSL.coalesce(USER.DISPLAY_NAME, RSVP.DISPLAY_NAME).as("display_name"),
+                        RSVP.ATTENDING,
+                        RSVP.TIME_SLOT_ID,
+                        RSVP.CONFIRMATION_TOKEN,
+                        RSVP.CONFIRMED_AT,
+                        RSVP.CREATED_AT)
+                .from(RSVP)
+                .leftJoin(USER)
+                .on(RSVP.USER_ID.eq(USER.ID))
+                .where(RSVP.EVENT_ID.eq(eventId))
+                .fetch(r -> Rsvp.builder()
+                        .id(r.get(RSVP.ID))
+                        .eventId(r.get(RSVP.EVENT_ID))
+                        .userId(r.get(RSVP.USER_ID))
+                        .email(r.get(RSVP.EMAIL))
+                        .displayName(r.get("display_name", String.class))
+                        .attending(r.get(RSVP.ATTENDING))
+                        .timeSlotId(r.get(RSVP.TIME_SLOT_ID))
+                        .confirmationToken(r.get(RSVP.CONFIRMATION_TOKEN))
+                        .confirmedAt(r.get(RSVP.CONFIRMED_AT))
+                        .createdAt(r.get(RSVP.CREATED_AT))
+                        .build());
     }
 
     @Override
@@ -142,6 +170,15 @@ public class RsvpRepositoryImpl implements RsvpRepository {
     @Override
     public void deleteById(UUID id) {
         dsl.deleteFrom(RSVP).where(RSVP.ID.eq(id)).execute();
+    }
+
+    @Override
+    public int claimGuestRsvps(String email, UUID userId) {
+        return dsl.update(RSVP)
+                .set(RSVP.USER_ID, userId)
+                .set(RSVP.CONFIRMED_AT, DSL.coalesce(RSVP.CONFIRMED_AT, OffsetDateTime.now()))
+                .where(RSVP.EMAIL.eq(email).and(RSVP.USER_ID.isNull()))
+                .execute();
     }
 
     private Rsvp toDomain(RsvpRecord record) {

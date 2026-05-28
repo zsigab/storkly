@@ -1,5 +1,6 @@
 package app.storkly.service.auth;
 
+import app.storkly.domain.event.RsvpRepository;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.exception.UserNotFoundException;
@@ -29,6 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final TurnstileService turnstileService;
+    private final RsvpRepository rsvpRepository;
 
     @Transactional
     public void register(String email, String password, String displayName, String captchaToken) {
@@ -68,6 +70,10 @@ public class AuthService {
                 .createdAt(user.createdAt())
                 .build();
         userRepository.save(verified);
+        int claimed = rsvpRepository.claimGuestRsvps(user.email(), userId);
+        if (claimed > 0) {
+            log.info("Claimed {} guest RSVP(s) for {}", claimed, user.email());
+        }
     }
 
     @Transactional

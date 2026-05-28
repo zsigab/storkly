@@ -9,6 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import app.storkly.domain.event.RsvpRepository;
 import app.storkly.domain.exception.EmailAlreadyRegisteredException;
 import app.storkly.domain.exception.InvalidCredentialsException;
 import app.storkly.domain.user.EmailVerificationRepository;
@@ -51,6 +52,9 @@ class AuthServiceTest {
     @Mock
     private TurnstileService turnstileService;
 
+    @Mock
+    private RsvpRepository rsvpRepository;
+
     private AuthService authService;
 
     @BeforeEach
@@ -61,7 +65,8 @@ class AuthServiceTest {
                 passwordResetRepository,
                 passwordEncoder,
                 emailService,
-                turnstileService);
+                turnstileService,
+                rsvpRepository);
     }
 
     @Test
@@ -226,5 +231,49 @@ class AuthServiceTest {
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(captor.capture());
         assertThat(captor.getValue().passwordHash()).isEqualTo("new-hash");
+    }
+
+    @Test
+    void verifyEmail_claimsGuestRsvps() {
+        String token = "verify-token";
+        UUID userId = UUID.randomUUID();
+        User unverifiedUser = User.builder()
+                .id(userId)
+                .email("john@example.com")
+                .passwordHash("hash")
+                .displayName("John Doe")
+                .role(UserRole.USER)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        when(emailVerificationRepository.consume(token)).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(unverifiedUser));
+        when(rsvpRepository.claimGuestRsvps("john@example.com", userId)).thenReturn(2);
+
+        authService.verifyEmail(token);
+
+        verify(userRepository).save(any(User.class));
+        verify(rsvpRepository).claimGuestRsvps(eq("john@example.com"), eq(userId));
+    }
+
+    @Test
+    void verifyEmail_noGuestRsvps_stillSucceeds() {
+        String token = "verify-token";
+        UUID userId = UUID.randomUUID();
+        User unverifiedUser = User.builder()
+                .id(userId)
+                .email("jane@example.com")
+                .passwordHash("hash")
+                .displayName("Jane Doe")
+                .role(UserRole.USER)
+                .createdAt(OffsetDateTime.now())
+                .build();
+        when(emailVerificationRepository.consume(token)).thenReturn(userId);
+        when(userRepository.findById(userId)).thenReturn(Optional.of(unverifiedUser));
+        when(rsvpRepository.claimGuestRsvps("jane@example.com", userId)).thenReturn(0);
+
+        authService.verifyEmail(token);
+
+        verify(userRepository).save(any(User.class));
+        verify(rsvpRepository).claimGuestRsvps(eq("jane@example.com"), eq(userId));
     }
 }
